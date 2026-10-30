@@ -48,13 +48,13 @@
   {% if can('ajustes.editar') %}<a href="{{ url_for('settings.clinic') }}" {% if ep.startswith('settings') %}aria-current="page"{% endif %}><span aria-hidden="true">⚙</span> Ajustes</a>{% endif %}
 </nav>
 {% endif %}
-{% if env != 'produccion' %}<div class="env-banner" role="note">Entorno de {{ env }} · use solo pacientes ficticios</div>{% endif %}
+{% if env in ('desarrollo', 'pruebas') or demo_mode %}<div class="env-banner" role="note">{{ 'MODO DEMOSTRACIÓN' if demo_mode else 'Entorno de ' ~ env }} · use solo pacientes ficticios</div>{% endif %}
 <main id="contenido" class="{% block main_class %}page{% endblock %}" tabindex="-1">
   {% with msgs = get_flashed_messages(with_categories=true) %}
     {% for cat, m in msgs %}<div class="flash flash-{{ cat }}" role="{{ 'alert' if cat == 'error' else 'status' }}">{{ m }}</div>{% endfor %}
   {% endwith %}
   {% block content %}{% endblock %}
 </main>
-<footer class="foot muted small">GastroMed Pro {{ app_version }} · Sistema en desarrollo: no apto aún para pacientes reales</footer>
+<footer class="foot muted small">GastroMed Pro {{ app_version }}{% if env in ('desarrollo', 'pruebas') %} · Sistema en desarrollo: use solo datos ficticios{% endif %}</footer>
 </body>
 </html>

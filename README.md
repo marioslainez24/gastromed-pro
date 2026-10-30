@@ -2,7 +2,7 @@
 
 Sistema de gestión clínica para Gastroenterología, Hepatología y Endoscopia — Dr. Mario Lainez.
 
-> **Estado: en desarrollo (v0.2.0). No apto todavía para pacientes reales.** Use solo datos ficticios.
+> **Estado: en desarrollo (v0.3.0). No apto todavía para pacientes reales.** Use solo datos ficticios.
 
 ## Documentos
 - `docs/ARQUITECTURA.md` — tecnologías, modelo de datos, permisos, costos.
@@ -13,10 +13,13 @@ Sistema de gestión clínica para Gastroenterología, Hepatología y Endoscopia 
 - `docs/INSTALACION_WINDOWS.md` — probar la demostración en Windows.
 - `evidencia/` — capturas en navegador real y PDF de ejemplo.
 
+## Instalar en la PC del consultorio (Windows 11)
+Doble clic en `INSTALAR.bat`. Guía: `docs/INSTALACION_WINDOWS.md`.
+
 ## Inicio rápido (desarrollo)
 ```
 python -m venv .venv && . .venv/bin/activate    # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 python scripts/seed_demo.py
 python run.py                                    # http://127.0.0.1:8000
 python -m pytest -q                              # pruebas

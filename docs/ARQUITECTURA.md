@@ -24,6 +24,17 @@ Versión del documento: 0.1 · 30 de octubre de 2026
 
 ## 2. Cómo se usa desde PC y celular
 
+**Decisión vigente (30-oct-2026):** servidor privado en la PC del consultorio con Windows 11. Ver `INSTALACION_WINDOWS.md`.
+
+```
+ PC del consultorio (Windows 11) = servidor  ── Wi-Fi del consultorio ──  Celular / tableta (navegador)
+   C:\GastroMed\datos       base de datos + adjuntos cifrados
+   C:\GastroMed\respaldos   respaldos diarios cifrados ──► copia en disco externo
+```
+Sin costos de alojamiento. Requiere la PC encendida; sin acceso fuera del consultorio salvo VPN futura.
+
+### Alternativa anterior (en espera): servidor en la nube
+
 ```
  PC Windows (navegador) ─┐
                          ├── HTTPS ──► Servidor en la nube (Linux) ──► Base de datos + archivos privados

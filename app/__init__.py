@@ -6,7 +6,7 @@ from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.3.0"
 
 
 def create_app(config: Config | None = None) -> Flask:
@@ -71,7 +71,7 @@ def create_app(config: Config | None = None) -> Flask:
     def _ctx():
         return {"can": can, "label": util.label, "fmt_dt": util.fmt_dt, "fmt_time": util.fmt_time, "age": util.age,
                 "fmt_birth": util.fmt_birth, "current_user": g.get("user"), "csrf_token": g.get("csrf_token"),
-                "app_version": APP_VERSION, "env": cfg.ENV}
+                "app_version": APP_VERSION, "env": cfg.ENV, "demo_mode": cfg.DEMO}
 
     def _err(code, title, msg):
         def handler(e):

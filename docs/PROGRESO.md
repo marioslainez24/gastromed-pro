@@ -2,6 +2,28 @@
 
 Este archivo permite continuar el trabajo en futuras conversaciones. Léalo primero.
 
+## Etapa 3 · 30-oct-2026 · Servidor privado en la PC del consultorio (v0.3.0)
+
+**Decisión del Dr. Lainez:** todo se guarda en su PC con Windows 11, que será el servidor privado. Se descarta Vultr por ahora.
+
+**Qué quedó funcionando**
+- Modo `consultorio`: claves obligatorias (nunca se generan en silencio), configuración guardada junto a los datos en `C:\GastroMed\datos`.
+- `INSTALAR.bat` + `windows/instalar.ps1`: Python 3.13 vía winget, componentes, claves, cuenta del propietario, permisos de carpeta, pruebas automáticas en la PC, accesos directos, inicio automático, respaldo diario 21:00 (se ejecuta al encender si estaba apagada), firewall solo red privada, respaldo previo en actualizaciones.
+- `servidor.py` (waitress) en puerto 8000 para la PC y el celular en el mismo Wi-Fi; muestra la dirección para el celular.
+- Modo DEMOSTRACIÓN separado (puerto 8001, solo esta PC, base aparte).
+- Respaldo automático: crear → verificar restaurando → copiar a disco externo → conservar 30. Diagnóstico de estado.
+
+**Cómo se comprobó**
+- 42 pruebas automáticas pasan, incluida una instalación simulada de punta a punta (configuración, re-ejecución sin cambiar claves, 3 respaldos automáticos con copia externa, diagnóstico «TODO CORRECTO»).
+- Simulación manual: servidor iniciado con la configuración del consultorio, inicio de sesión correcto, respaldo copiado a la carpeta «USB».
+- **No probado en Windows real** (entorno Linux, sin acceso a PyPI): el instalador PowerShell, waitress y los accesos directos quedan *pendientes de validación* en la PC del doctor.
+
+**Pendiente inmediato**
+1. Validar la instalación en la PC del doctor y corregir lo que aparezca.
+2. HTTPS en la red local (certificado propio) para cifrar el tráfico Wi-Fi y permitir instalar la PWA.
+3. Logo y firma en la receta; código QR para dos pasos; horarios por profesional y colores por tipo de cita.
+4. Fase 2: laboratorio estructurado con tendencias, formularios GI, calculadoras validadas (con revisión del doctor).
+
 ## Etapa 2 · 30-oct-2026 · Fase 1 casi completa (v0.2.0)
 
 **Qué quedó funcionando**

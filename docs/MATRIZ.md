@@ -1,6 +1,6 @@
 # Matriz de requisitos y cobertura — GastroMed Pro
 
-Actualizada: 30 de octubre de 2026 · versión 0.2.0 · ver también `COMPARATIVA.md`
+Actualizada: 30 de octubre de 2026 · versión 0.3.0 · ver también `COMPARATIVA.md`
 
 **Fuentes:** el documento de requisitos del Dr. Mario Lainez. Las páginas de Medilink (softwaremedilink.com y ayuda.softwaremedilink.com) **no fueron accesibles** desde el entorno de desarrollo (bloqueo de red). Por lo tanto **no se afirma haber revisado ninguna función de Medilink**; la comparación queda pendiente hasta que se puedan consultar (o el usuario envíe capturas/textos).
 
@@ -68,6 +68,10 @@ Actualizada: 30 de octubre de 2026 · versión 0.2.0 · ver también `COMPARATIV
 | 7.2 | PWA instalable sin guardar expedientes en el dispositivo | 🟡 | Manifiesto + service worker solo estático; instalar requiere HTTPS |
 | 7.3 | Accesibilidad (teclado, contraste, foco visible, atajo «/») | 🟡 | Implementado; falta auditoría formal |
 | 7.4 | Configuración Honduras / HNL / America/Tegucigalpa | ✅ | |
+| 8.1 | Servidor privado en la PC del consultorio (Windows 11) con instalador de doble clic | 🟡 | Simulación completa probada (`test_consultorio.py`); falta validar en Windows real |
+| 8.2 | Acceso desde celular en el Wi-Fi del consultorio | 🟡 | Firewall solo red privada; sin HTTPS local todavía |
+| 8.3 | Respaldo diario automático, verificado, con copia a disco externo y retención | ✅ | `test_instalacion_respaldo_y_diagnostico…`, `test_retencion…`; tarea de Windows 🟡 |
+| 8.4 | Modo demostración separado de los datos reales | ✅ | Base y puerto propios |
 
 ## Requisitos añadidos por la comparativa (ver COMPARATIVA.md)
 

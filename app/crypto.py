@@ -20,11 +20,11 @@ __all__ = ["data_fernet", "InvalidToken", "totp_new_secret", "totp_now", "totp_v
 
 
 def load_data_key(cfg) -> bytes:
-    key = os.environ.get("GASTROMED_DATA_KEY") or getattr(cfg, "DATA_KEY", "")
+    key = getattr(cfg, "DATA_KEY", "") or os.environ.get("GASTROMED_DATA_KEY")
     if key:
         return key.encode() if isinstance(key, str) else key
-    if cfg.ENV == "produccion":
-        raise RuntimeError("Falta GASTROMED_DATA_KEY en producción.")
+    if cfg.ENV in ("produccion", "consultorio"):
+        raise RuntimeError("Falta GASTROMED_DATA_KEY. Ejecute de nuevo el instalador o restaure el archivo .env.")
     path = Path(cfg.DATABASE_PATH).parent / "clave_datos.key"
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
