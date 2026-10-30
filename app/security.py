@@ -175,7 +175,7 @@ def _parse(ts: str) -> datetime:
 def check_csrf():
     if request.method in ("GET", "HEAD", "OPTIONS"):
         return
-    if request.endpoint in ("auth.login", "auth.mfa_verify"):
+    if request.endpoint in ("auth.login", "auth.mfa_verify", "setup.first_run"):  # usan su propio token
         # El inicio de sesión usa un token de formulario firmado propio (ver auth.py).
         return
     sent = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token") or ""
