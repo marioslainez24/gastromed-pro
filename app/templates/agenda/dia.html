@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Agenda{% endblock %}
+{% block content %}
+<div class="page-head"><h1 class="cap">{{ d_label }}</h1></div>
+{% set ref = d %}{% set view = 'dia' %}{% set endpoint = 'agenda.day' %}
+{% include "agenda/_nav.html" %}
+
+<div class="cols">
+  <section class="col-main card">
+    <h2 class="sr-only">Citas del día</h2>
+    {% if rows %}
+    <ol class="appt-list">
+      {% for a in rows %}
+      <li class="appt st-{{ a.status }}">
+        <div class="appt-time"><b>{{ fmt_time(a.starts_at) }}</b><span class="muted small">{{ fmt_time(a.ends_at) }}</span></div>
+        <div class="appt-body">
+          <a class="strong" href="{{ url_for('agenda.view', appt_id=a.id) }}">{{ a.first_names }} {{ a.last_names }}</a>
+          <div class="small muted">{{ label('appt_type', a.appt_type) }} · {{ a.mrn }}{% if practitioners|length > 1 %} · {{ a.practitioner }}{% endif %}{% if a.admin_note %} · {{ a.admin_note }}{% endif %}</div>
+        </div>
+        <div class="appt-status">
+          <span class="status st-{{ a.status }}">{{ label('appt_status', a.status) }}</span>
+          {% if can('agenda.editar') %}
+            {% set nexts = transitions[a.status] %}
+            {% if 'confirmada' in nexts %}{% set quick = 'confirmada' %}{% elif 'presente' in nexts %}{% set quick = 'presente' %}{% elif 'en_consulta' in nexts and can('clinico.editar') %}{% set quick = 'en_consulta' %}{% else %}{% set quick = None %}{% endif %}
+            {% if quick %}
+            <form method="post" action="{{ url_for('agenda.change_status', appt_id=a.id) }}" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ a.version }}">
+              <input type="hidden" name="status" value="{{ quick }}"><input type="hidden" name="back" value="{{ request.full_path }}">
+              <button class="btn btn-sm" type="submit">{{ {'confirmada': 'Confirmar', 'presente': 'Registrar llegada', 'en_consulta': 'Iniciar consulta'}[quick] }}</button>
+            </form>
+            {% endif %}
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <div class="empty"><p>No hay citas para este día.</p>{% if can('agenda.editar') %}<a class="btn btn-primary" href="{{ url_for('agenda.new', fecha=d.isoformat()) }}">Agendar cita</a>{% endif %}</div>
+    {% endif %}
+  </section>
+  <aside class="col-side card">
+    <h2>Sala de espera <span class="count">{{ waiting|length }}</span></h2>
+    {% if waiting %}
+    <ul class="list">{% for a in waiting %}<li><a href="{{ url_for('agenda.view', appt_id=a.id) }}">{{ a.first_names }} {{ a.last_names }}</a> <span class="muted small">llegó {{ fmt_time(a.arrived_at) }} · cita {{ fmt_time(a.starts_at) }}</span></li>{% endfor %}</ul>
+    {% else %}<p class="muted small">Nadie en espera.</p>{% endif %}
+  </aside>
+</div>
+{% endblock %}

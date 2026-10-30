@@ -1,0 +1,16 @@
+{
+  "name": "GastroMed Pro",
+  "short_name": "GastroMed",
+  "description": "Gestión clínica para Gastroenterología, Hepatología y Endoscopia",
+  "lang": "es",
+  "start_url": "/agenda/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f5",
+  "theme_color": "#0f6e66",
+  "icons": [
+    { "src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/static/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

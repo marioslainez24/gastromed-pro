@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Cita{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Cita · {{ fmt_dt(a.starts_at) }}</h1>
+  <span class="status st-{{ a.status }}">{{ label('appt_status', a.status) }}</span>
+</div>
+<div class="cols">
+  <section class="col-main card">
+    <dl class="dl">
+      <dt>Paciente</dt><dd><a class="strong" href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a> · <span class="mono">{{ p.mrn }}</span></dd>
+      <dt>Profesional</dt><dd>{{ prac.full_name }}</dd>
+      <dt>Tipo</dt><dd>{{ label('appt_type', a.appt_type) }}</dd>
+      <dt>Horario</dt><dd>{{ fmt_time(a.starts_at) }}–{{ fmt_time(a.ends_at) }} ({{ minutes }} min)</dd>
+      {% if a.arrived_at %}<dt>Llegada</dt><dd>{{ fmt_dt(a.arrived_at) }}</dd>{% endif %}
+      {% if a.admin_note %}<dt>Nota administrativa</dt><dd>{{ a.admin_note }}</dd>{% endif %}
+      <dt>Teléfono</dt><dd>{{ p.phone or '—' }}</dd>
+    </dl>
+    {% if note %}<p><a class="btn" href="{{ url_for('notes.view', note_id=note.id) }}">Ver nota ({{ label('note_status', note.status)|lower }})</a></p>
+    {% elif can('clinico.editar') and a.status in ('presente','en_consulta','atendida') %}<p><a class="btn btn-primary" href="{{ url_for('notes.new', patient_id=p.id, appointment_id=a.id) }}">Escribir nota de esta consulta</a></p>{% endif %}
+
+    {% if can('agenda.editar') and transitions[a.status] %}
+    <h2>Cambiar estado</h2>
+    <div class="btn-row">
+      {% for st in ['confirmada','presente','en_consulta','atendida','no_asistio','cancelada'] if st in transitions[a.status] %}
+        {% if st not in ('en_consulta','atendida') or can('clinico.editar') %}
+        <form method="post" action="{{ url_for('agenda.change_status', appt_id=a.id) }}" class="inline" {% if st in ('cancelada','no_asistio') %}data-confirm="¿Marcar la cita como «{{ label('appt_status', st) }}»?"{% endif %}>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ a.version }}"><input type="hidden" name="status" value="{{ st }}">
+          <button class="btn {{ 'btn-danger-quiet' if st in ('cancelada','no_asistio') else '' }}" type="submit">{{ {'confirmada':'Confirmar','presente':'Registrar llegada','en_consulta':'Iniciar consulta','atendida':'Marcar atendida','no_asistio':'No asistió','cancelada':'Cancelar cita'}[st] }}</button>
+        </form>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if can('agenda.editar') and a.status in ('solicitada','confirmada') %}
+    <details class="mt"><summary>Reprogramar</summary>
+      <form method="post" action="{{ url_for('agenda.reschedule', appt_id=a.id) }}" class="stack mt">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ a.version }}">
+        <div class="grid2">
+          <label>Nueva fecha y hora <input type="datetime-local" name="starts_local" value="{{ start_local }}" required step="300"></label>
+          <label>Duración (min) <input type="number" name="duration" value="{{ minutes }}" min="5" max="480" step="5" required></label>
+        </div>
+        <label>Motivo <input name="detail" maxlength="300" placeholder="Ej.: solicitud del paciente"></label>
+        <button class="btn" type="submit">Reprogramar</button>
+      </form>
+    </details>
+    {% endif %}
+  </section>
+  <aside class="col-side card">
+    <h2>Historial de la cita</h2>
+    <ol class="timeline compact">
+      {% for e in events %}
+      <li><time>{{ fmt_dt(e.at) }}</time> {{ e.full_name }}:
+        {% if e.action == 'creada' %}creó la cita
+        {% elif e.action == 'reprogramada' %}reprogramó de {{ fmt_dt(e.from_starts_at) }} a {{ fmt_dt(e.to_starts_at) }}
+        {% else %}{{ label('appt_status', e.from_status) }} → {{ label('appt_status', e.to_status) }}{% endif %}
+        {% if e.detail %}<span class="muted small">({{ e.detail }})</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </aside>
+</div>
+{% endblock %}

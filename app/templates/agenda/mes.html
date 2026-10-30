@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Agenda mensual{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ title }}</h1></div>
+{% set ref = first %}{% set view = 'mes' %}{% set endpoint = 'agenda.month' %}
+{% include "agenda/_nav.html" %}
+<table class="month" aria-label="Citas por día">
+  <thead><tr>{% for dn in ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] %}<th scope="col">{{ dn }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for wk in weeks %}<tr>
+    {% for dd in wk %}
+    <td class="{% if dd.month != first.month %}out{% endif %} {% if dd == today %}is-today{% endif %}">
+      <a href="{{ url_for('agenda.day', fecha=dd.isoformat(), profesional=prac) }}"><span class="dnum">{{ dd.day }}</span>
+      {% if counts.get(dd) %}<span class="mcount">{{ counts[dd] }} cita{{ 's' if counts[dd] != 1 }}</span>{% endif %}</a>
+    </td>
+    {% endfor %}
+  </tr>{% endfor %}
+  </tbody>
+</table>
+<p class="muted small">El conteo excluye citas canceladas.</p>
+{% endblock %}

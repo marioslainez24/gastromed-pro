@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión{% endblock %}
+{% block body_class %}login-body{% endblock %}
+{% block main_class %}login-wrap{% endblock %}
+{% block content %}
+<section class="login-card">
+  <div class="login-brand">
+    <svg class="brand-mark lg" viewBox="0 0 32 32" aria-hidden="true"><use href="{{ url_for('static', filename='icons/sprite.svg') }}#logo"/></svg>
+    <h1>GastroMed <b>Pro</b></h1>
+    <p class="muted">Gastroenterología · Hepatología · Endoscopia</p>
+  </div>
+  {% if expired %}<div class="flash flash-info" role="status">Su sesión se cerró por inactividad. Ingrese de nuevo.</div>{% endif %}
+  {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ request.full_path if request.args.get('next') else url_for('auth.login') }}" class="stack">
+    <input type="hidden" name="login_csrf" value="{{ login_csrf }}">
+    <label>Correo electrónico
+      <input type="email" name="email" required autocomplete="username" autofocus value="{{ request.form.get('email', '') }}" maxlength="200">
+    </label>
+    <label>Contraseña
+      <input type="password" name="password" required autocomplete="current-password" maxlength="200">
+    </label>
+    <button class="btn btn-primary w100" type="submit">Ingresar</button>
+  </form>
+  <p class="small muted">Tras {{ 5 }} intentos fallidos la cuenta se bloquea temporalmente. Cierre sesión al terminar en equipos compartidos.</p>
+</section>
+{% endblock %}

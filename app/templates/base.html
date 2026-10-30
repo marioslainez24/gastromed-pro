@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0f6e66">
+  <title>{% block title %}GastroMed Pro{% endblock %} · GastroMed Pro</title>
+  <link rel="manifest" href="{{ url_for('auth.manifest') }}">
+  <link rel="icon" href="{{ url_for('static', filename='icons/icon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ app_version }}">
+  <script src="{{ url_for('static', filename='js/theme.js') }}?v={{ app_version }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}?v={{ app_version }}" defer></script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<a class="skip" href="#contenido">Saltar al contenido</a>
+{% if current_user %}
+<header class="topbar">
+  <a class="brand" href="{{ url_for('agenda.day') }}" aria-label="GastroMed Pro, ir a la agenda">
+    <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="{{ url_for('static', filename='icons/sprite.svg') }}#logo"/></svg>
+    <span>GastroMed <b>Pro</b></span>
+  </a>
+  {% if can('pacientes.ver_admin') %}
+  <form class="global-search" role="search" action="{{ url_for('patients.search') }}" method="get" data-autocomplete="{{ url_for('patients.search', formato='json') }}">
+    <label for="buscar-global" class="sr-only">Buscar paciente</label>
+    <input id="buscar-global" name="q" type="search" placeholder="Buscar paciente: nombre, expediente, DNI o teléfono" autocomplete="off" value="{{ request.args.get('q', '') if request.endpoint == 'patients.search' else '' }}" aria-autocomplete="list" aria-controls="buscar-sugerencias" accesskey="b">
+    <kbd class="hint" aria-hidden="true">/</kbd>
+    <ul id="buscar-sugerencias" class="suggest" role="listbox" hidden></ul>
+  </form>
+  {% endif %}
+  <div class="top-actions">
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Cambiar entre modo claro y oscuro" title="Modo claro / oscuro">◐</button>
+    <details class="user-menu">
+      <summary><span class="avatar" aria-hidden="true">{{ current_user.full_name[:1] }}</span><span class="user-name">{{ current_user.full_name }}</span></summary>
+      <div class="menu-pop">
+        <p class="muted small">{{ current_user.role_name }}<br>{{ current_user.email }}</p>
+        <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-quiet w100" type="submit">Cerrar sesión</button></form>
+      </div>
+    </details>
+  </div>
+</header>
+<nav class="mainnav" aria-label="Principal">
+  {% set ep = request.endpoint or '' %}
+  {% if can('agenda.ver') %}<a href="{{ url_for('agenda.day') }}" {% if ep.startswith('agenda') %}aria-current="page"{% endif %}><span aria-hidden="true">▦</span> Agenda</a>{% endif %}
+  {% if can('pacientes.ver_admin') %}<a href="{{ url_for('patients.search') }}" {% if ep.startswith('patients') or ep.startswith('notes') or ep.startswith('rx') %}aria-current="page"{% endif %}><span aria-hidden="true">☰</span> Pacientes</a>{% endif %}
+  {% if can('ajustes.editar') %}<a href="{{ url_for('settings.clinic') }}" {% if ep.startswith('settings') %}aria-current="page"{% endif %}><span aria-hidden="true">⚙</span> Ajustes</a>{% endif %}
+</nav>
+{% endif %}
+{% if env != 'produccion' %}<div class="env-banner" role="note">Entorno de {{ env }} · use solo pacientes ficticios</div>{% endif %}
+<main id="contenido" class="{% block main_class %}page{% endblock %}" tabindex="-1">
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for cat, m in msgs %}<div class="flash flash-{{ cat }}" role="{{ 'alert' if cat == 'error' else 'status' }}">{{ m }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="foot muted small">GastroMed Pro {{ app_version }} · Sistema en desarrollo: no apto aún para pacientes reales</footer>
+</body>
+</html>

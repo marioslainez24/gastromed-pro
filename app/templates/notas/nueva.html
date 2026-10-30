@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Nueva nota{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Nueva nota · {{ p.first_names }} {{ p.last_names }}</h1><span class="pill mono">{{ p.mrn }}</span></div>
+<form method="post" class="card narrow stack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="patient_id" value="{{ p.id }}">
+  {% if appointment_id %}<input type="hidden" name="appointment_id" value="{{ appointment_id }}">{% endif %}
+  <fieldset class="radios"><legend>Tipo de consulta</legend>
+    <label class="check"><input type="radio" name="kind" value="primera" {% if suggested == 'primera' %}checked{% endif %}> Primera consulta</label>
+    <label class="check"><input type="radio" name="kind" value="subsecuente" {% if suggested == 'subsecuente' %}checked{% endif %}> Consulta subsecuente</label>
+    <p class="muted small">Sugerido: {{ 'subsecuente (el paciente ya tiene notas finalizadas)' if suggested == 'subsecuente' else 'primera consulta (no hay notas finalizadas)' }}.</p>
+  </fieldset>
+  <fieldset class="radios"><legend>Plantilla</legend>
+    <label class="check"><input type="radio" name="template" value="soap" checked> SOAP (subjetivo, objetivo, análisis, plan)</label>
+    <label class="check"><input type="radio" name="template" value="narrativa"> Narrativa</label>
+    <p class="muted small">Plantillas personalizables y formularios de gastroenterología: Fase 2.</p>
+  </fieldset>
+  <div class="actions"><button class="btn btn-primary" type="submit">Crear borrador</button> <a class="btn btn-quiet" href="{{ url_for('patients.view', patient_id=p.id) }}">Cancelar</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="logo" viewBox="0 0 32 32">
+    <rect x="1" y="1" width="30" height="30" rx="8" fill="currentColor"/>
+    <path d="M10 7c0 3 1.5 4.5 4 5.5 3.6 1.4 7 3.2 7 7.5 0 3.6-2.8 6-6.4 6-2.6 0-4.6-1.4-5.2-3.6" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="22.5" cy="9" r="2.4" fill="#fff"/>
+  </symbol>
+</svg>

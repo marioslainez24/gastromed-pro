@@ -1,0 +1,20 @@
+<div class="agenda-bar">
+  <div class="seg" role="group" aria-label="Vista">
+    <a href="{{ url_for('agenda.day', fecha=ref.isoformat(), profesional=prac) }}" {% if view == 'dia' %}aria-current="page"{% endif %}>Día</a>
+    <a href="{{ url_for('agenda.week', fecha=ref.isoformat(), profesional=prac) }}" {% if view == 'semana' %}aria-current="page"{% endif %}>Semana</a>
+    <a href="{{ url_for('agenda.month', fecha=ref.isoformat(), profesional=prac) }}" {% if view == 'mes' %}aria-current="page"{% endif %}>Mes</a>
+  </div>
+  <div class="pager">
+    <a class="btn btn-quiet" href="{{ url_for(endpoint, fecha=prev.isoformat(), profesional=prac) }}" aria-label="Anterior">‹</a>
+    <a class="btn btn-quiet" href="{{ url_for(endpoint, fecha=today.isoformat(), profesional=prac) }}">Hoy</a>
+    <a class="btn btn-quiet" href="{{ url_for(endpoint, fecha=next.isoformat(), profesional=prac) }}" aria-label="Siguiente">›</a>
+  </div>
+  {% if practitioners|length > 1 %}
+  <form method="get" class="inline">
+    <input type="hidden" name="fecha" value="{{ ref.isoformat() }}">
+    <label class="sr-only" for="prof">Profesional</label>
+    <select id="prof" name="profesional" data-autosubmit><option value="">Todos los profesionales</option>{% for u in practitioners %}<option value="{{ u.id }}" {% if prac == u.id %}selected{% endif %}>{{ u.full_name }}</option>{% endfor %}</select>
+  </form>
+  {% endif %}
+  {% if can('agenda.editar') %}<a class="btn btn-primary" href="{{ url_for('agenda.new', fecha=ref.isoformat()) }}">＋ Nueva cita</a>{% endif %}
+</div>

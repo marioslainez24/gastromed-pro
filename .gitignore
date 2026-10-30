@@ -1,0 +1,9 @@
+# Secretos y datos: NUNCA al repositorio
+.env
+instance/
+*.sqlite3
+*.sqlite3-*
+respaldos/
+__pycache__/
+.pytest_cache/
+evidencia/capturas/*.png

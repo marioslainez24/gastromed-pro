@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}{{ p.first_names }} {{ p.last_names }}{% endblock %}
+{% block content %}
+<section class="patient-head card">
+  <div class="ph-main">
+    <h1>{{ p.first_names }} {{ p.last_names }}</h1>
+    <p class="ph-meta">
+      <span class="pill mono" title="Identificador interno">{{ p.mrn }}</span>
+      <span>{{ age(p.birth_date) }}</span><span aria-hidden="true">·</span>
+      <span>{{ label('sex', p.sex) }}</span><span aria-hidden="true">·</span>
+      <span>Nac. {{ fmt_birth(p.birth_date) }}</span><span aria-hidden="true">·</span>
+      <span>{{ p.document_number or 'Sin documento' }}</span>
+    </p>
+  </div>
+  <div class="ph-actions">
+    {% if can('agenda.editar') %}<a class="btn" href="{{ url_for('agenda.new', patient_id=p.id) }}">Agendar cita</a>{% endif %}
+    {% if can('clinico.editar') %}<a class="btn btn-primary" href="{{ url_for('notes.new', patient_id=p.id) }}">Nueva nota</a>{% endif %}
+    {% if can('recetas.emitir') and can('clinico.ver') %}<a class="btn" href="{{ url_for('rx.new', patient_id=p.id) }}">Nueva receta</a>{% endif %}
+    {% if can('pacientes.editar_admin') %}<a class="btn btn-quiet" href="{{ url_for('patients.edit', patient_id=p.id) }}">Editar datos</a>{% endif %}
+  </div>
+</section>
+
+{% if can('clinico.ver') %}
+<section class="clinical-banner {% if p.allergy_status == 'con_alergias' %}is-alert{% elif p.allergy_status == 'no_investigado' %}is-unknown{% endif %}" aria-label="Alertas clínicas">
+  <div><strong>Alergias:</strong>
+    {% if p.allergy_status == 'con_alergias' %}{% for a in allergies %}<span class="tag tag-danger">{{ a.substance }}{% if a.reaction %} — {{ a.reaction }}{% endif %} ({{ label('severity', a.severity)|lower }})</span>{% endfor %}
+    {% else %}<span class="tag {{ 'tag-warn' if p.allergy_status == 'no_investigado' else 'tag-ok' }}">{{ label('allergy_status', p.allergy_status) }}</span>{% endif %}
+  </div>
+  {% if p.clinical_alerts %}<div><strong>Alertas:</strong> {{ p.clinical_alerts }}</div>{% endif %}
+</section>
+{% endif %}
+
+<div class="cols">
+  <div class="col-main">
+    {% if can('clinico.ver') %}
+    <section class="card">
+      <h2>Historia cronológica</h2>
+      {% set items = [] %}
+      {% for n in notes %}{% set _ = items.append(('nota', n.created_at, n)) %}{% endfor %}
+      {% for r in prescriptions %}{% set _ = items.append(('receta', r.issued_at, r)) %}{% endfor %}
+      {% if items %}
+      <ol class="timeline">
+        {% for kind, ts, it in items|sort(attribute='1', reverse=true) %}
+        <li class="tl-{{ kind }}">
+          <time>{{ fmt_dt(ts) }}</time>
+          {% if kind == 'nota' %}
+            <a href="{{ url_for('notes.view', note_id=it.id) }}" class="strong">{{ label('note_kind', it.kind) }}</a>
+            <span class="tag {{ 'tag-ok' if it.status == 'finalizada' else 'tag-warn' }}">{{ label('note_status', it.status) }}</span>
+            {% if it.addenda %}<span class="tag">{{ it.addenda }} adenda(s)</span>{% endif %}
+            <span class="muted small">· {{ it.author }}</span>
+          {% else %}
+            <a href="{{ url_for('rx.view', rx_id=it.id) }}" class="strong">Receta</a>
+            {% if it.status == 'anulada' %}<span class="tag tag-danger">Anulada</span>{% endif %}
+            <span class="muted small">· {{ it.meds }} · {{ it.author }}</span>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}<p class="muted">Sin notas ni recetas registradas.</p>{% endif %}
+    </section>
+    {% endif %}
+
+    {% if can('agenda.ver') %}
+    <section class="card">
+      <h2>Citas</h2>
+      {% if appointments %}
+      <ul class="list">
+        {% for a in appointments %}
+        <li><a href="{{ url_for('agenda.view', appt_id=a.id) }}">{{ fmt_dt(a.starts_at) }}</a> · {{ label('appt_type', a.appt_type) }} · <span class="status st-{{ a.status }}">{{ label('appt_status', a.status) }}</span> <span class="muted small">· {{ a.practitioner }}</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="muted">Sin citas.</p>{% endif %}
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="col-side">
+    <section class="card">
+      <h2>Datos administrativos</h2>
+      <dl class="dl">
+        <dt>Documento</dt><dd>{{ label('document_type', p.document_type) }}{% if p.document_number %}: {{ p.document_number }}{% endif %}</dd>
+        <dt>Teléfono</dt><dd>{{ p.phone or '—' }}</dd>
+        <dt>Correo</dt><dd>{{ p.email or '—' }}</dd>
+        <dt>Dirección</dt><dd>{{ p.address or '—' }}</dd>
+        <dt>Procedencia</dt><dd>{{ p.origin or '—' }}</dd>
+        <dt>Emergencia</dt><dd>{{ p.emergency_contact_name or '—' }}{% if p.emergency_contact_phone %} · {{ p.emergency_contact_phone }}{% endif %}</dd>
+        <dt>Remitente</dt><dd>{{ p.referring_physician or '—' }}</dd>
+        <dt>Pago</dt><dd>{{ p.payer or '—' }}</dd>
+        <dt>Registro</dt><dd>{{ fmt_dt(p.created_at) }}</dd>
+      </dl>
+    </section>
+
+    {% if can('clinico.ver') %}
+    <section class="card" id="alergias">
+      <h2>Alergias y alertas</h2>
+      {% for a in allergies %}
+        <div class="allergy-row">
+          <span><b>{{ a.substance }}</b>{% if a.reaction %} — {{ a.reaction }}{% endif %} <span class="muted small">({{ label('severity', a.severity)|lower }})</span></span>
+          {% if can('clinico.editar') %}
+          <form method="post" action="{{ url_for('patients.deactivate_allergy', patient_id=p.id, allergy_id=a.id) }}" data-confirm="¿Marcar esta alergia como inactiva? Se conservará en el historial.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="link-btn small" type="submit">Inactivar</button>
+          </form>
+          {% endif %}
+        </div>
+      {% endfor %}
+      {% if can('clinico.editar') %}
+      <details class="mt"><summary>Registrar alergia</summary>
+        <form method="post" action="{{ url_for('patients.add_allergy', patient_id=p.id) }}" class="stack mt">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label>Sustancia o medicamento <input name="substance" required maxlength="160"></label>
+          <label>Reacción <input name="reaction" maxlength="300" placeholder="Ej.: urticaria, anafilaxia"></label>
+          <label>Gravedad <select name="severity">{% for k in ['leve','moderada','grave','desconocida'] %}<option value="{{ k }}" {% if k == 'desconocida' %}selected{% endif %}>{{ label('severity', k) }}</option>{% endfor %}</select></label>
+          <button class="btn" type="submit">Agregar alergia</button>
+        </form>
+      </details>
+      <details class="mt" {% if p.allergy_status == 'no_investigado' %}open{% endif %}><summary>Estado de alergias y alertas clínicas</summary>
+        <form method="post" action="{{ url_for('patients.update_clinical_header', patient_id=p.id) }}" class="stack mt">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ p.version }}">
+          <fieldset class="radios"><legend class="sr-only">Estado de alergias</legend>
+            {% for k in ['no_investigado','sin_alergias_conocidas','con_alergias'] %}
+            <label class="check"><input type="radio" name="allergy_status" value="{{ k }}" {% if p.allergy_status == k %}checked{% endif %} {% if k == 'sin_alergias_conocidas' and allergies %}disabled{% endif %}> {{ label('allergy_status', k) }}</label>
+            {% endfor %}
+          </fieldset>
+          <label>Alertas clínicas visibles <textarea name="clinical_alerts" rows="2" maxlength="1000" placeholder="Ej.: anticoagulado, marcapasos, embarazo">{{ p.clinical_alerts or '' }}</textarea></label>
+          <button class="btn" type="submit">Guardar</button>
+        </form>
+      </details>
+      {% endif %}
+    </section>
+    {% else %}
+    <section class="card muted small"><p>La información clínica no está disponible para su rol.</p></section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

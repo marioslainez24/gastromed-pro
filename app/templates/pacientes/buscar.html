@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Pacientes{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Pacientes</h1>
+  {% if can('pacientes.editar_admin') %}<a class="btn btn-primary" href="{{ url_for('patients.new') }}">＋ Nuevo paciente</a>{% endif %}
+</div>
+<form class="search-row" method="get" action="{{ url_for('patients.search') }}" role="search">
+  <label for="q" class="sr-only">Buscar</label>
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Nombre, apellidos, expediente (GM-…), DNI o teléfono">
+  <button class="btn" type="submit">Buscar</button>
+</form>
+<p class="muted small">{% if q %}{{ rows|length }} resultado(s) para «{{ q }}»{% if rows|length == 50 %} (se muestran los primeros 50; afine la búsqueda){% endif %}.{% else %}Pacientes modificados recientemente.{% endif %}</p>
+{% if rows %}
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th scope="col">Paciente</th><th scope="col">Expediente</th><th scope="col">Edad</th><th scope="col">Documento</th><th scope="col">Teléfono</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td><a class="strong" href="{{ url_for('patients.view', patient_id=r.id) }}">{{ r.last_names }}, {{ r.first_names }}</a></td>
+      <td class="mono">{{ r.mrn }}</td>
+      <td>{{ age(r.birth_date) }}</td>
+      <td>{{ r.document_number or label('document_type', r.document_type) }}</td>
+      <td>{{ r.phone or '—' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% elif q %}
+<div class="empty">
+  <p>No se encontró ningún paciente con «{{ q }}».</p>
+  {% if can('pacientes.editar_admin') %}<a class="btn btn-primary" href="{{ url_for('patients.new') }}">Registrar paciente nuevo</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

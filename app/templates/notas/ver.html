@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Nota · {{ p.first_names }} {{ p.last_names }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ label('note_kind', n.kind) }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
+    <p class="muted small">{{ p.mrn }} · {{ age(p.birth_date) }} · {{ label('sex', p.sex) }} · Plantilla {{ label('note_template', n.template) }} · Autor: {{ n.author }} · Creada {{ fmt_dt(n.created_at) }}</p>
+  </div>
+  <span class="tag {{ 'tag-ok' if n.status == 'finalizada' else 'tag-warn' }} big">{{ label('note_status', n.status) }}</span>
+</div>
+
+<section class="clinical-banner {% if p.allergy_status == 'con_alergias' %}is-alert{% elif p.allergy_status == 'no_investigado' %}is-unknown{% endif %}">
+  <div><strong>Alergias:</strong>
+  {% if allergies %}{% for a in allergies %}<span class="tag tag-danger">{{ a.substance }} ({{ label('severity', a.severity)|lower }})</span>{% endfor %}
+  {% else %}<span class="tag {{ 'tag-warn' if p.allergy_status == 'no_investigado' else 'tag-ok' }}">{{ label('allergy_status', p.allergy_status) }}</span>{% endif %}</div>
+  {% if p.clinical_alerts %}<div><strong>Alertas:</strong> {{ p.clinical_alerts }}</div>{% endif %}
+</section>
+
+{% if editable %}
+  {% if request.args.get('confirmar') %}
+  <section class="card confirm-box" role="alertdialog" aria-labelledby="cf-title">
+    <h2 id="cf-title">¿Finalizar esta nota?</h2>
+    <p>Una vez finalizada <b>no podrá modificarse</b>. Las correcciones posteriores se registrarán como adendas con su autor y fecha.</p>
+    <form method="post" action="{{ url_for('notes.finalize', note_id=n.id) }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ n.version }}">
+      <button class="btn btn-primary" type="submit">Sí, finalizar nota</button>
+    </form>
+    <a class="btn btn-quiet" href="{{ url_for('notes.view', note_id=n.id) }}">Seguir editando</a>
+  </section>
+  {% endif %}
+
+  {% if prior %}
+  <details class="card prior">
+    <summary>Información de la nota anterior ({{ fmt_dt(prior.finalized_at, false) }}) — revisar antes de reutilizar</summary>
+    <p class="muted small">Estos datos corresponden a la consulta del {{ fmt_dt(prior.finalized_at, false) }}. No se incorporan automáticamente: copie solo lo que haya verificado hoy.</p>
+    {% for key in ['diagnosticos','impresion','plan_terapeutico','seguimiento'] if prior_fields.get(key) %}
+      <div class="prior-item"><b>{{ text_labels[key] }}:</b> <span data-prior-text>{{ prior_fields[key] }}</span>
+        {% if key in (sections|map(attribute=1)|sum(start=[])) %}<button type="button" class="link-btn small" data-copy-prior="{{ key }}" data-prior-date="{{ fmt_dt(prior.finalized_at, false) }}">Copiar al borrador</button>{% endif %}
+      </div>
+    {% endfor %}
+  </details>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('notes.save', note_id=n.id) }}" class="note-form" id="note-form" data-autosave="{{ url_for('notes.save', note_id=n.id) }}" data-dirty-guard>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="version" value="{{ n.version }}" data-version>
+    {% for title, keys in sections %}
+    <fieldset class="card">
+      <legend>{{ title }}</legend>
+      {% for k in keys %}
+        {% if k == '__vitales__' %}
+        <div class="vitals">
+          {% for key, lab, unit, lo, hi in vitals %}
+          <label class="field"><span>{{ lab }} <span class="muted small">({{ unit }})</span></span>
+            <input type="text" inputmode="decimal" name="v_{{ key }}" value="{{ fields.get('vitales', {}).get(key, '') }}" data-range="{{ lo }}-{{ hi }}" autocomplete="off">
+          </label>
+          {% endfor %}
+          <div class="field bmi"><span>IMC <span class="muted small">(kg/m², OMS)</span></span><output data-bmi>{{ bmi if bmi else '—' }}</output></div>
+        </div>
+        {% else %}
+        <label class="field"><span>{{ text_labels[k] }}{% if k == 'motivo' %} <span class="req" aria-hidden="true">*</span>{% endif %}</span>
+          <textarea name="{{ k }}" rows="{{ 6 if k in ('hea','narrativa') else 3 }}" maxlength="20000" data-grow>{{ fields.get(k, '') }}</textarea>
+        </label>
+        {% if k == 'diagnosticos' %}<p class="muted small">Codificación CIE: pendiente de cargar un catálogo autorizado (Fase 2). Por ahora, texto libre.</p>{% endif %}
+        {% endif %}
+      {% endfor %}
+    </fieldset>
+    {% endfor %}
+    <div class="sticky-actions">
+      <span class="save-state small muted" data-save-state aria-live="polite">Guardado {{ fmt_time(n.updated_at) }}</span>
+      <button class="btn" type="submit" name="then" value="guardar">Guardar borrador</button>
+      {% if can('notas.finalizar') %}<button class="btn btn-primary" type="submit" name="then" value="finalizar">Finalizar…</button>{% endif %}
+    </div>
+  </form>
+{% else %}
+  {% if n.status == 'borrador' %}<div class="flash flash-info">Borrador en edición por {{ n.author }}. Solo su autor puede modificarlo.</div>{% endif %}
+  {% for title, keys in sections %}
+  <section class="card note-read">
+    <h2>{{ title }}</h2>
+    {% for k in keys %}
+      {% if k == '__vitales__' %}
+        {% set v = fields.get('vitales', {}) %}
+        {% if v %}<p class="vitals-read">{% for key, lab, unit, lo, hi in vitals if v.get(key) is not none %}<span><b>{{ lab }}:</b> {{ v[key]|round(1)|string|replace('.0','') }} {{ unit }}</span>{% endfor %}{% if bmi %}<span><b>IMC:</b> {{ bmi }} kg/m²</span>{% endif %}</p>
+        {% else %}<p class="muted small">Sin signos vitales registrados.</p>{% endif %}
+      {% elif fields.get(k) %}
+        <h3>{{ text_labels[k] }}</h3><p class="prewrap">{{ fields[k] }}</p>
+      {% endif %}
+    {% endfor %}
+  </section>
+  {% endfor %}
+  {% if n.status == 'finalizada' %}
+  <p class="muted small">Finalizada {{ fmt_dt(n.finalized_at) }} por {{ n.finalizer }} · Huella SHA-256: <span class="mono">{{ n.content_sha256[:16] }}…</span></p>
+  {% endif %}
+{% endif %}
+
+<section class="card" id="adendas">
+  <h2>Adendas</h2>
+  {% for a in addenda %}
+    <article class="addendum"><p class="small muted">{{ fmt_dt(a.created_at) }} · {{ a.full_name }}</p><p class="prewrap">{{ a.text }}</p></article>
+  {% else %}<p class="muted small">Sin adendas.</p>{% endfor %}
+  {% if n.status == 'finalizada' and can('clinico.editar') %}
+  <form method="post" action="{{ url_for('notes.addendum', note_id=n.id) }}" class="stack mt">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Nueva adenda (corrección o información adicional)<textarea name="text" rows="3" required maxlength="20000"></textarea></label>
+    <button class="btn" type="submit">Agregar adenda</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Recetas de esta consulta</h2>
+  {% for r in prescriptions %}<p><a href="{{ url_for('rx.view', rx_id=r.id) }}">Receta del {{ fmt_dt(r.issued_at) }}</a>{% if r.status == 'anulada' %} <span class="tag tag-danger">Anulada</span>{% endif %}</p>{% else %}<p class="muted small">Ninguna.</p>{% endfor %}
+  {% if can('recetas.emitir') %}<a class="btn" href="{{ url_for('rx.new', patient_id=p.id, note_id=n.id) }}">Emitir receta</a>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="card narrow center-text">
+  <p class="err-code">{{ code }}</p>
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+  <p><a class="btn" href="{{ url_for('auth.index') }}" data-back>Volver</a> {% if current_user %}<a class="btn btn-quiet" href="{{ url_for('agenda.day') }}">Ir a la agenda</a>{% else %}<a class="btn btn-quiet" href="{{ url_for('auth.login') }}">Iniciar sesión</a>{% endif %}</p>
+</section>
+{% endblock %}

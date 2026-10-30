@@ -1,0 +1,88 @@
+"""GastroMed Pro — aplicación Flask."""
+from flask import Flask, g, render_template, request
+
+from . import util
+from .config import Config
+from .db import close_db, migrate
+from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, load_current_user
+
+APP_VERSION = "0.1.0"
+
+
+def create_app(config: Config | None = None) -> Flask:
+    cfg = config or Config()
+    app = Flask(__name__, instance_relative_config=False)
+    app.config["GM"] = cfg
+    app.config["SECRET_KEY"] = cfg.SECRET_KEY
+    app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # formularios; los adjuntos tendrán su propio límite
+    app.config["TEMPLATES_AUTO_RELOAD"] = cfg.ENV == "desarrollo"
+    # Cookie firmada de Flask: solo transporta mensajes de aviso (flash), nunca datos clínicos.
+    app.config.update(SESSION_COOKIE_NAME="gm_avisos", SESSION_COOKIE_HTTPONLY=True,
+                      SESSION_COOKIE_SECURE=cfg.COOKIE_SECURE, SESSION_COOKIE_SAMESITE="Lax")
+
+    migrate(cfg.DATABASE_PATH)
+
+    from .auth import bp as auth_bp
+    from .views_patients import bp as patients_bp
+    from .views_agenda import bp as agenda_bp
+    from .views_notes import bp as notes_bp
+    from .views_prescriptions import bp as rx_bp
+    from .views_settings import bp as settings_bp
+    for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp):
+        app.register_blueprint(bp)
+
+    app.teardown_appcontext(close_db)
+
+    @app.before_request
+    def _before():
+        if request.endpoint == "static":
+            return
+        load_current_user()
+        check_csrf()
+
+    @app.after_request
+    def _headers(resp):
+        h = resp.headers
+        h["Content-Security-Policy"] = ("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; "
+                                        "font-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; "
+                                        "base-uri 'none'; object-src 'none'")
+        h["X-Content-Type-Options"] = "nosniff"
+        h["X-Frame-Options"] = "DENY"
+        h["Referrer-Policy"] = "no-referrer"
+        h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
+        h["Cross-Origin-Opener-Policy"] = "same-origin"
+        if cfg.COOKIE_SECURE:
+            h["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        if request.endpoint != "static":
+            # Ninguna página con datos se guarda en caché del navegador ni de intermediarios.
+            h["Cache-Control"] = "no-store"
+            h["Pragma"] = "no-cache"
+        return resp
+
+    @app.context_processor
+    def _ctx():
+        return {"can": can, "label": util.label, "fmt_dt": util.fmt_dt, "fmt_time": util.fmt_time, "age": util.age,
+                "fmt_birth": util.fmt_birth, "current_user": g.get("user"), "csrf_token": g.get("csrf_token"),
+                "app_version": APP_VERSION, "env": cfg.ENV}
+
+    def _err(code, title, msg):
+        def handler(e):
+            desc = getattr(e, "description", None)
+            if request.is_json or request.accept_mimetypes.best == "application/json":
+                return {"error": title, "detalle": desc if isinstance(desc, str) and code in (400, 409) else msg}, code
+            return render_template("error.html", code=code, title=title,
+                                   message=desc if isinstance(desc, str) and code in (400, 409) else msg), code
+        return handler
+
+    app.register_error_handler(400, _err(400, "Solicitud no válida", "Revise los datos e intente de nuevo."))
+    app.register_error_handler(401, _err(401, "Sesión requerida", "Inicie sesión para continuar."))
+    app.register_error_handler(403, _err(403, "Acceso no autorizado",
+                                         "Su rol no tiene permiso para esta acción. Si lo necesita, solicítelo al administrador."))
+    app.register_error_handler(404, _err(404, "No encontrado", "El registro no existe o no está disponible para su usuario."))
+    app.register_error_handler(409, _err(409, "Conflicto", "El registro cambió mientras lo editaba."))
+    app.register_error_handler(413, _err(413, "Contenido demasiado grande", "El envío supera el tamaño permitido."))
+    app.register_error_handler(500, _err(500, "Error interno",
+                                         "Ocurrió un error inesperado. No se guardaron cambios parciales. Intente de nuevo."))
+    app.jinja_env.globals["PERMISSIONS"] = PERMISSIONS
+    app.jinja_env.globals["SESSION_COOKIE"] = SESSION_COOKIE
+    return app

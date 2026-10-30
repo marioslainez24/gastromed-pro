@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Ajustes{% endblock %}
+{% macro tf(name, lab, attrs='') -%}
+<label class="field {% if errors.get(name) %}has-error{% endif %}">{{ lab }}<input name="{{ name }}" value="{{ data.get(name) or '' }}" {{ attrs|safe }}>{% if errors.get(name) %}<span class="err">{{ errors[name] }}</span>{% endif %}</label>
+{%- endmacro %}
+{% block content %}
+<div class="page-head"><h1>Ajustes</h1></div>
+{% include "ajustes/_tabs.html" %}
+{% if errors %}<div class="flash flash-error" role="alert">Revise los campos marcados.</div>{% endif %}
+<form method="post" class="card form-grid" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ data.version }}">
+  <fieldset><legend>Encabezado de recetas y documentos</legend>
+    <div class="grid2">
+      {{ tf('doctor_display_name', 'Nombre profesional', 'required maxlength="120"') }}
+      {{ tf('specialty', 'Especialidad', 'maxlength="160"') }}
+      {{ tf('license_number', 'Número de colegiación', 'maxlength="60" placeholder="Pendiente de completar"') }}
+      {{ tf('phones', 'Teléfonos', 'maxlength="120"') }}
+      {{ tf('address', 'Dirección del consultorio', 'maxlength="300"') }}
+      {{ tf('contact_email', 'Correo de contacto', 'maxlength="160" type="email"') }}
+    </div>
+    <p class="muted small">Logo e imagen de firma: se habilitan con el módulo de archivos privados (siguiente etapa). Una imagen de firma <b>no</b> es una firma electrónica verificable.</p>
+  </fieldset>
+  <fieldset><legend>Región</legend>
+    <div class="grid2">
+      <label class="field">Zona horaria<select name="timezone">{% for t in tzs %}<option {% if data.timezone == t %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
+      {{ tf('currency', 'Moneda (código ISO 4217)', 'required maxlength="3"') }}
+      {{ tf('locale', 'Configuración regional', 'required maxlength="10"') }}
+      {{ tf('phone_prefix', 'Prefijo telefónico', 'required maxlength="6"') }}
+      <label class="field">Tamaño de papel predeterminado<select name="paper_size"><option value="carta" {% if data.paper_size == 'carta' %}selected{% endif %}>Carta (216 × 279 mm)</option><option value="a4" {% if data.paper_size == 'a4' %}selected{% endif %}>A4 (210 × 297 mm)</option></select></label>
+    </div>
+  </fieldset>
+  <fieldset><legend>Duración predeterminada de citas (minutos)</legend>
+    <div class="grid4">
+      {% for t in ['primera_vez','seguimiento','procedimiento','teleconsulta'] %}
+      <label class="field {% if errors.get('dur_' ~ t) %}has-error{% endif %}">{{ label('appt_type', t) }}<input type="number" name="dur_{{ t }}" min="5" max="480" step="5" value="{{ data.durations.get(t, 30) }}" required></label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <div class="actions"><button class="btn btn-primary" type="submit">Guardar ajustes</button></div>
+</form>
+{% endblock %}

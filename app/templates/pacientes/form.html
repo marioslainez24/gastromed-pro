@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Nuevo paciente' if mode == 'new' else 'Editar paciente' }}{% endblock %}
+{% macro field(name, label_text, type='text', required=false, attrs='') -%}
+<label class="field {% if errors.get(name) %}has-error{% endif %}"><span>{{ label_text }}{% if required %} <span class="req" aria-hidden="true">*</span></span>{% endif %}
+  <input type="{{ type }}" name="{{ name }}" value="{{ data.get(name) or '' }}" {% if required %}required{% endif %} {{ attrs|safe }} {% if errors.get(name) %}aria-invalid="true" aria-describedby="err-{{ name }}"{% endif %}>
+  {% if errors.get(name) %}<span class="err" id="err-{{ name }}">{{ errors[name] }}</span>{% endif %}
+</label>
+{%- endmacro %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ 'Nuevo paciente' if mode == 'new' else 'Editar datos de ' ~ data.first_names ~ ' ' ~ data.last_names }}</h1>
+  {% if mode == 'edit' %}<span class="pill mono">{{ data.mrn }}</span>{% endif %}
+</div>
+
+{% if dups %}
+<div class="flash flash-warn" role="alert">
+  <strong>Posible paciente duplicado.</strong> Encontramos expedientes con datos coincidentes. Revíselos antes de crear uno nuevo:
+  <ul>{% for d in dups %}<li><a href="{{ url_for('patients.view', patient_id=d.id) }}" target="_blank" rel="noopener">{{ d.first_names }} {{ d.last_names }}</a> · {{ d.mrn }} · nac. {{ fmt_birth(d.birth_date) }} · {{ d.document_number or 'sin documento' }} · {{ d.phone or 'sin teléfono' }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% if errors %}<div class="flash flash-error" role="alert">Revise los campos marcados.</div>{% endif %}
+
+<form method="post" class="card form-grid" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% if mode == 'edit' %}<input type="hidden" name="version" value="{{ data.version }}">{% endif %}
+  <fieldset>
+    <legend>Identificación</legend>
+    <div class="grid2">
+      {{ field('first_names', 'Nombres', required=true, attrs='maxlength="120" autocomplete="off"') }}
+      {{ field('last_names', 'Apellidos', required=true, attrs='maxlength="120" autocomplete="off"') }}
+      {{ field('birth_date', 'Fecha de nacimiento', type='date') }}
+      <label class="field"><span>Sexo <span class="req" aria-hidden="true">*</span></span>
+        <select name="sex" required>{% for k, v in [('no_registrado','No registrado'),('femenino','Femenino'),('masculino','Masculino'),('intersexual','Intersexual')] %}<option value="{{ k }}" {% if data.get('sex') == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+      </label>
+      <label class="field {% if errors.get('document_type') %}has-error{% endif %}"><span>Tipo de documento <span class="req" aria-hidden="true">*</span></span>
+        <select name="document_type" required data-doc-type>{% for k in ['dni','pasaporte','carne_residente','otro','sin_documento'] %}<option value="{{ k }}" {% if (data.get('document_type') or 'dni') == k %}selected{% endif %}>{{ label('document_type', k) }}</option>{% endfor %}</select>
+      </label>
+      {{ field('document_number', 'Número de documento', attrs='maxlength="40" inputmode="text" placeholder="0801-1990-12345" data-doc-number') }}
+    </div>
+    <p class="muted small">El sistema asigna un número de expediente interno (GM-…) independiente del documento. Se admiten pacientes sin documento.</p>
+  </fieldset>
+  <fieldset>
+    <legend>Contacto</legend>
+    <div class="grid2">
+      {{ field('phone', 'Teléfono', type='tel', attrs='maxlength="40" placeholder="+504 9999-9999" autocomplete="off"') }}
+      {{ field('email', 'Correo electrónico', type='email', attrs='maxlength="160" autocomplete="off"') }}
+      {{ field('address', 'Dirección', attrs='maxlength="300"') }}
+      {{ field('origin', 'Procedencia (municipio / departamento)', attrs='maxlength="120"') }}
+      {{ field('emergency_contact_name', 'Contacto de emergencia', attrs='maxlength="160"') }}
+      {{ field('emergency_contact_phone', 'Teléfono de emergencia', type='tel', attrs='maxlength="40"') }}
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Administrativo</legend>
+    <div class="grid2">
+      {{ field('referring_physician', 'Médico remitente', attrs='maxlength="160"') }}
+      {{ field('payer', 'Seguro, convenio o condición de pago', attrs='maxlength="160"') }}
+    </div>
+  </fieldset>
+  {% if dups %}
+  <label class="check warn-box"><input type="checkbox" name="confirmo_distinto" value="1" required> Revisé los expedientes anteriores y confirmo que se trata de <b>otra persona</b>.</label>
+  {% endif %}
+  <div class="actions">
+    <button class="btn btn-primary" type="submit">{{ 'Registrar paciente' if mode == 'new' else 'Guardar cambios' }}</button>
+    <a class="btn btn-quiet" href="{{ url_for('patients.view', patient_id=data.id) if mode == 'edit' else url_for('patients.search') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

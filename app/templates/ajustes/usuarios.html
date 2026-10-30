@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Usuarios{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Ajustes</h1></div>
+{% include "ajustes/_tabs.html" %}
+<section class="card">
+  <h2>Usuarios</h2>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Agenda propia</th><th>Estado</th></tr></thead>
+    <tbody>{% for u in rows %}<tr><td>{{ u.full_name }}</td><td>{{ u.email }}</td><td>{{ u.role_name }}</td><td>{{ 'Sí' if u.is_practitioner else 'No' }}</td><td>{{ 'Activo' if u.active else 'Desactivado' }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="muted small">Alta, edición y desactivación de usuarios desde esta pantalla: siguiente etapa. Hoy se administran con el script <code>scripts/usuarios.py</code>.</p>
+</section>
+<section class="card">
+  <h2>Permisos por rol</h2>
+  <div class="table-wrap"><table class="table perm-table">
+    <thead><tr><th>Permiso</th>{% for r in roles %}<th>{{ r.name }}</th>{% endfor %}</tr></thead>
+    <tbody>{% for code, desc in PERMISSIONS.items() %}<tr><td>{{ desc }}</td>{% for r in roles %}<td class="center">{% if code in perms[r.id] %}<span aria-label="Sí">✔</span>{% else %}<span class="muted" aria-label="No">—</span>{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

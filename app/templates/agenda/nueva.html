@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Nueva cita{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Nueva cita</h1></div>
+{% if errors %}<div class="flash flash-error" role="alert">{% for e in errors.values() %}{{ e }} {% endfor %}</div>{% endif %}
+<form method="post" class="card form-grid narrow" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <fieldset>
+    <legend>Paciente</legend>
+    {% if patient %}
+      <input type="hidden" name="patient_id" value="{{ patient.id }}">
+      <p class="selected-patient"><b>{{ patient.first_names }} {{ patient.last_names }}</b> · <span class="mono">{{ patient.mrn }}</span> · {{ age(patient.birth_date) }}
+        <a class="small" href="{{ url_for('agenda.new', fecha=values.starts_local[:10], hora=values.starts_local[11:]) }}">cambiar</a></p>
+    {% else %}
+      <div class="patient-picker" data-picker="{{ url_for('patients.search', formato='json') }}">
+        <label for="pp">Buscar paciente</label>
+        <input id="pp" type="search" placeholder="Nombre, expediente o DNI" autocomplete="off" aria-controls="pp-list">
+        <input type="hidden" name="patient_id" value="">
+        <ul id="pp-list" class="suggest" role="listbox" hidden></ul>
+        <p class="small muted">¿No existe? <a href="{{ url_for('patients.new') }}">Registrar paciente</a> y luego agendar desde su expediente.</p>
+      </div>
+    {% endif %}
+  </fieldset>
+  <fieldset>
+    <legend>Cita</legend>
+    <div class="grid2">
+      <label class="field {% if errors.practitioner_id %}has-error{% endif %}">Profesional
+        <select name="practitioner_id" required>{% for u in pracs %}<option value="{{ u.id }}" {% if values.practitioner_id == u.id %}selected{% endif %}>{{ u.full_name }}</option>{% endfor %}</select>
+      </label>
+      <label class="field">Tipo
+        <select name="appt_type" data-durations='{{ durations|tojson }}'>{% for k in ['primera_vez','seguimiento','procedimiento','teleconsulta'] %}<option value="{{ k }}" {% if values.appt_type == k %}selected{% endif %}>{{ label('appt_type', k) }}</option>{% endfor %}</select>
+      </label>
+      <label class="field {% if errors.starts_local %}has-error{% endif %}">Fecha y hora de inicio
+        <input type="datetime-local" name="starts_local" value="{{ values.starts_local }}" required step="300">
+      </label>
+      <label class="field {% if errors.duration %}has-error{% endif %}">Duración (minutos)
+        <input type="number" name="duration" min="5" max="480" step="5" value="{{ values.duration or durations.get(values.appt_type, 30) }}" required>
+      </label>
+    </div>
+    <label class="field">Nota administrativa (no clínica)
+      <input name="admin_note" maxlength="300" value="{{ values.admin_note }}" placeholder="Ej.: trae resultados previos, prefiere confirmación por llamada">
+    </label>
+    <p class="muted small">Hora de la clínica. El sistema impide cruces con otras citas activas del mismo profesional.</p>
+  </fieldset>
+  <div class="actions"><button class="btn btn-primary" type="submit">Agendar</button> <a class="btn btn-quiet" href="{{ url_for('agenda.day') }}">Cancelar</a></div>
+</form>
+{% endblock %}
