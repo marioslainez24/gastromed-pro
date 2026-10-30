@@ -6,16 +6,65 @@
 <section class="card">
   <h2>Usuarios</h2>
   <div class="table-wrap"><table class="table">
-    <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Agenda propia</th><th>Estado</th></tr></thead>
-    <tbody>{% for u in rows %}<tr><td>{{ u.full_name }}</td><td>{{ u.email }}</td><td>{{ u.role_name }}</td><td>{{ 'Sí' if u.is_practitioner else 'No' }}</td><td>{{ 'Activo' if u.active else 'Desactivado' }}</td></tr>{% endfor %}</tbody>
+    <thead><tr><th>Nombre</th><th>Rol y agenda</th><th>Seguridad</th><th>Estado</th><th></th></tr></thead>
+    <tbody>{% for u in rows %}<tr>
+      <td><b>{{ u.full_name }}</b><br><span class="small muted">{{ u.email }}</span></td>
+      <td>
+        <form method="post" action="{{ url_for('settings.user_update', user_id=u.id) }}" class="stack compact-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <select name="role_id" aria-label="Rol de {{ u.full_name }}">{% for r in roles %}<option value="{{ r.id }}" {% if r.id == u.role_id %}selected{% endif %}>{{ r.name }}</option>{% endfor %}</select>
+          <label class="check small"><input type="checkbox" name="is_practitioner" value="1" {% if u.is_practitioner %}checked{% endif %}> Tiene agenda propia</label>
+          <button class="btn btn-sm" type="submit">Guardar</button>
+        </form>
+      </td>
+      <td class="small">{{ 'Dos pasos activo' if u.mfa_enabled else 'Sin dos pasos' }}{% if u.must_change_password %}<br><span class="tag tag-warn">Contraseña temporal</span>{% endif %}</td>
+      <td>{% if u.active %}<span class="tag tag-ok">Activo</span>{% else %}<span class="tag tag-danger">Desactivado</span>{% endif %}</td>
+      <td class="stack">
+        {% if u.id != current_user.id %}
+        <form method="post" action="{{ url_for('settings.user_toggle', user_id=u.id) }}" data-confirm="{{ '¿Reactivar' if not u.active else '¿Desactivar' }} a {{ u.full_name }}?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="active" value="{{ 0 if u.active else 1 }}">
+          <button class="btn btn-sm {{ 'btn-danger-quiet' if u.active }}" type="submit">{{ 'Desactivar' if u.active else 'Reactivar' }}</button>
+        </form>
+        <form method="post" action="{{ url_for('settings.user_reset', user_id=u.id) }}" data-confirm="Se generará una contraseña temporal y se cerrarán sus sesiones. ¿Continuar?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label class="check small"><input type="checkbox" name="reset_mfa" value="1"> Reiniciar dos pasos</label>
+          <button class="btn btn-sm" type="submit">Restablecer acceso</button>
+        </form>
+        {% else %}<div class="small"><a href="{{ url_for('account.password') }}">Mi contraseña</a><br><a href="{{ url_for('account.mfa') }}">Dos pasos</a></div>{% endif %}
+      </td>
+    </tr>{% endfor %}</tbody>
   </table></div>
-  <p class="muted small">Alta, edición y desactivación de usuarios desde esta pantalla: siguiente etapa. Hoy se administran con el script <code>scripts/usuarios.py</code>.</p>
 </section>
+
+<section class="card">
+  <h2>Agregar usuario</h2>
+  <form method="post" action="{{ url_for('settings.user_create') }}" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="grid4">
+      <label class="field">Nombre completo<input name="full_name" required maxlength="120"></label>
+      <label class="field">Correo<input name="email" type="email" required maxlength="200"></label>
+      <label class="field">Rol<select name="role_id">{% for r in roles %}<option value="{{ r.id }}" {% if r.code == 'recepcion' %}selected{% endif %}>{{ r.name }}</option>{% endfor %}</select></label>
+      <label class="check"><input type="checkbox" name="is_practitioner" value="1"> Tiene agenda propia (profesional)</label>
+    </div>
+    <div class="actions"><button class="btn btn-primary" type="submit">Crear usuario</button><span class="muted small">Se mostrará una contraseña temporal una sola vez.</span></div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Política de seguridad</h2>
+  <form method="post" action="{{ url_for('settings.security_settings') }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="check"><input type="checkbox" name="require_mfa" value="1" {% if require_mfa %}checked{% endif %}> Exigir verificación en dos pasos a todos los usuarios (recomendado antes de usar datos reales)</label>
+    <div><button class="btn" type="submit">Guardar política</button></div>
+  </form>
+</section>
+
 <section class="card">
   <h2>Permisos por rol</h2>
   <div class="table-wrap"><table class="table perm-table">
     <thead><tr><th>Permiso</th>{% for r in roles %}<th>{{ r.name }}</th>{% endfor %}</tr></thead>
     <tbody>{% for code, desc in PERMISSIONS.items() %}<tr><td>{{ desc }}</td>{% for r in roles %}<td class="center">{% if code in perms[r.id] %}<span aria-label="Sí">✔</span>{% else %}<span class="muted" aria-label="No">—</span>{% endif %}</td>{% endfor %}</tr>{% endfor %}</tbody>
   </table></div>
+  <p class="muted small">Edición de permisos por rol y por sede: próxima etapa.</p>
 </section>
 {% endblock %}

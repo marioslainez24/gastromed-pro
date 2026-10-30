@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Contraseña temporal{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Contraseña temporal</h1>
+  <p>Entregue estos datos a <b>{{ name }}</b> en persona o por un canal seguro. <b>Esta contraseña no se volverá a mostrar.</b></p>
+  <dl class="dl">
+    <dt>Usuario</dt><dd class="mono">{{ email }}</dd>
+    <dt>Contraseña temporal</dt><dd class="secret mono">{{ temp }}</dd>
+  </dl>
+  <p class="muted small">Al ingresar, el sistema le pedirá crear su propia contraseña.</p>
+  <a class="btn btn-primary" href="{{ url_for('settings.users') }}">Listo</a>
+</section>
+{% endblock %}

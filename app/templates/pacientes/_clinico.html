@@ -1,0 +1,111 @@
+{# Secciones clínicas del expediente. Solo se incluye si el usuario tiene permiso clínico. #}
+<section class="card" id="problemas">
+  <h2>Lista de problemas</h2>
+  {% set activos = problems|selectattr('status', 'equalto', 'activo')|list %}
+  {% set resueltos = problems|selectattr('status', 'equalto', 'resuelto')|list %}
+  {% if activos %}<ul class="list">{% for pr in activos %}
+    <li class="row-between"><span><b>{{ pr.description }}</b>{% if pr.onset_text %} <span class="muted small">· desde {{ pr.onset_text }}</span>{% endif %}</span>
+      {% if can('clinico.editar') %}<form method="post" action="{{ url_for('record.resolve_problem', patient_id=p.id, item_id=pr.id) }}" data-confirm="¿Marcar «{{ pr.description }}» como resuelto?"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="link-btn small">Resuelto</button></form>{% endif %}</li>
+  {% endfor %}</ul>{% else %}<p class="muted small">Sin problemas activos registrados.</p>{% endif %}
+  {% if resueltos %}<details class="mt"><summary class="small">Resueltos ({{ resueltos|length }})</summary><ul class="list small">{% for pr in resueltos %}<li>{{ pr.description }} <span class="muted">· resuelto {{ fmt_dt(pr.resolved_at, false) }}</span></li>{% endfor %}</ul></details>{% endif %}
+  {% if can('clinico.editar') %}
+  <details class="mt"><summary>Agregar problema</summary>
+    <form method="post" action="{{ url_for('record.add_problem', patient_id=p.id) }}" class="grid2 mt">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="field">Problema<input name="description" required maxlength="300" placeholder="Ej.: Cirrosis hepática por MASLD"></label>
+      <label class="field">Desde<input name="onset_text" maxlength="80" placeholder="Ej.: 2021"></label>
+      <div><button class="btn btn-sm" type="submit">Agregar</button></div>
+    </form>
+  </details>
+  {% endif %}
+</section>
+
+<section class="card" id="medicamentos">
+  <h2>Medicamentos actuales</h2>
+  {% set mact = meds|selectattr('status', 'equalto', 'activo')|list %}
+  {% set msus = meds|selectattr('status', 'equalto', 'suspendido')|list %}
+  <p class="small {{ 'muted' if p.meds_reconciled_at else 'warn-text' }}">
+    {% if p.meds_reconciled_at %}Lista conciliada el {{ fmt_dt(p.meds_reconciled_at) }} por {{ reconciler.full_name if reconciler else '—' }}.{% else %}La lista no ha sido conciliada con el paciente.{% endif %}
+  </p>
+  {% if mact %}<ul class="list">{% for m in mact %}
+    <li class="row-between"><span><b>{{ m.name }}</b> {{ m.dose or '' }} {{ m.route or '' }} {{ m.frequency or '' }}{% if m.indication %} <span class="muted small">· {{ m.indication }}</span>{% endif %}<br><span class="muted small">{{ med_sources[m.source] }} · registrado {{ fmt_dt(m.recorded_at, false) }}</span></span>
+      {% if can('clinico.editar') %}
+      <details class="inline-details"><summary class="small link-like">Suspender</summary>
+        <form method="post" action="{{ url_for('record.stop_medication', patient_id=p.id, item_id=m.id) }}" class="stack mt">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input name="stop_reason" maxlength="300" placeholder="Motivo" aria-label="Motivo de suspensión">
+          <button class="btn btn-sm" type="submit">Confirmar</button>
+        </form>
+      </details>{% endif %}
+    </li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Sin medicamentos activos registrados.</p>{% endif %}
+  {% if msus %}<details class="mt"><summary class="small">Suspendidos ({{ msus|length }})</summary><ul class="list small">{% for m in msus %}<li>{{ m.name }} {{ m.dose or '' }} <span class="muted">· suspendido {{ fmt_dt(m.stopped_at, false) }}: {{ m.stop_reason }}</span></li>{% endfor %}</ul></details>{% endif %}
+  {% if can('clinico.editar') %}
+  <details class="mt"><summary>Agregar medicamento</summary>
+    <form method="post" action="{{ url_for('record.add_medication', patient_id=p.id) }}" class="grid2 mt">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="field">Medicamento<input name="name" required maxlength="160"></label>
+      <label class="field">Dosis<input name="dose" maxlength="80" placeholder="Ej.: 40 mg"></label>
+      <label class="field">Frecuencia<input name="frequency" maxlength="120"></label>
+      <label class="field">Vía<input name="route" maxlength="60" list="routes-med"></label>
+      <label class="field">Indicación<input name="indication" maxlength="200"></label>
+      <label class="field">Origen<select name="source">{% for k, v in med_sources.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+      <datalist id="routes-med"><option value="oral"><option value="subcutánea"><option value="intravenosa"><option value="rectal"><option value="tópica"></datalist>
+      <div><button class="btn btn-sm" type="submit">Agregar</button></div>
+    </form>
+  </details>
+  <form method="post" action="{{ url_for('record.reconcile', patient_id=p.id) }}" class="mt" data-confirm="¿Confirma que revisó con el paciente la lista completa de medicamentos actuales?">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="confirm" value="1">
+    <button class="btn btn-sm" type="submit">Registrar conciliación de hoy</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="card" id="antecedentes">
+  <h2>Antecedentes</h2>
+  {% if history %}
+  {% for cat, items in history|groupby('category') %}
+    <h3>{{ history_categories[cat] }}</h3>
+    <ul class="list">{% for h in items %}<li class="row-between"><span>{{ h.description }}{% if h.when_text %} <span class="muted small">· {{ h.when_text }}</span>{% endif %}{% if h.notes %}<br><span class="small muted">{{ h.notes }}</span>{% endif %}<br><span class="small muted">Registrado {{ fmt_dt(h.recorded_at, false) }} · {{ h.author }}</span></span>
+      {% if can('clinico.editar') %}<form method="post" action="{{ url_for('record.inactivate_history', patient_id=p.id, item_id=h.id) }}" data-confirm="¿Marcar como no vigente o registrado por error?"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="link-btn small">Retirar</button></form>{% endif %}
+    </li>{% endfor %}</ul>
+  {% endfor %}
+  {% else %}<p class="muted small">Sin antecedentes registrados. «Sin registros» no equivale a «niega antecedentes».</p>{% endif %}
+  {% if can('clinico.editar') %}
+  <details class="mt"><summary>Agregar antecedente</summary>
+    <form method="post" action="{{ url_for('record.add_history', patient_id=p.id) }}" class="grid2 mt">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="field">Tipo<select name="category">{% for k, v in history_categories.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+      <label class="field">Descripción<input name="description" required maxlength="600" placeholder="Ej.: Colecistectomía laparoscópica"></label>
+      <label class="field">Fecha o época<input name="when_text" maxlength="80" placeholder="Ej.: 2018"></label>
+      <label class="field">Notas<input name="notes" maxlength="600"></label>
+      <div><button class="btn btn-sm" type="submit">Agregar</button></div>
+    </form>
+  </details>
+  {% endif %}
+</section>
+
+<section class="card" id="archivos">
+  <div class="row-between"><h2>Estudios y archivos</h2>{% if can('clinico.editar') %}<a class="btn btn-sm" href="{{ url_for('files.upload', patient_id=p.id) }}">＋ Agregar estudio</a>{% endif %}</div>
+  {% if files %}
+  <ul class="file-list">{% for f in files %}
+    <li>
+      {% if f.mime in ('image/jpeg','image/png') %}<a href="{{ url_for('files.download', file_id=f.id) }}" target="_blank" rel="noopener"><img class="thumb" src="{{ url_for('files.download', file_id=f.id) }}" alt="{{ f.title }}" loading="lazy"></a>
+      {% else %}<span class="thumb thumb-doc" aria-hidden="true">{{ 'PDF' if f.mime == 'application/pdf' else 'IMG' }}</span>{% endif %}
+      <div>
+        <a class="strong" href="{{ url_for('files.download', file_id=f.id) }}" target="_blank" rel="noopener">{{ f.title }}</a>
+        <div class="small muted">{{ {'laboratorio':'Laboratorio','imagen':'Imagenología','endoscopia':'Endoscopia','patologia':'Patología','referencia':'Referencia','documento':'Documento','otro':'Otro'}[f.category] }}
+          · {{ f.study_date and fmt_birth(f.study_date) or 'sin fecha de estudio' }}{% if f.institution %} · {{ f.institution }}{% endif %} · {{ (f.size_bytes / 1024)|round|int }} KB · subido por {{ f.uploader }}</div>
+        <a class="small" href="{{ url_for('files.download', file_id=f.id, descargar=1) }}">Descargar</a>
+        {% if can('clinico.editar') %}
+        <details class="inline-details"><summary class="small link-like">Retirar</summary>
+          <form method="post" action="{{ url_for('files.archive', file_id=f.id) }}" class="stack mt">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input name="reason" required maxlength="300" placeholder="Motivo (p. ej., otro paciente, duplicado)" aria-label="Motivo">
+            <button class="btn btn-sm" type="submit">Retirar del expediente</button>
+          </form>
+        </details>{% endif %}
+      </div>
+    </li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Sin estudios adjuntos.</p>{% endif %}
+</section>

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Verificación en dos pasos{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Verificación en dos pasos</h1>{% if enabled %}<span class="tag tag-ok big">Activa</span>{% endif %}</div>
+{% if required and not enabled %}<div class="flash flash-warn" role="status">La clínica exige la verificación en dos pasos. Actívela para continuar.</div>{% endif %}
+{% if enabled %}
+<section class="card narrow">
+  <p>Al ingresar se le pedirá el código de 6 dígitos de su aplicación autenticadora.</p>
+  {% if not required %}
+  <details><summary>Desactivar</summary>
+    <form method="post" action="{{ url_for('account.mfa_disable') }}" class="stack mt">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Confirme con su contraseña<input type="password" name="password" required autocomplete="current-password"></label>
+      <button class="btn btn-danger-quiet" type="submit">Desactivar verificación en dos pasos</button>
+    </form>
+  </details>
+  {% else %}<p class="muted small">La clínica la exige para todos los usuarios; no puede desactivarse.</p>{% endif %}
+</section>
+{% else %}
+<section class="card narrow stack">
+  <ol class="steps">
+    <li>Instale en su celular una aplicación autenticadora (por ejemplo Google Authenticator o Microsoft Authenticator, gratuitas en la tienda de su teléfono).</li>
+    <li>En la aplicación elija <b>«Agregar cuenta» → «Introducir clave de configuración»</b>. Nombre: <b>GastroMed Pro</b>. Tipo: <b>basada en el tiempo</b>.</li>
+    <li>Escriba esta clave:
+      <p class="secret mono" aria-label="Clave de configuración">{{ secret }}</p>
+      <p class="muted small">Desde un celular puede abrir este enlace para agregarla directamente: <a href="{{ uri }}">agregar a la aplicación autenticadora</a>. (Código QR: pendiente en una próxima versión.)</p>
+    </li>
+    <li>Escriba el código de 6 dígitos que muestra la aplicación:</li>
+  </ol>
+  <form method="post" action="{{ url_for('account.mfa_enable') }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Código de 6 dígitos<input name="code" inputmode="numeric" pattern="[0-9 ]{6,7}" maxlength="7" autocomplete="one-time-code" required class="code-input"></label>
+    <button class="btn btn-primary" type="submit">Activar</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

@@ -176,6 +176,12 @@ def view(patient_id):
             "SELECT r.*, u.full_name AS author, (SELECT GROUP_CONCAT(active_ingredient, ', ') FROM prescription_items i"
             " WHERE i.prescription_id = r.id) AS meds FROM prescriptions r JOIN users u ON u.id = r.author_id"
             " WHERE r.patient_id = ? AND r.org_id = ? ORDER BY r.issued_at DESC", (p["id"], g.user["org_id"])).fetchall()
+        from .views_files import list_files
+        from .views_record import load_record
+        ctx.update(load_record(db, p["id"]))
+        ctx["files"] = list_files(db, p["id"])
+        ctx["reconciler"] = db.execute("SELECT full_name FROM users WHERE id = ?", (p["meds_reconciled_by"],)).fetchone() \
+            if p["meds_reconciled_by"] else None
         audit("expediente_consultado", "paciente", p["id"])
     else:
         audit("ficha_administrativa_consultada", "paciente", p["id"])

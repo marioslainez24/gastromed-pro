@@ -4,9 +4,9 @@ from flask import Flask, g, render_template, request
 from . import util
 from .config import Config
 from .db import close_db, migrate
-from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, load_current_user
+from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.0"
 
 
 def create_app(config: Config | None = None) -> Flask:
@@ -21,6 +21,10 @@ def create_app(config: Config | None = None) -> Flask:
                       SESSION_COOKIE_SECURE=cfg.COOKIE_SECURE, SESSION_COOKIE_SAMESITE="Lax")
 
     migrate(cfg.DATABASE_PATH)
+    from cryptography.fernet import Fernet
+    from .crypto import load_data_key
+    app.config["GM_FERNET"] = Fernet(load_data_key(cfg))
+    app.config["MAX_CONTENT_LENGTH"] = 21 * 1024 * 1024  # adjuntos hasta 20 MB (+ margen del formulario)
 
     from .auth import bp as auth_bp
     from .views_patients import bp as patients_bp
@@ -28,7 +32,10 @@ def create_app(config: Config | None = None) -> Flask:
     from .views_notes import bp as notes_bp
     from .views_prescriptions import bp as rx_bp
     from .views_settings import bp as settings_bp
-    for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp):
+    from .views_record import bp as record_bp
+    from .views_files import bp as files_bp
+    from .views_account import bp as account_bp
+    for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp, record_bp, files_bp, account_bp):
         app.register_blueprint(bp)
 
     app.teardown_appcontext(close_db)
@@ -39,13 +46,14 @@ def create_app(config: Config | None = None) -> Flask:
             return
         load_current_user()
         check_csrf()
+        return enforce_account_requirements()
 
     @app.after_request
     def _headers(resp):
         h = resp.headers
-        h["Content-Security-Policy"] = ("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; "
+        h.setdefault("Content-Security-Policy", ("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; "
                                         "font-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; "
-                                        "base-uri 'none'; object-src 'none'")
+                                        "base-uri 'none'; object-src 'none'"))
         h["X-Content-Type-Options"] = "nosniff"
         h["X-Frame-Options"] = "DENY"
         h["Referrer-Policy"] = "no-referrer"

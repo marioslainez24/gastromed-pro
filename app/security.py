@@ -137,7 +137,8 @@ def load_current_user():
     db = get_db()
     row = db.execute(
         "SELECT s.*, u.id AS uid, u.org_id, u.full_name, u.email, u.role_id, u.active, u.is_practitioner, r.code AS role_code,"
-        " r.name AS role_name FROM sessions s JOIN users u ON u.id = s.user_id JOIN roles r ON r.id = u.role_id"
+        " r.name AS role_name, u.must_change_password, u.mfa_enabled, cs.require_mfa FROM sessions s JOIN users u ON u.id = s.user_id"
+        " JOIN roles r ON r.id = u.role_id LEFT JOIN clinic_settings cs ON cs.org_id = u.org_id"
         " WHERE s.token_hash = ?", (_hash_token(token),)).fetchone()
     if not row or row["revoked_at"] or not row["active"]:
         return
@@ -157,7 +158,9 @@ def load_current_user():
             db.execute("UPDATE sessions SET last_seen_at = ? WHERE token_hash = ?", (utcnow(), row["token_hash"]))
     perms = {r["permission"] for r in db.execute("SELECT permission FROM role_permissions WHERE role_id = ?", (row["role_id"],))}
     g.user = {"id": row["uid"], "org_id": row["org_id"], "full_name": row["full_name"], "email": row["email"],
-              "role_code": row["role_code"], "role_name": row["role_name"], "is_practitioner": bool(row["is_practitioner"])}
+              "role_code": row["role_code"], "role_name": row["role_name"], "is_practitioner": bool(row["is_practitioner"]),
+              "must_change_password": bool(row["must_change_password"]), "mfa_enabled": bool(row["mfa_enabled"]),
+              "mfa_required": bool(row["require_mfa"])}
     g.perms = frozenset(perms)
     g.csrf_token = row["csrf_token"]
 
@@ -172,12 +175,31 @@ def _parse(ts: str) -> datetime:
 def check_csrf():
     if request.method in ("GET", "HEAD", "OPTIONS"):
         return
-    if request.endpoint in ("auth.login",):
+    if request.endpoint in ("auth.login", "auth.mfa_verify"):
         # El inicio de sesión usa un token de formulario firmado propio (ver auth.py).
         return
     sent = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token") or ""
     if not g.get("csrf_token") or not hmac.compare_digest(sent, g.csrf_token):
         abort(400, description="La solicitud no se pudo verificar (token de seguridad inválido). Recargue la página e intente de nuevo.")
+
+
+ACCOUNT_EXEMPT = {"account.password", "account.mfa", "account.mfa_enable", "auth.logout", "auth.manifest", "auth.service_worker"}
+
+
+def enforce_account_requirements():
+    """Cambio obligatorio de contraseña y MFA obligatorio (si la clínica lo exige) antes de usar el sistema."""
+    u = g.get("user")
+    if not u or request.endpoint in ACCOUNT_EXEMPT or request.endpoint == "static":
+        return None
+    if u["must_change_password"]:
+        if request.method != "GET":
+            abort(403)
+        return redirect(url_for("account.password"))
+    if u["mfa_required"] and not u["mfa_enabled"]:
+        if request.method != "GET":
+            abort(403)
+        return redirect(url_for("account.mfa"))
+    return None
 
 
 def login_required(view):

@@ -2,6 +2,27 @@
 
 Este archivo permite continuar el trabajo en futuras conversaciones. Léalo primero.
 
+## Etapa 2 · 30-oct-2026 · Fase 1 casi completa (v0.2.0)
+
+**Qué quedó funcionando**
+- Comparativa con programas similares (`COMPARATIVA.md`) y 11 requisitos nuevos en la matriz.
+- Antecedentes, medicamentos actuales con conciliación y lista de problemas (nada se borra).
+- Archivos privados: subida desde PC o cámara del celular, validación por contenido, cifrado en disco, acceso solo clínico, retiro con motivo.
+- Verificación en dos pasos (TOTP), política para exigirla, cambio obligatorio de contraseña temporal.
+- Pantalla de usuarios: alta, rol, agenda propia, desactivar/reactivar, restablecer acceso.
+- Respaldos cifrados con verificación completa, restauración en carpeta nueva y exportación completa.
+
+**Cómo se comprobó**
+- `python -m pytest -q` → **38 pruebas pasan** (30-oct-2026), incluida una restauración completa que vuelve a levantar la aplicación y abre el mismo PDF byte por byte.
+- Scripts de respaldo ejecutados sobre la base de demostración: crear → verificar (CORRECTO) → exportar.
+- Navegador real en PC (1366 px) y celular (390 px, modo oscuro): búsqueda, subida de estudio, expediente, dos pasos, usuarios. Sin errores de JavaScript.
+
+**Pendiente inmediato**
+1. Puesta en línea (Vultr Miami recomendado) con HTTPS, disco cifrado, respaldos diarios automáticos y copia externa. Requiere que el Dr. Lainez cree la cuenta.
+2. Logo y firma en la receta; código QR para dos pasos.
+3. Horarios por profesional, bloqueos/vacaciones, colores por tipo de cita.
+4. Fase 2: órdenes y resultados de laboratorio con tendencias, formularios GI y primeras calculadoras validadas.
+
 ## Etapa 1 · 30-oct-2026 · Primer flujo funcional
 
 **Qué quedó funcionando**

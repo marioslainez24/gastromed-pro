@@ -2,12 +2,14 @@
 
 Sistema de gestión clínica para Gastroenterología, Hepatología y Endoscopia — Dr. Mario Lainez.
 
-> **Estado: en desarrollo (v0.1.0). No apto todavía para pacientes reales.** Use solo datos ficticios.
+> **Estado: en desarrollo (v0.2.0). No apto todavía para pacientes reales.** Use solo datos ficticios.
 
 ## Documentos
 - `docs/ARQUITECTURA.md` — tecnologías, modelo de datos, permisos, costos.
 - `docs/MATRIZ.md` — todos los requisitos con su estado (probado / pendiente / proveedor externo).
 - `docs/PROGRESO.md` — qué está hecho, cómo se comprobó y qué sigue. **Leer primero al retomar.**
+- `docs/COMPARATIVA.md` — programas similares revisados y qué se tomó de ellos.
+- `docs/SEGURIDAD_Y_RESPALDOS.md` — claves, respaldos, restauración, exportación.
 - `docs/INSTALACION_WINDOWS.md` — probar la demostración en Windows.
 - `evidencia/` — capturas en navegador real y PDF de ejemplo.
 

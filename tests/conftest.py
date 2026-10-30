@@ -17,7 +17,8 @@ PASSWORDS = {"propietario": "Propietario-Prueba-123", "medico": "Medico-Prueba-1
 
 @pytest.fixture()
 def env(tmp_path):
-    cfg = Config(ENV="pruebas", DATABASE_PATH=str(tmp_path / "test.sqlite3"), SECRET_KEY="x" * 40, COOKIE_SECURE=False)
+    cfg = Config(ENV="pruebas", DATABASE_PATH=str(tmp_path / "test.sqlite3"), FILES_DIR=str(tmp_path / "archivos"),
+                 SECRET_KEY="x" * 40, COOKIE_SECURE=False)
     app = create_app(cfg)
     db = connect(cfg.DATABASE_PATH)
     org = create_organization(db, "Clínica de prueba")

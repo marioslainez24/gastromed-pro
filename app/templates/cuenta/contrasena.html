@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Cambiar contraseña{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Cambiar contraseña</h1></div>
+{% if forced %}<div class="flash flash-warn" role="status">Por seguridad debe crear una contraseña propia antes de continuar.</div>{% endif %}
+{% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form method="post" class="card narrow stack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label>Contraseña actual (o temporal)<input type="password" name="current_password" required autocomplete="current-password"></label>
+  <label>Nueva contraseña<input type="password" name="new_password" required minlength="12" autocomplete="new-password"></label>
+  <label>Repita la nueva contraseña<input type="password" name="confirm_password" required minlength="12" autocomplete="new-password"></label>
+  <p class="muted small">Mínimo 12 caracteres, con mayúsculas, minúsculas y números. Una frase larga es más segura y fácil de recordar.</p>
+  <button class="btn btn-primary" type="submit">Guardar contraseña</button>
+</form>
+<p class="center-text"><a href="{{ url_for('account.mfa') }}">Verificación en dos pasos</a></p>
+{% endblock %}

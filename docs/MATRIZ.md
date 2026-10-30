@@ -1,6 +1,6 @@
 # Matriz de requisitos y cobertura — GastroMed Pro
 
-Actualizada: 30 de octubre de 2026 · versión 0.1.0
+Actualizada: 30 de octubre de 2026 · versión 0.2.0 · ver también `COMPARATIVA.md`
 
 **Fuentes:** el documento de requisitos del Dr. Mario Lainez. Las páginas de Medilink (softwaremedilink.com y ayuda.softwaremedilink.com) **no fueron accesibles** desde el entorno de desarrollo (bloqueo de red). Por lo tanto **no se afirma haber revisado ninguna función de Medilink**; la comparación queda pendiente hasta que se puedan consultar (o el usuario envíe capturas/textos).
 
@@ -18,11 +18,11 @@ Actualizada: 30 de octubre de 2026 · versión 0.1.0
 | 1.2 | Bloqueo por intentos fallidos y límite por IP | ✅ | `test_bloqueo_tras_intentos_fallidos` |
 | 1.3 | Sesiones de servidor con expiración por inactividad (30 min) y absoluta (12 h), revocación al salir | ✅ | `test_sesion_revocada_al_salir` (inactividad: 🟡 sin prueba automática) |
 | 1.4 | Protección CSRF en toda modificación | ✅ | `test_csrf_obligatorio` |
-| 1.5 | MFA (segundo factor TOTP) | ⬜ | Siguiente etapa |
+| 1.5 | MFA (TOTP) opcional u obligatorio por política; secreto cifrado; sin reutilizar códigos | ✅ | `test_mfa_usuarios.py` (incluye vectores oficiales RFC 6238). Código QR: ⬜ |
 | 1.6 | Roles y permisos por acción en servidor | ✅ | `test_recepcion_no_accede…`, `test_caja_y_enfermeria` |
 | 1.7 | Permisos por sede | ⬜ | Tabla `user_sites` creada; reglas pendientes |
-| 1.8 | Desactivar usuarios conservando autoría | 🟡 | Script `usuarios.py desactivar`; trigger impide borrar |
-| 1.9 | Pantalla de gestión de usuarios | ⬜ | Hoy solo consulta + matriz de permisos |
+| 1.8 | Desactivar usuarios conservando autoría y cerrando sus sesiones | ✅ | `test_desactivar_usuario…` |
+| 1.9 | Pantalla de usuarios: alta con contraseña temporal, rol, reactivar, restablecer acceso, cambio obligatorio de contraseña | ✅ | `test_crear_usuario…`; edición de permisos por rol ⬜ |
 | 1.10 | Auditoría de accesos y cambios, inmutable y encadenada | ✅ | `test_auditoria_inmutable_y_encadenada` |
 | 1.11 | Aislamiento entre organizaciones / cambio de identificador | ✅ | `test_cambiar_identificador_no_expone_otra_organizacion` |
 | 1.12 | Cabeceras de seguridad (CSP sin inline, no-store, anti-iframe) | ✅ | `test_cabeceras_de_seguridad_y_cookies` |
@@ -35,7 +35,7 @@ Actualizada: 30 de octubre de 2026 · versión 0.1.0
 | 2.6 | Fusión de expedientes con trazabilidad | ⬜ | Columna `merged_into` preparada |
 | 2.7 | Alergias con reacción y gravedad; «sin alergias conocidas» ≠ «no investigado» | ✅ | Probado en flujo de receta; regla impide marcar «sin alergias» con alergias activas |
 | 2.8 | Alertas clínicas visibles | ✅ | Banner en expediente, nota y receta |
-| 2.9 | Medicamentos actuales, antecedentes, hábitos, problemas, hospitalizaciones | ⬜ | Siguiente etapa |
+| 2.9 | Antecedentes (personales, quirúrgicos, familiares, hábitos, hospitalizaciones, procedimientos), medicamentos actuales con conciliación, lista de problemas | ✅ | `test_antecedentes_medicamentos_problemas` |
 | 2.10 | Historial cronológico de consultas y recetas | ✅ | `test_todas_las_pantallas_cargan` |
 | 2.11 | Control de concurrencia (no sobrescribir en silencio) | ✅ | `test_concurrencia_no_sobrescribe_en_silencio` |
 | 3.1 | Agenda diaria, semanal y mensual | ✅ | `test_todas_las_pantallas_cargan` + capturas |
@@ -59,15 +59,31 @@ Actualizada: 30 de octubre de 2026 · versión 0.1.0
 | 5.4 | Advertencia de alergias no investigadas antes de emitir | ✅ | |
 | 5.5 | Interacciones / vademécum | 🔌 | **No disponible**: se indica en pantalla; no se inventa base farmacológica |
 | 5.6 | Colegiación, dirección, teléfonos editables | ✅ | `test_guardar_ajustes` |
-| 5.7 | Logo e imagen de firma | ⬜ | Requiere módulo de archivos privados |
+| 5.7 | Logo e imagen de firma en recetas | ⬜ | Módulo de archivos listo; falta integrarlo al PDF |
 | 5.8 | Firma electrónica verificable | 🔌 | No implementada; el PDF lo declara |
-| 6.1 | Archivos privados (PDF, imágenes, foto desde celular) con validación | ⬜ | **Siguiente etapa (Fase 1)** |
-| 6.2 | Respaldos cifrados y prueba de restauración | ⬜ | **Siguiente etapa (Fase 1)** |
-| 6.3 | Exportación completa de datos y adjuntos | ⬜ | |
+| 6.1 | Archivos privados: PDF/JPG/PNG/HEIC, foto desde celular, validación por contenido, rechazo de PDF activos, 20 MB, cifrado en disco, acceso solo clínico | ✅ | `test_expediente_archivos.py` + navegador. Antivirus: 🟡 pendiente en servidor |
+| 6.2 | Respaldos cifrados, verificación y restauración (registros + adjuntos) | ✅ | `test_respaldo.py`. Programación diaria automática: ⬜ (en el servidor) |
+| 6.3 | Exportación completa (CSV + adjuntos descifrados) | ✅ | `test_exportacion_completa` |
 | 7.1 | Interfaz en español, PC y celular, modo claro/oscuro | ✅ | Capturas en `evidencia/capturas` (sin errores de JavaScript) |
 | 7.2 | PWA instalable sin guardar expedientes en el dispositivo | 🟡 | Manifiesto + service worker solo estático; instalar requiere HTTPS |
 | 7.3 | Accesibilidad (teclado, contraste, foco visible, atajo «/») | 🟡 | Implementado; falta auditoría formal |
 | 7.4 | Configuración Honduras / HNL / America/Tegucigalpa | ✅ | |
+
+## Requisitos añadidos por la comparativa (ver COMPARATIVA.md)
+
+| # | Requisito | Fase | Estado |
+|---|---|---|---|
+| C.1 | Confirmar o anular la cita en un clic desde el recordatorio | 5 | 🔌 |
+| C.2 | Colores por tipo de cita en la agenda | 1b | ⬜ |
+| C.3 | Horarios de atención por profesional y recursos (sala, equipo) | 1b | ⬜ |
+| C.4 | Frases predefinidas y categorías de consulta (general, urgencia, interconsulta) | 2 | ⬜ |
+| C.5 | Búsqueda de texto completo dentro del expediente | 2 | ⬜ |
+| C.6 | Documentos clínicos por plantilla (incapacidades, constancias) | 2 | ⬜ |
+| C.7 | Presupuesto desde el diagnóstico; estado de pago y cobro desde la agenda | 4 | ⬜ |
+| C.8 | Reportes con comparativas mensuales, productividad, exportar a Excel | 4 | ⬜ |
+| C.9 | Recall / vigilancia endoscópica automática | 3 | ⬜ |
+| C.10 | Notas de enfermería del procedimiento que alimentan el informe | 3 | ⬜ |
+| C.11 | Indicadores de calidad (tasa de detección de adenomas, etc.) | 3 | ⬜ |
 
 ## Fases 2 a 5 (alcance conservado)
 
@@ -98,7 +114,7 @@ Actualizada: 30 de octubre de 2026 · versión 0.1.0
 |---|---|
 | Registrar paciente y encontrarlo desde otro dispositivo | ✅ |
 | Consulta persiste tras cerrar y abrir sesión | ✅ |
-| Estudios privados solo con autorización | ⬜ (archivos: siguiente etapa) |
+| Estudios privados solo con autorización | ✅ |
 | Recepción no accede a información clínica | ✅ |
 | Cambiar identificador no expone otro expediente | ✅ |
 | Nota finalizada conserva su versión original | ✅ |
@@ -107,7 +123,7 @@ Actualizada: 30 de octubre de 2026 · versión 0.1.0
 | Recetas se imprimen correctamente | 🟡 PDF verificado; falta prueba de impresión física |
 | Calculadoras coinciden con casos de referencia | ⬜ Fase 2 |
 | Fallos de proveedores no simulan éxito | ⬜ (no hay proveedores aún) |
-| Respaldos restauran registros y adjuntos | ⬜ siguiente etapa |
-| Exportación con información clínica y archivos | ⬜ |
+| Respaldos restauran registros y adjuntos | ✅ |
+| Exportación con información clínica y archivos | ✅ |
 | No hay secretos expuestos | ✅ |
 | Flujos principales en PC y celular | 🟡 capturas en navegador real a 1366 px y 390 px; falta prueba en su equipo |

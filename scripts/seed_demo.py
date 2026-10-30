@@ -76,6 +76,17 @@ def main():
                    " VALUES (?,?,?,?,?,?,?)", (new_id(), pids[1], "Penicilina", "Urticaria generalizada", "moderada", owner, utcnow()))
         db.execute("UPDATE patients SET allergy_status = 'con_alergias', clinical_alerts = 'Anticoagulado (demo)' WHERE id = ?", (pids[1],))
         db.execute("UPDATE patients SET allergy_status = 'sin_alergias_conocidas' WHERE id IN (?, ?)", (pids[0], pids[2]))
+        for cat, desc, when in [("personal", "Diabetes mellitus tipo 2 (dato ficticio)", "2015"), ("quirurgico", "Colecistectomía laparoscópica", "2018"),
+                                ("habito", "Alcohol: suspendido desde 2020 (dato ficticio)", None),
+                                ("procedimiento", "Endoscopia alta con ligadura de várices (dato ficticio)", "2024")]:
+            db.execute("INSERT INTO patient_history(id, patient_id, category, description, when_text, recorded_by, recorded_at) VALUES (?,?,?,?,?,?,?)",
+                       (new_id(), pids[1], cat, desc, when, owner, utcnow()))
+        for name, dose, freq, src in [("Propranolol", "20 mg", "cada 12 horas", "otro_medico"), ("Metformina", "850 mg", "cada 12 horas", "referido_paciente")]:
+            db.execute("INSERT INTO patient_medications(id, patient_id, name, dose, frequency, route, source, recorded_by, recorded_at)"
+                       " VALUES (?,?,?,?,?,?,?,?,?)", (new_id(), pids[1], name, dose, freq, "oral", src, owner, utcnow()))
+        for desc, onset in [("Cirrosis hepática compensada (ficticio)", "2023"), ("Várices esofágicas en profilaxis (ficticio)", "2024")]:
+            db.execute("INSERT INTO patient_problems(id, patient_id, description, onset_text, recorded_by, recorded_at) VALUES (?,?,?,?,?,?)",
+                       (new_id(), pids[1], desc, onset, owner, utcnow()))
         today = datetime.now(tz).date()
         slots = [(pids[0], time(8, 0), 40, "primera_vez", "confirmada"), (pids[1], time(9, 0), 20, "seguimiento", "solicitada"),
                  (pids[2], time(9, 30), 60, "procedimiento", "solicitada"), (pids[3], time(11, 0), 20, "seguimiento", "solicitada")]

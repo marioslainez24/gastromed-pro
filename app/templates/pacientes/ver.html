@@ -33,6 +33,7 @@
 <div class="cols">
   <div class="col-main">
     {% if can('clinico.ver') %}
+    {% include "pacientes/_clinico.html" %}
     <section class="card">
       <h2>Historia cronológica</h2>
       {% set items = [] %}

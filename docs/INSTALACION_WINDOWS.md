@@ -44,7 +44,7 @@ Para detenerla: vuelva a la ventana negra y pulse `Ctrl + C`.
 ```
 python -m pytest -q
 ```
-Debe terminar con `20 passed`.
+Debe terminar con `38 passed`.
 
 ## Qué probar
 1. Agenda → «Registrar llegada» en una cita → «Iniciar consulta» → escriba la nota (se guarda sola) → «Finalizar…».

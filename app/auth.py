@@ -11,6 +11,12 @@ from .security import (SESSION_COOKIE, audit, client_ip, create_session, dummy_v
 
 bp = Blueprint("auth", __name__)
 LOGIN_CSRF_COOKIE = "gm_login_csrf"
+MFA_COOKIE = "gm_mfa"
+
+
+def _h(tok: str) -> str:
+    import hashlib
+    return hashlib.sha256(tok.encode()).hexdigest()
 
 
 def _safe_next(target: str | None) -> str:
@@ -65,6 +71,15 @@ def login():
             audit("inicio_sesion_exitoso" if ok else "inicio_sesion_fallido", "usuario", user["id"] if user else None,
                   {"motivo": "bloqueado" if locked else ("limite_ip" if ip_fails >= cfg.LOGIN_IP_LIMIT_PER_15MIN else None)}
                   if not ok else None, db=db, user_id=user["id"] if user else None, org_id=user["org_id"] if user else None)
+        if ok and user["mfa_enabled"]:
+            tok = secrets.token_urlsafe(32)
+            with write_tx(db):
+                db.execute("INSERT INTO mfa_challenges(token_hash, user_id, next_url, created_at, expires_at) VALUES (?,?,?,?,?)",
+                           (_h(tok), user["id"], _safe_next(request.args.get("next")), utcnow(),
+                            (now + timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")))
+            resp = make_response(redirect(url_for("auth.mfa_verify")))
+            resp.set_cookie(MFA_COOKIE, tok, httponly=True, secure=cfg.COOKIE_SECURE, samesite="Strict", max_age=300, path="/ingresar")
+            return resp
         if ok:
             token = create_session(user["id"])
             resp = make_response(redirect(_safe_next(request.args.get("next"))))
@@ -82,6 +97,41 @@ def login():
     resp.set_cookie(LOGIN_CSRF_COOKIE, tok, httponly=True, secure=cfg.COOKIE_SECURE, samesite="Strict",
                     max_age=3600, path="/ingresar")
     return resp
+
+
+@bp.route("/ingresar/verificacion", methods=["GET", "POST"])
+def mfa_verify():
+    """Segundo paso del inicio de sesión: código de 6 dígitos de la aplicación autenticadora."""
+    from .crypto import data_fernet, totp_verify
+    cfg = current_app.config["GM"]
+    tok = request.cookies.get(MFA_COOKIE, "")
+    db = get_db()
+    ch = db.execute("SELECT * FROM mfa_challenges WHERE token_hash = ?", (_h(tok),)).fetchone() if tok else None
+    now = datetime.now(timezone.utc)
+    if not ch or ch["used_at"] or _parse(ch["expires_at"]) < now or ch["attempts"] >= 5:
+        return redirect(url_for("auth.login"))
+    error = None
+    if request.method == "POST":
+        user = db.execute("SELECT * FROM users WHERE id = ?", (ch["user_id"],)).fetchone()
+        secret = data_fernet().decrypt(user["mfa_secret_enc"].encode()).decode()
+        counter = totp_verify(secret, request.form.get("code", ""), user["mfa_last_counter"])
+        with write_tx(db):
+            if counter is None or not user["active"]:
+                db.execute("UPDATE mfa_challenges SET attempts = attempts + 1 WHERE token_hash = ?", (ch["token_hash"],))
+                audit("mfa_fallido", "usuario", user["id"], db=db, user_id=user["id"], org_id=user["org_id"])
+            else:
+                db.execute("UPDATE mfa_challenges SET used_at = ? WHERE token_hash = ?", (utcnow(), ch["token_hash"]))
+                db.execute("UPDATE users SET mfa_last_counter = ? WHERE id = ?", (counter, user["id"]))
+                audit("mfa_exitoso", "usuario", user["id"], db=db, user_id=user["id"], org_id=user["org_id"])
+        if counter is not None and user["active"]:
+            token = create_session(user["id"])
+            resp = make_response(redirect(ch["next_url"] or url_for("agenda.day")))
+            resp.set_cookie(SESSION_COOKIE, token, httponly=True, secure=cfg.COOKIE_SECURE, samesite="Lax",
+                            max_age=cfg.SESSION_ABSOLUTE_HOURS * 3600, path="/")
+            resp.delete_cookie(MFA_COOKIE, path="/ingresar")
+            return resp
+        error = "Código incorrecto o ya utilizado. Espere el siguiente código e intente de nuevo."
+    return render_template("auth/mfa.html", error=error), 401 if error else 200
 
 
 @bp.route("/salir", methods=["POST"])

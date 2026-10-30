@@ -77,7 +77,9 @@ def users():
     roles = db.execute("SELECT * FROM roles WHERE org_id = ? ORDER BY name", (g.user["org_id"],)).fetchall()
     perms = {r["id"]: {x["permission"] for x in db.execute("SELECT permission FROM role_permissions WHERE role_id = ?", (r["id"],))}
              for r in roles}
-    return render_template("ajustes/usuarios.html", rows=rows, roles=roles, perms=perms, PERMISSIONS=PERMISSIONS)
+    s = db.execute("SELECT require_mfa FROM clinic_settings WHERE org_id = ?", (g.user["org_id"],)).fetchone()
+    return render_template("ajustes/usuarios.html", rows=rows, roles=roles, perms=perms, PERMISSIONS=PERMISSIONS,
+                           require_mfa=bool(s["require_mfa"]))
 
 
 @bp.route("/auditoria")
@@ -88,3 +90,128 @@ def audit_log():
                       " WHERE a.org_id = ? ORDER BY a.seq DESC LIMIT 200", (g.user["org_id"],)).fetchall()
     ok, broken = verify_audit_chain(db)
     return render_template("ajustes/auditoria.html", rows=rows, chain_ok=ok, broken=broken)
+
+
+# ---------------------------------------------------------------------------
+# Gestión de usuarios (alta, rol, desactivación, contraseña temporal, MFA)
+# ---------------------------------------------------------------------------
+import re as _re
+import secrets as _secrets
+
+from .db import new_id
+from .security import hash_password
+
+
+def _temp_password() -> str:
+    # 16 caracteres con mayúsculas, minúsculas y dígitos; se muestra una sola vez.
+    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"
+    while True:
+        p = "".join(_secrets.choice(alphabet) for _ in range(16))
+        if any(c.isdigit() for c in p) and any(c.islower() for c in p) and any(c.isupper() for c in p):
+            return p
+
+
+def _get_user(user_id):
+    u = get_db().execute("SELECT * FROM users WHERE id = ? AND org_id = ?", (user_id, g.user["org_id"])).fetchone()
+    if not u:
+        abort(404)
+    return u
+
+
+def _owners_active(db, exclude=None):
+    return db.execute("SELECT COUNT(*) c FROM users u JOIN roles r ON r.id = u.role_id WHERE u.org_id = ? AND u.active = 1"
+                      " AND r.code = 'propietario' AND u.id <> COALESCE(?, '')", (g.user["org_id"], exclude)).fetchone()["c"]
+
+
+@bp.route("/usuarios/nuevo", methods=["POST"])
+@require("usuarios.gestionar")
+def user_create():
+    db = get_db()
+    email = (request.form.get("email") or "").strip().lower()[:200]
+    name = (request.form.get("full_name") or "").strip()[:120]
+    role = db.execute("SELECT * FROM roles WHERE id = ? AND org_id = ?", (request.form.get("role_id"), g.user["org_id"])).fetchone()
+    if not _re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email) or not name or not role:
+        flash("Complete nombre, correo válido y rol.", "error")
+        return redirect(url_for("settings.users"))
+    if db.execute("SELECT 1 FROM users WHERE email = ?", (email,)).fetchone():
+        flash("Ya existe un usuario con ese correo.", "error")
+        return redirect(url_for("settings.users"))
+    temp = _temp_password()
+    uid = new_id()
+    site = db.execute("SELECT id FROM sites WHERE org_id = ? ORDER BY created_at LIMIT 1", (g.user["org_id"],)).fetchone()
+    with write_tx(db):
+        db.execute("INSERT INTO users(id, org_id, email, full_name, password_hash, role_id, is_practitioner, must_change_password, created_at)"
+                   " VALUES (?,?,?,?,?,?,?,1,?)", (uid, g.user["org_id"], email, name, hash_password(temp), role["id"],
+                                                   int(request.form.get("is_practitioner") == "1"), utcnow()))
+        db.execute("INSERT INTO user_sites(user_id, site_id) VALUES (?,?)", (uid, site["id"]))
+        audit("usuario_creado", "usuario", uid, {"rol": role["code"]}, db=db)
+    return render_template("ajustes/clave_temporal.html", email=email, name=name, temp=temp)
+
+
+@bp.route("/usuarios/<user_id>/editar", methods=["POST"])
+@require("usuarios.gestionar")
+def user_update(user_id):
+    u = _get_user(user_id)
+    db = get_db()
+    role = db.execute("SELECT * FROM roles WHERE id = ? AND org_id = ?", (request.form.get("role_id"), g.user["org_id"])).fetchone()
+    if not role:
+        abort(400)
+    if role["code"] != "propietario" and _owners_active(db, exclude=u["id"]) == 0:
+        flash("Debe quedar al menos un propietario activo.", "error")
+        return redirect(url_for("settings.users"))
+    with write_tx(db):
+        db.execute("UPDATE users SET role_id = ?, is_practitioner = ?, version = version + 1 WHERE id = ?",
+                   (role["id"], int(request.form.get("is_practitioner") == "1"), u["id"]))
+        audit("usuario_editado", "usuario", u["id"], {"rol": role["code"]}, db=db)
+    flash("Usuario actualizado.", "ok")
+    return redirect(url_for("settings.users"))
+
+
+@bp.route("/usuarios/<user_id>/estado", methods=["POST"])
+@require("usuarios.gestionar")
+def user_toggle(user_id):
+    u = _get_user(user_id)
+    db = get_db()
+    activate = request.form.get("active") == "1"
+    if not activate and (u["id"] == g.user["id"] or _owners_active(db, exclude=u["id"]) == 0):
+        flash("No puede desactivar su propio usuario ni al último propietario activo.", "error")
+        return redirect(url_for("settings.users"))
+    with write_tx(db):
+        db.execute("UPDATE users SET active = ?, deactivated_at = ? WHERE id = ?", (int(activate), None if activate else utcnow(), u["id"]))
+        if not activate:
+            db.execute("UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL", (utcnow(), u["id"]))
+        audit("usuario_activado" if activate else "usuario_desactivado", "usuario", u["id"], db=db)
+    flash("Usuario reactivado." if activate else "Usuario desactivado; sus sesiones se cerraron y sus registros conservan la autoría.", "ok")
+    return redirect(url_for("settings.users"))
+
+
+@bp.route("/usuarios/<user_id>/restablecer", methods=["POST"])
+@require("usuarios.gestionar")
+def user_reset(user_id):
+    u = _get_user(user_id)
+    db = get_db()
+    temp = _temp_password()
+    reset_mfa = request.form.get("reset_mfa") == "1"
+    with write_tx(db):
+        db.execute("UPDATE users SET password_hash = ?, must_change_password = 1, failed_logins = 0, locked_until = NULL WHERE id = ?",
+                   (hash_password(temp), u["id"]))
+        if reset_mfa:
+            db.execute("UPDATE users SET mfa_enabled = 0, mfa_secret_enc = NULL, mfa_last_counter = 0 WHERE id = ?", (u["id"],))
+        db.execute("UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL", (utcnow(), u["id"]))
+        audit("usuario_restablecido", "usuario", u["id"], {"mfa_reiniciado": reset_mfa}, db=db)
+    return render_template("ajustes/clave_temporal.html", email=u["email"], name=u["full_name"], temp=temp)
+
+
+@bp.route("/seguridad", methods=["POST"])
+@require("ajustes.editar")
+def security_settings():
+    db = get_db()
+    require_mfa = int(request.form.get("require_mfa") == "1")
+    if require_mfa and not g.user["mfa_enabled"]:
+        flash("Active primero su propia verificación en dos pasos (Mi cuenta) antes de exigirla a todos.", "error")
+        return redirect(url_for("settings.users"))
+    with write_tx(db):
+        db.execute("UPDATE clinic_settings SET require_mfa = ?, version = version + 1 WHERE org_id = ?", (require_mfa, g.user["org_id"]))
+        audit("politica_mfa", "ajustes", g.user["org_id"], {"obligatoria": bool(require_mfa)}, db=db)
+    flash("Política de verificación en dos pasos actualizada.", "ok")
+    return redirect(url_for("settings.users"))

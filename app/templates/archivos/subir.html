@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Agregar estudio{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Agregar estudio · {{ p.first_names }} {{ p.last_names }}</h1><span class="pill mono">{{ p.mrn }}</span></div>
+{% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form method="post" enctype="multipart/form-data" class="card narrow form-grid" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="patient_id" value="{{ p.id }}">
+  <div class="confirm-patient">Este archivo se guardará en el expediente de <b>{{ p.first_names }} {{ p.last_names }}</b> ({{ p.mrn }}, {{ age(p.birth_date) }}). Verifique que sea el paciente correcto.</div>
+  <label class="field">Archivo (PDF, JPG, PNG o HEIC; máximo 20 MB)
+    <input type="file" name="archivo" required accept="application/pdf,image/jpeg,image/png,image/heic,.heic">
+  </label>
+  <p class="muted small">En el celular puede elegir «Tomar foto» para fotografiar el estudio.</p>
+  <div class="grid2">
+    <label class="field">Categoría
+      <select name="category" required>{% for k, v in categories.items() %}<option value="{{ k }}" {% if form.get('category') == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+    </label>
+    <label class="field">Título<input name="title" required maxlength="160" value="{{ form.get('title', '') }}" placeholder="Ej.: Pruebas hepáticas"></label>
+    <label class="field">Fecha del estudio<input type="date" name="study_date" value="{{ form.get('study_date', '') }}"></label>
+    <label class="field">Institución / laboratorio<input name="institution" maxlength="160" value="{{ form.get('institution', '') }}"></label>
+  </div>
+  <div class="actions"><button class="btn btn-primary" type="submit">Guardar estudio</button> <a class="btn btn-quiet" href="{{ url_for('patients.view', patient_id=p.id) }}#archivos">Cancelar</a></div>
+  <p class="muted small">El archivo se valida por su contenido, se cifra y solo pueden verlo usuarios con permiso clínico. Los valores de laboratorio estructurados y gráficas de tendencia llegan en la Fase 2.</p>
+</form>
+{% endblock %}

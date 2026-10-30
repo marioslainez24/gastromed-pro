@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Verificación en dos pasos{% endblock %}
+{% block main_class %}login-wrap{% endblock %}
+{% block content %}
+<section class="login-card">
+  <div class="login-brand">
+    <svg class="brand-mark lg" viewBox="0 0 32 32" aria-hidden="true"><use href="{{ url_for('static', filename='icons/sprite.svg') }}#logo"/></svg>
+    <h1>Verificación</h1>
+    <p class="muted">Escriba el código de 6 dígitos de su aplicación autenticadora.</p>
+  </div>
+  {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" class="stack">
+    <label>Código
+      <input name="code" inputmode="numeric" pattern="[0-9 ]{6,7}" maxlength="7" autocomplete="one-time-code" required autofocus class="code-input">
+    </label>
+    <button class="btn btn-primary w100" type="submit">Verificar</button>
+  </form>
+  <p class="small muted">¿Perdió el celular? Pida al administrador que restablezca su acceso.</p>
+</section>
+{% endblock %}
