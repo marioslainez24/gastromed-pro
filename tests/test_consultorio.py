@@ -66,4 +66,4 @@ def test_lanzadores_windows_bien_formados():
         assert b"\r\n" in raw and b"\n" not in raw.replace(b"\r\n", b""), f"{f.name}: debe usar CRLF"
     ps = (ROOT / "windows" / "instalar.ps1").read_bytes()
     assert ps.startswith(b"\xef\xbb\xbf"), "instalar.ps1 necesita BOM UTF-8 para PowerShell 5.1"
-    assert b"requirements-dev.txt" in ps and b"tzdata" in (ROOT / "requirements.txt").read_bytes()
+    assert b"requirements-dev.txt" in ps and b"requirements.txt" in ps and b"tzdata" in (ROOT / "requirements.txt").read_bytes()

@@ -6,7 +6,7 @@ from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.3.0"
+APP_VERSION = "0.3.1"
 
 
 def create_app(config: Config | None = None) -> Flask:

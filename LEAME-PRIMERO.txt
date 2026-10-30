@@ -1,14 +1,22 @@
-﻿GASTROMED PRO 0.3.0 - LEAME PRIMERO
-====================================
+﻿GASTROMED PRO 0.3.1 - INSTALACION
+=================================
 
-PARA INSTALAR EN SU PC (Windows 11):
-  1. Clic derecho en el ZIP > Propiedades > marcar "Desbloquear" > Aceptar.
-  2. Extraer todo.
-  3. Doble clic en INSTALAR.bat y responder las preguntas.
+1. Clic derecho en el ZIP > Propiedades > marcar "Desbloquear" > Aceptar.
+2. Clic derecho en el ZIP > Extraer todo > Extraer.
+3. Abra la carpeta extraida y haga doble clic en INSTALAR.bat.
+   Si aparece "Windows protegio su PC": Mas informacion > Ejecutar de todas formas.
+4. Responda las preguntas (su correo y una contrasena de 12 o mas caracteres
+   con mayusculas, minusculas y numeros).
 
-Guia completa con fotos de cada paso: docs\INSTALACION_WINDOWS.md
-(abrala con el Bloc de notas o cualquier navegador).
+Necesita internet solo durante la instalacion (unos 10 minutos).
 
-Todo se guarda en C:\GastroMed de esta PC.
-Respaldo automatico diario a las 21:00.
-Use primero el acceso "GastroMed Pro - DEMOSTRACION" con pacientes ficticios.
+DESPUES DE INSTALAR
+- Doble clic en "GastroMed Pro" (escritorio). NO cierre la ventana negra
+  mientras use el sistema.
+- Para practicar con pacientes ficticios: "GastroMed Pro - DEMOSTRACION".
+- En el escritorio queda un archivo de CLAVES: copielo a una USB, guardela en
+  lugar seguro y borre el archivo del escritorio. Sin esas claves no se pueden
+  abrir los respaldos.
+
+Todo se guarda en C:\GastroMed de esta PC. Respaldo automatico diario 21:00.
+Si algo falla, tome una foto de la pantalla y compartala.

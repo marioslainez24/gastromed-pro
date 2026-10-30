@@ -91,7 +91,9 @@ Ok "Programa copiado en $AppDir"
 Paso 4 "Instalando componentes (requiere internet; puede tardar unos minutos)"
 if (-not (Test-Path $VenvPy)) { & $Python -m venv (Join-Path $AppDir ".venv"); if ($LASTEXITCODE -ne 0) { Falla "No se pudo crear el entorno de Python." } }
 & $VenvPy -m pip install --upgrade pip --quiet --disable-pip-version-check
-& $VenvPy -m pip install -r (Join-Path $AppDir "requirements-dev.txt") --quiet --disable-pip-version-check
+$TieneTests = Test-Path (Join-Path $AppDir "tests")
+$Req = if ($TieneTests) { "requirements-dev.txt" } else { "requirements.txt" }   # paquete sin extras: solo lo necesario
+& $VenvPy -m pip install -r (Join-Path $AppDir $Req) --quiet --disable-pip-version-check
 if ($LASTEXITCODE -ne 0) { Falla "No se pudieron instalar los componentes. Revise la conexion a internet y ejecute de nuevo INSTALAR.bat." }
 Ok "Componentes instalados"
 
@@ -110,14 +112,20 @@ icacls $BackupDir /inheritance:r /grant:r "${yo}:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F
 Ok "Permisos de carpeta restringidos a $yo"
 
 # ---------------------------------------------------------------- 6. Comprobacion
-Paso 6 "Comprobando el programa (pruebas automaticas, ~1 minuto)"
-Remove-Item Env:GASTROMED_ENV_FILE -ErrorAction SilentlyContinue   # las pruebas usan datos temporales, nunca los reales
+Paso 6 "Comprobando el programa"
 Push-Location $AppDir
-& $VenvPy -m pytest -q -p no:cacheprovider tests
+if ($TieneTests) {
+    Remove-Item Env:GASTROMED_ENV_FILE -ErrorAction SilentlyContinue   # las pruebas usan datos temporales, nunca los reales
+    & $VenvPy -m pytest -q -p no:cacheprovider tests
+} else {
+    # Paquete sin extras: comprobacion rapida de que el programa arranca con su configuracion real
+    $env:GASTROMED_ENV_FILE = $EnvFile
+    & $VenvPy -c "from app import create_app; a = create_app(); print('      Programa listo, modo', a.config['GM'].ENV)"
+}
 $code = $LASTEXITCODE
 Pop-Location
-if ($code -ne 0) { Aviso "Algunas pruebas fallaron en esta PC. El sistema puede tener problemas: comparta una foto de esta pantalla." }
-else { Ok "Todas las pruebas pasaron en esta PC" }
+if ($code -ne 0) { Aviso "La comprobacion fallo en esta PC. El sistema puede tener problemas: comparta una foto de esta pantalla." }
+else { Ok "Comprobacion correcta" }
 
 # ---------------------------------------------------------------- 7. Accesos directos
 Paso 7 "Creando accesos directos"
