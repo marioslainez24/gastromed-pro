@@ -128,8 +128,20 @@ def main(exe):
             proc.kill()
         log.close()
         print("---- salida del ejecutable ----")
-        print((root.parent / "exe.log").read_text(encoding="utf-8", errors="replace")[-4000:])
+        tail = (root.parent / "exe.log").read_text(encoding="utf-8", errors="replace")[-4000:]
+        print(tail)
+        global EXE_TAIL
+        EXE_TAIL = tail
 
+
+EXE_TAIL = ""
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    try:
+        main(sys.argv[1])
+    except BaseException:
+        import traceback
+        msg = traceback.format_exc()[-2500:] + "\n---- exe ----\n" + EXE_TAIL[-2500:]
+        # Anotación visible por la API de GitHub (los registros no se pueden descargar desde el entorno de desarrollo).
+        print("::error title=Prueba del ejecutable::" + msg.replace("%", "%25").replace("\r", "").replace("\n", "%0A"), flush=True)
+        raise
