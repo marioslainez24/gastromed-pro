@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # para publicar el .exe en «Releases»
 
 jobs:
   windows:
@@ -40,3 +40,13 @@ jobs:
           name: GastroMedPro-exe
           path: build/dist/GastroMedPro.exe
           retention-days: 30
+
+      - name: Publicar versión descargable (Releases)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(python -c "import re;print(re.search(r'APP_VERSION = \"([^\"]+)\"', open('app/__init__.py', encoding='utf-8').read()).group(1))")
+          TAG="v${VER}-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" build/dist/GastroMedPro.exe --title "GastroMed Pro ${VER} (compilación ${GITHUB_RUN_NUMBER})" \
+            --notes "Ejecutable para Windows probado automáticamente en Windows: pruebas del programa y flujo completo (configuración inicial, paciente, nota, receta PDF, respaldo). Descargue GastroMedPro.exe."
