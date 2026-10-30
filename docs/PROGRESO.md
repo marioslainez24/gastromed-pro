@@ -2,6 +2,14 @@
 
 Este archivo permite continuar el trabajo en futuras conversaciones. Léalo primero.
 
+## Etapa 4 · 30-oct-2026 · Ejecutable único para Windows (v0.4.0)
+
+**Decisión del Dr. Lainez:** un solo `GastroMedPro.exe`, sin instalar otros programas, para usar en su clínica.
+
+- `gastromed_exe.py`: primer arranque crea `C:\GastroMed` y las claves (copia en el escritorio), configuración inicial en el navegador (solo desde la misma PC), servidor waitress en el puerto 8000 (PC + Wi-Fi), respaldo automático cada 24 h en segundo plano, abre el navegador.
+- Construcción en Windows real con GitHub Actions (repositorio privado `marioslainez24/gastromed-pro`, flujo `construir-exe.yml`): pruebas automáticas en Windows → PyInstaller → prueba de humo del .exe (configuración, ingreso, paciente, nota, receta PDF, respaldo) → artefacto descargable.
+- 45 pruebas automáticas.
+
 ## Etapa 3 · 30-oct-2026 · Servidor privado en la PC del consultorio (v0.3.0)
 
 **Decisión del Dr. Lainez:** todo se guarda en su PC con Windows 11, que será el servidor privado. Se descarta Vultr por ahora.
