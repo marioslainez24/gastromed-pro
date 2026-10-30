@@ -219,6 +219,7 @@ details > summary { cursor: pointer; }
 /* Inicio de sesión */
 .login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
 .login-card { width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 2rem; box-shadow: var(--shadow); }
+.setup-card { max-width: 480px; }
 .login-brand { text-align: center; margin-bottom: 1.25rem; } .login-brand h1 { margin-top: .4rem; } .login-brand b { color: var(--accent); }
 .err-code { font-size: 3rem; font-weight: 800; color: var(--accent); margin: 0; }
 

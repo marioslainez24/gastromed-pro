@@ -1,12 +1,12 @@
 """GastroMed Pro — aplicación Flask."""
-from flask import Flask, g, render_template, request
+from flask import Flask, g, redirect, render_template, request, url_for
 
 from . import util
 from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.3.1"
+APP_VERSION = "0.4.0"
 
 
 def create_app(config: Config | None = None) -> Flask:
@@ -35,15 +35,18 @@ def create_app(config: Config | None = None) -> Flask:
     from .views_record import bp as record_bp
     from .views_files import bp as files_bp
     from .views_account import bp as account_bp
-    for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp, record_bp, files_bp, account_bp):
+    from .views_setup import bp as setup_bp, needs_setup
+    for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp, record_bp, files_bp, account_bp, setup_bp):
         app.register_blueprint(bp)
 
     app.teardown_appcontext(close_db)
 
     @app.before_request
     def _before():
-        if request.endpoint == "static":
+        if request.endpoint in ("static", "auth.manifest", "auth.service_worker"):
             return
+        if request.endpoint != "setup.first_run" and needs_setup():
+            return redirect(url_for("setup.first_run"))
         load_current_user()
         check_csrf()
         return enforce_account_requirements()

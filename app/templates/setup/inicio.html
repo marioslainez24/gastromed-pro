@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Configuración inicial{% endblock %}
+{% block main_class %}login-wrap{% endblock %}
+{% block content %}
+<section class="login-card setup-card">
+  <div class="login-brand">
+    <svg class="brand-mark lg" viewBox="0 0 32 32" aria-hidden="true"><use href="{{ url_for('static', filename='icons/sprite.svg') }}#logo"/></svg>
+    <h1>Bienvenido a GastroMed <b>Pro</b></h1>
+    <p class="muted">Configuración inicial · solo se hace una vez</p>
+  </div>
+  {% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+  <form method="post" class="stack">
+    <input type="hidden" name="setup_csrf" value="{{ setup_csrf }}">
+    <label>Nombre del consultorio<input name="clinic" required maxlength="160" value="{{ form.get('clinic') or 'Consultorio Dr. Mario Lainez' }}"></label>
+    <label>Su nombre profesional (aparece en las recetas)<input name="name" required maxlength="120" value="{{ form.get('name') or 'Dr. Mario Lainez' }}"></label>
+    <label>Especialidad<input name="specialty" maxlength="160" value="{{ form.get('specialty') or 'Gastroenterología, Hepatología y Endoscopia' }}"></label>
+    <label>Correo (será su usuario)<input type="email" name="email" required maxlength="200" value="{{ form.get('email', '') }}" autocomplete="username"></label>
+    <label>Contraseña<input type="password" name="password" required minlength="12" autocomplete="new-password"></label>
+    <label>Repita la contraseña<input type="password" name="password2" required minlength="12" autocomplete="new-password"></label>
+    <p class="muted small">Mínimo 12 caracteres con mayúsculas, minúsculas y números. Una frase larga es más fácil de recordar.</p>
+    <button class="btn btn-primary w100" type="submit">Crear mi cuenta</button>
+  </form>
+</section>
+{% endblock %}

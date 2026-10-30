@@ -7,3 +7,6 @@ respaldos/
 __pycache__/
 .pytest_cache/
 evidencia/capturas/*.png
+
+build/build/
+build/dist/

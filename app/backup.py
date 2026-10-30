@@ -175,3 +175,58 @@ def export_all(db_path: str, files_dir: str, data_key: bytes, out_zip: str) -> P
                    "ADVERTENCIA: este archivo NO está cifrado y contiene información clínica. Guárdelo en un medio protegido.\n")
     conn.close()
     return out
+
+
+# ---------------------------------------------------------------------------
+# Respaldo automático (usado por el programa .exe en segundo plano y por scripts/respaldo.py)
+# ---------------------------------------------------------------------------
+def prune(folder: Path, keep: int) -> int:
+    """Conserva solo los últimos `keep` respaldos (no toca otros archivos)."""
+    olds = sorted(folder.glob("gastromed-*.gmbak"))[:-keep] if keep > 0 else []
+    for f in olds:
+        f.unlink()
+    return len(olds)
+
+
+def last_backup_age_hours(backup_dir: str) -> float | None:
+    files = sorted(Path(backup_dir).glob("gastromed-*.gmbak")) if Path(backup_dir).exists() else []
+    if not files:
+        return None
+    return (datetime.now().timestamp() - files[-1].stat().st_mtime) / 3600
+
+
+def run_automatic(cfg, backup_key: bytes, data_key: bytes, app_version: str) -> tuple[bool, list[str]]:
+    """Crear → verificar restaurando → copiar a disco externo → conservar los últimos N. Devuelve (ok, mensajes)."""
+    import shutil
+    msgs = []
+    log = Path(cfg.DATABASE_PATH).parent / "respaldo.log"
+
+    def note(m):
+        msgs.append(m)
+        with log.open("a", encoding="utf-8") as fh:
+            fh.write(f"{datetime.now():%Y-%m-%d %H:%M:%S}  {m}\n")
+
+    try:
+        path = create_backup(cfg.DATABASE_PATH, cfg.FILES_DIR, cfg.BACKUP_DIR, backup_key, app_version)
+        with tempfile.TemporaryDirectory() as td:
+            report = verify_and_restore(str(path), backup_key, str(Path(td) / "r"), data_key)
+        if not report["ok"]:
+            note(f"ERROR: el respaldo {path.name} no pasó la verificación: {report['errores']}")
+            return False, msgs
+        note(f"OK: {path.name} creado y verificado ({path.stat().st_size / 1024:.0f} KB, "
+             f"{report['conteos']['patients']} pacientes, {report.get('adjuntos_verificados', 0)} adjuntos)")
+        if cfg.BACKUP_COPY_DIR:
+            dest = Path(cfg.BACKUP_COPY_DIR)
+            if dest.exists():
+                shutil.copy2(path, dest / path.name)
+                prune(dest, cfg.BACKUP_KEEP)
+                note(f"OK: copiado a {dest}")
+            else:
+                note(f"ALERTA: no se encontró la carpeta de copia externa {dest} (¿está conectado el disco?)")
+        removed = prune(Path(cfg.BACKUP_DIR), cfg.BACKUP_KEEP)
+        if removed:
+            note(f"Se eliminaron {removed} respaldos antiguos (se conservan los últimos {cfg.BACKUP_KEEP}).")
+        return True, msgs
+    except Exception as e:  # noqa: BLE001
+        note(f"ERROR: {e}")
+        return False, msgs
