@@ -112,7 +112,8 @@ def main(exe):
         assert (root / "datos" / "https-cert.pem").exists()
         print("Flujo principal, endoscopia, recordatorios y https correctos. Esperando respaldo automático…", flush=True)
         for _ in range(60):
-            if list((root / "respaldos").glob("gastromed-*.gmbak")):
+            lg = root / "datos" / "respaldo.log"
+            if list((root / "respaldos").glob("gastromed-*.gmbak")) and lg.exists() and "OK:" in lg.read_text(encoding="utf-8", errors="replace"):
                 break
             time.sleep(2)
         backups = list((root / "respaldos").glob("gastromed-*.gmbak"))
@@ -137,6 +138,10 @@ def main(exe):
 EXE_TAIL = ""
 
 if __name__ == "__main__":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:  # noqa: BLE001
+        pass
     try:
         main(sys.argv[1])
     except BaseException:

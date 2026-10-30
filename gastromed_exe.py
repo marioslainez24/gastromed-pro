@@ -242,7 +242,7 @@ def main():
             print(f"  Desde el celular:  http://{ip}:{PORT}   (mismo Wi-Fi)")
     if https_ok and ips:
         print("    La primera vez el celular dirá «La conexión no es privada»: toque «Configuración")
-        print("    avanzada» → «Continuar». Es normal: el certificado lo creó esta PC, no una empresa externa.")
+        print("    avanzada» y luego «Continuar». Es normal: el certificado lo creó esta PC, no una empresa externa.")
     print(f"  Datos:             {Path(cfg.DATABASE_PATH).parent}")
     print(f"  Respaldos:         {cfg.BACKUP_DIR}  (automático cada 24 h)")
     print("\n  NO CIERRE ESTA VENTANA mientras use el sistema. Para apagarlo, ciérrela.")
