@@ -30,14 +30,20 @@ PERMISSIONS = {
     "ajustes.editar": "Editar configuración de la clínica",
     "usuarios.gestionar": "Gestionar usuarios y roles",
     "auditoria.ver": "Ver bitácora de auditoría",
+    "resultados.registrar": "Registrar resultados de laboratorio",
+    "resultados.revisar": "Revisar y comunicar resultados",
+    "ordenes.emitir": "Emitir órdenes de laboratorio, imagen y endoscopia",
+    "tareas.gestionar": "Crear y completar tareas",
+    "calculadoras.aprobar": "Aprobar calculadoras para uso clínico",
 }
 
 DEFAULT_ROLES = {
     "propietario": ("Médico propietario y administrador", list(PERMISSIONS)),
     "medico": ("Médico colaborador", ["pacientes.ver_admin", "pacientes.editar_admin", "clinico.ver", "clinico.editar",
-                                       "notas.finalizar", "recetas.emitir", "recetas.anular", "agenda.ver", "agenda.editar"]),
-    "enfermeria": ("Enfermería", ["pacientes.ver_admin", "clinico.ver", "agenda.ver"]),
-    "recepcion": ("Recepción", ["pacientes.ver_admin", "pacientes.editar_admin", "agenda.ver", "agenda.editar"]),
+                                       "notas.finalizar", "recetas.emitir", "recetas.anular", "agenda.ver", "agenda.editar",
+                                       "resultados.registrar", "resultados.revisar", "ordenes.emitir", "tareas.gestionar"]),
+    "enfermeria": ("Enfermería", ["pacientes.ver_admin", "clinico.ver", "agenda.ver", "resultados.registrar", "tareas.gestionar"]),
+    "recepcion": ("Recepción", ["pacientes.ver_admin", "pacientes.editar_admin", "agenda.ver", "agenda.editar", "tareas.gestionar"]),
     "caja": ("Caja y contabilidad", ["pacientes.ver_admin", "agenda.ver"]),
 }
 

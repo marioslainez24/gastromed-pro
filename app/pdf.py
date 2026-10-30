@@ -116,3 +116,66 @@ def prescription_pdf(r, items, p, s, size: str, allergies) -> bytes:
 
     doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
     return buf.getvalue()
+
+
+def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str) -> bytes:
+    """Solicitud de laboratorio, imagen o endoscopia."""
+    buf = io.BytesIO()
+    pagesize = LETTER if size == "carta" else A4
+    doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm,
+                            bottomMargin=22 * mm, title=f"Solicitud de {type_label}", author=s["doctor_display_name"],
+                            creator="GastroMed Pro")
+    tz = ZoneInfo(s["timezone"])
+    issued = parse_utc(o["created_at"]).astimezone(tz)
+    width = pagesize[0] - 36 * mm
+    story = [Paragraph(_e(s["doctor_display_name"]), ST["doctor"])]
+    sub = [x for x in [s["specialty"], f"Colegiación: {s['license_number']}" if s["license_number"] else None] if x]
+    if sub:
+        story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
+    contact = [x for x in [s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
+    if contact:
+        story.append(Paragraph(_e(" · ".join(contact)), ST["sub"]))
+    story.append(Spacer(1, 4 * mm))
+    head = Table([[Paragraph(f"SOLICITUD DE {_e(type_label.upper())}", ST["title"]),
+                   Paragraph(f"Fecha: {issued:%d/%m/%Y}<br/>Folio: {o['id'][:8].upper()}<br/>Prioridad: {_e(priority_label)}", ST["subr"])]],
+                 colWidths=[width * 0.6, width * 0.4])
+    head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                              ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+    story.append(head)
+    doc_line = "" if p["document_type"] == "sin_documento" else f" · {_e(p['document_number'])}"
+    pt = Table([[Paragraph(f"<b>Paciente:</b> {_e(p['first_names'])} {_e(p['last_names'])}", ST["body"]),
+                 Paragraph(f"<b>Edad:</b> {_e(age(p['birth_date'], issued.date()))}", ST["body"])],
+                [Paragraph(f"<b>Expediente:</b> {_e(p['mrn'])}{doc_line}", ST["sub"]),
+                 Paragraph(f"<b>Sexo:</b> {_e(label('sex', p['sex']))}", ST["sub"])]], colWidths=[width * 0.7, width * 0.3])
+    pt.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eef4f3")), ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                            ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]))
+    story += [Spacer(1, 3 * mm), pt, Spacer(1, 5 * mm), Paragraph("Estudios solicitados", ST["title"])]
+    for i, it in enumerate(items, 1):
+        story.append(Paragraph(f"{i}. {_e(it['description'])}", ST["body"]))
+    if o["indication"]:
+        story += [Spacer(1, 4 * mm), Paragraph("Indicación clínica / datos relevantes", ST["title"]),
+                  Paragraph(_e(o["indication"]).replace("\n", "<br/>"), ST["body"])]
+    sig = Table([[""], [Paragraph(f"<b>{_e(s['doctor_display_name'])}</b><br/>Firma y sello", ST["sub"])]],
+                colWidths=[70 * mm], rowHeights=[18 * mm, None])
+    sig.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("ALIGN", (0, 1), (0, 1), "CENTER"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+    outer = Table([[sig]], colWidths=[width])
+    outer.setStyle(TableStyle([("ALIGN", (0, 0), (0, 0), "RIGHT")]))
+    story += [Spacer(1, 10 * mm), KeepTogether([outer])]
+    voided = o["status"] == "anulada"
+
+    def on_page(canvas, d):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 7.5)
+        canvas.setFillColor(MUTED)
+        canvas.drawString(18 * mm, 12 * mm, "Generado con GastroMed Pro. Requiere firma manuscrita del médico.")
+        canvas.drawRightString(pagesize[0] - 18 * mm, 12 * mm, f"Página {d.page}")
+        if voided:
+            canvas.setFont("Helvetica-Bold", 64)
+            canvas.setFillColor(colors.Color(0.75, 0.1, 0.1, alpha=0.25))
+            canvas.translate(pagesize[0] / 2, pagesize[1] / 2)
+            canvas.rotate(35)
+            canvas.drawCentredString(0, 0, "ANULADA")
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
+    return buf.getvalue()

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Cálculos · {{ p.first_names }} {{ p.last_names }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1><a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1><span class="pill mono">{{ p.mrn }}</span></div>
+{% include "labs/_ptabs.html" %}
+<div class="btn-row"><a class="btn btn-primary" href="{{ url_for('gi.calc_index', patient_id=p.id) }}">＋ Nuevo cálculo</a></div>
+<section class="card">
+  {% if items %}
+  <ul class="list">{% for it in items %}
+    <li><b>{{ it.calc.name if it.calc else it.r.calc_code }}</b> <span class="muted small">v. {{ it.r.calc_version }}</span> · {{ it.res.texto }}
+      <br><span class="small muted">{{ fmt_dt(it.r.created_at) }} · {{ it.r.full_name }}</span>
+      <details><summary class="small">Datos usados</summary><ul class="small">{% for k, v in it.inp.items() %}<li>{{ k }}: {{ v.valor }} {{ v.unidad }} <span class="muted">({{ v.origen }})</span></li>{% endfor %}</ul></details>
+    </li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Sin cálculos guardados.</p>{% endif %}
+</section>
+{% endblock %}

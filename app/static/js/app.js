@@ -213,6 +213,13 @@
     });
   }
 
+  // ---- Laboratorio: mostrar todas las pruebas del catálogo ------------------
+  $$("[data-show-all-labs]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $$("tr.hidden-row").forEach(function (r) { r.classList.remove("hidden-row"); }); b.remove();
+    });
+  });
+
   // ---- PWA: registro del service worker (solo recursos estáticos) -----------
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(function () {});

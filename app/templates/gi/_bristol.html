@@ -1,0 +1,25 @@
+{# Escala de Bristol: representación gráfica propia (formas simples dibujadas para GastroMed Pro). #}
+{% macro bristol_icon(n) -%}
+<svg class="bristol-icon" viewBox="0 0 80 28" aria-hidden="true">
+{%- if n == 1 -%}<circle cx="12" cy="14" r="6"/><circle cx="28" cy="13" r="5"/><circle cx="43" cy="15" r="6"/><circle cx="58" cy="13" r="5"/><circle cx="71" cy="15" r="4"/>
+{%- elif n == 2 -%}<path d="M6 14c0-6 8-8 14-6 4-4 12-4 16 0 4-4 12-4 16 0 6-2 14 0 14 6s-8 8-14 6c-4 4-12 4-16 0-4 4-12 4-16 0-6 2-14 0-14-6z"/>
+{%- elif n == 3 -%}<rect x="5" y="7" width="70" height="14" rx="7"/><path class="crack" d="M20 8l3 6-3 6M38 8l-3 6 3 6M56 8l3 6-3 6"/>
+{%- elif n == 4 -%}<rect x="5" y="8" width="70" height="12" rx="6"/>
+{%- elif n == 5 -%}<rect x="5" y="8" width="18" height="12" rx="6"/><rect x="29" y="9" width="20" height="11" rx="5.5"/><rect x="55" y="8" width="20" height="12" rx="6"/>
+{%- elif n == 6 -%}<path d="M6 16c2-6 8-8 12-5 3-5 10-5 13 0 4-4 10-3 12 2 4-3 10-2 11 3 4-2 10 0 10 5-3 4-10 4-13 1-4 3-11 3-14 0-4 3-11 3-14 0-4 2-12 1-17-6z"/>
+{%- else -%}<path d="M4 18c8-6 16 2 24-3s16 4 24-1 16 2 24-2v6H4z"/>
+{%- endif -%}
+</svg>
+{%- endmacro %}
+
+{% macro bristol_field(name, value, BRISTOL) -%}
+<fieldset class="bristol" role="radiogroup">
+  <legend class="sr-only">Escala de Bristol</legend>
+  {% for n, desc in BRISTOL %}
+  <label class="bristol-opt"><input type="radio" name="{{ name }}" value="{{ n }}" {% if value|string == n|string %}checked{% endif %}>
+    {{ bristol_icon(n) }}<span><b>Tipo {{ n }}</b> · {{ desc }}</span></label>
+  {% endfor %}
+  <label class="bristol-opt"><input type="radio" name="{{ name }}" value="" {% if not value %}checked{% endif %}><span class="muted">No registrado</span></label>
+</fieldset>
+<p class="muted tiny">Escala de heces de Bristol (Lewis y Heaton, 1997). Ilustraciones y descripciones propias de GastroMed Pro.</p>
+{%- endmacro %}

@@ -2,6 +2,22 @@
 
 Este archivo permite continuar el trabajo en futuras conversaciones. Léalo primero.
 
+## Etapa 5 · 30-oct-2026 · Fase 2 (v0.5.0)
+
+**Qué quedó funcionando**
+- Órdenes de laboratorio, imagen y endoscopia con PDF (carta/A4), prioridad, responsable de revisión y fecha esperada; estados automáticos (solicitada → parcial → recibido), cierre y anulación con motivo.
+- Resultados estructurados con unidad y **rangos del informe del laboratorio** (no se inventan rangos), marca alto/bajo, comparación de las últimas 8 tomas y gráfica de tendencia (SVG propio). Valores inmutables en la base de datos; corrección por anulación.
+- Pendientes: resultados por revisar (con registro de comunicación al paciente), órdenes sin resultado/vencidas, tareas con responsable y vencimiento.
+- 13 formularios de gastroenterología dentro de la nota (bloqueados al finalizarla), escala de Bristol con ilustraciones propias, diario de síntomas con gráficas.
+- 11 calculadoras: Child-Pugh, MELD-Na (OPTN 2016), MELD 3.0 (2021), FIB-4, APRI, Maddrey, Lille, Glasgow-Blatchford, Rockall (clínico y completo), BISAP, IMC. Cada una con fuente, verificación, población, fórmula, redondeo, datos ausentes, límites y casos de referencia calculados a mano. Importan datos del expediente mostrando la fecha. **Requieren aprobación del médico propietario** antes de guardar resultados; resultado guardado con entradas, origen, versión y autor (inmutable).
+- Cuestionarios con licencia (GerdQ, Roma IV, Mayo, Harvey-Bradshaw, etc.) NO incluidos: pendientes de licencia.
+
+**Cómo se comprobó**: 79 pruebas automáticas; navegador real PC y celular sin errores de JavaScript.
+
+**Pendiente de verificar contra fuente primaria**: Lille (término de diferencia de bilirrubina) y regla de diálisis de MELD 3.0 — señalado en la pantalla de revisión.
+
+**Siguiente:** Fase 3 (informes de endoscopia, imágenes, patología, vigilancia).
+
 ## Etapa 4 · 30-oct-2026 · Ejecutable único para Windows (v0.4.0)
 
 **Decisión del Dr. Lainez:** un solo `GastroMedPro.exe`, sin instalar otros programas, para usar en su clínica.

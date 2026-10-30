@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "gi/_bristol.html" import bristol_field %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{{ title }}</h1>
+  <p class="muted small">{{ p.first_names }} {{ p.last_names }} · {{ p.mrn }} · se guarda dentro de la nota en borrador</p></div>
+</div>
+{% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form method="post" class="card stack gi-form" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% if existing %}<input type="hidden" name="version" value="{{ existing.version }}">{% endif %}
+  {% for key, label, kind, options in fields %}
+    {% if kind == 'multi' %}
+      <fieldset class="{{ 'alarm-box' if key == 'signos_alarma' }}"><legend>{{ label }}</legend>
+        <div class="check-grid">{% for v, l in options %}<label class="check"><input type="checkbox" name="{{ key }}" value="{{ v }}" {% if v in data.get(key, []) %}checked{% endif %}> {{ l }}</label>{% endfor %}</div>
+      </fieldset>
+    {% elif kind == 'select' %}
+      <label class="field">{{ label }}<select name="{{ key }}"><option value="">—</option>{% for v, l in options %}<option value="{{ v }}" {% if data.get(key) == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+    {% elif kind == 'bristol' %}
+      <div class="field"><span>{{ label }}</span>{{ bristol_field(key, data.get(key), BRISTOL) }}</div>
+    {% elif kind == 'number' %}
+      <label class="field">{{ label }}<input name="{{ key }}" inputmode="decimal" value="{{ data.get(key, '') }}" class="w-num"></label>
+    {% elif kind == 'textarea' %}
+      <label class="field">{{ label }}<textarea name="{{ key }}" rows="3" maxlength="4000" data-grow>{{ data.get(key, '') }}</textarea></label>
+    {% else %}
+      <label class="field">{{ label }}<input name="{{ key }}" maxlength="4000" value="{{ data.get(key, '') }}"></label>
+    {% endif %}
+  {% endfor %}
+  <div class="actions"><button class="btn btn-primary" type="submit">Guardar en la nota</button> <a class="btn btn-quiet" href="{{ url_for('notes.view', note_id=n.id) }}#formularios">Volver a la nota</a></div>
+  <p class="muted small">Los signos de alarma marcados se muestran resaltados en la nota. El formulario se bloquea al finalizar la nota.</p>
+</form>
+{% endblock %}

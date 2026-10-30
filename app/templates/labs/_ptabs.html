@@ -1,0 +1,6 @@
+<nav class="seg tabs" aria-label="Secciones del paciente">
+  <a href="{{ url_for('patients.view', patient_id=p.id) }}" {% if request.endpoint == 'patients.view' %}aria-current="page"{% endif %}>Expediente</a>
+  <a href="{{ url_for('labs.patient_labs', patient_id=p.id) }}" {% if request.endpoint in ('labs.patient_labs','labs.results_new') %}aria-current="page"{% endif %}>Laboratorio y órdenes</a>
+  <a href="{{ url_for('gi.diary', patient_id=p.id) }}" {% if request.endpoint == 'gi.diary' %}aria-current="page"{% endif %}>Diario de síntomas</a>
+  <a href="{{ url_for('gi.patient_calcs', patient_id=p.id) }}" {% if request.endpoint == 'gi.patient_calcs' %}aria-current="page"{% endif %}>Cálculos</a>
+</nav>

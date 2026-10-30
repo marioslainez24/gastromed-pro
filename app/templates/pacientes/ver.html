@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ p.first_names }} {{ p.last_names }}{% endblock %}
 {% block content %}
+{% if can('clinico.ver') %}{% include "labs/_ptabs.html" %}{% endif %}
 <section class="patient-head card">
   <div class="ph-main">
     <h1>{{ p.first_names }} {{ p.last_names }}</h1>

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Laboratorio · {{ p.first_names }} {{ p.last_names }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1><a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
+  <span class="pill mono">{{ p.mrn }}</span>
+</div>
+{% include "labs/_ptabs.html" %}
+<div class="btn-row">
+  {% if can('resultados.registrar') %}<a class="btn btn-primary" href="{{ url_for('labs.results_new', patient_id=p.id) }}">＋ Registrar resultados</a>{% endif %}
+  {% if can('ordenes.emitir') %}
+  <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='laboratorio') }}">Orden de laboratorio</a>
+  <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='imagen') }}">Orden de imagen</a>
+  <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='endoscopia') }}">Solicitud de endoscopia</a>
+  {% endif %}
+</div>
+
+{% if chart %}
+<section class="card">
+  <div class="row-between"><h2>Tendencia: {{ focus_name }}</h2><a class="small" href="{{ url_for('labs.patient_labs', patient_id=p.id) }}">Cerrar gráfica</a></div>
+  {{ chart }}
+  <p class="muted small">La banda sombreada es el rango de referencia del resultado más reciente. Puntos rojos: fuera de rango.</p>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Resultados (comparación de las últimas tomas)</h2>
+  {% if table %}
+  <div class="table-wrap">
+  <table class="table lab-table">
+    <thead><tr><th scope="col">Prueba</th>{% for d in dates %}<th scope="col" class="num">{{ fmt_birth(d) }}</th>{% endfor %}<th></th></tr></thead>
+    <tbody>
+    {% set ns = namespace(grp='') %}
+    {% for code, t in table.items() %}
+      {% if t.grp != ns.grp %}{% set ns.grp = t.grp %}<tr class="grp-row"><th colspan="{{ dates|length + 2 }}">{{ t.grp }}</th></tr>{% endif %}
+      <tr>
+        <th scope="row">{{ t.name }} <span class="muted small">{{ t.unit or '' }}</span></th>
+        {% for d in dates %}
+          {% set r = t.cells.get(d) %}
+          <td class="num {% if r and r.flag in ('alto','bajo') %}is-out{% endif %}">
+            {% if r %}{{ r.value_text if r.value_num is none else ('%g' % r.value_num) }}{% if r.flag == 'alto' %} ↑{% elif r.flag == 'bajo' %} ↓{% endif %}
+              {% if r.status == 'pendiente_revision' %}<span class="dot-pending" title="Pendiente de revisión médica" aria-label="pendiente de revisión"></span>{% endif %}
+              {% if r.ref_low is not none or r.ref_high is not none %}<br><span class="muted tiny">{{ '%g' % r.ref_low if r.ref_low is not none else '' }}–{{ '%g' % r.ref_high if r.ref_high is not none else '' }}</span>{% endif %}
+            {% else %}<span class="muted">·</span>{% endif %}
+          </td>
+        {% endfor %}
+        <td>{% if t.series|length >= 1 %}<a class="small" href="{{ url_for('labs.patient_labs', patient_id=p.id, prueba=code) }}">Gráfica</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted small">↑/↓ según el rango de referencia del propio laboratorio. <span class="dot-pending"></span> pendiente de revisión médica. Se muestran las 8 fechas más recientes.</p>
+  {% else %}<p class="muted">Sin resultados registrados.</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>Órdenes</h2>
+  {% if orders %}
+  <ul class="list">{% for o in orders %}
+    <li><a class="strong" href="{{ url_for('labs.order_view', order_id=o.id) }}">{{ ORDER_TYPES[o.order_type] }}</a> · {{ fmt_dt(o.created_at, false) }}
+      · <span class="tag {{ 'tag-ok' if o.status in ('resultado_recibido','cerrada') else ('tag-danger' if o.status == 'anulada' else 'tag-warn') }}">{{ ORDER_STATUS[o.status] }}</span>
+      <div class="small muted">{{ o.items }}</div></li>
+  {% endfor %}</ul>
+  {% else %}<p class="muted small">Sin órdenes.</p>{% endif %}
+</section>
+{% endblock %}

@@ -8,6 +8,7 @@ from flask import Blueprint, abort, flash, g, jsonify, redirect, render_template
 from .db import get_db, new_id, utcnow, write_tx
 from .security import audit, require
 from .views_patients import get_patient_or_404
+from .gi_forms import FORMS as GI_FORMS
 
 bp = Blueprint("notes", __name__, url_prefix="/notas")
 
@@ -125,6 +126,7 @@ def new():
 @bp.route("/<note_id>")
 @require("clinico.ver")
 def view(note_id):
+    from .views_gi import note_forms
     n = _get_note(note_id)
     db = get_db()
     p = db.execute("SELECT * FROM patients WHERE id = ?", (n["patient_id"],)).fetchone()
@@ -142,6 +144,9 @@ def view(note_id):
     return render_template("notas/ver.html", n=n, p=p, fields=fields, addenda=addenda, allergies=allergies, editable=editable,
                            sections=TEMPLATES[n["template"]], text_labels=TEXT_FIELDS, vitals=VITALS, bmi=bmi(fields.get("vitales", {})),
                            prior=prior, prior_fields=json.loads(prior["fields"]) if prior else None, prescriptions=prescriptions,
+                           gi_forms=note_forms(db, n["id"]), GI_FORMS=GI_FORMS,
+                           orders=db.execute("SELECT o.*, (SELECT GROUP_CONCAT(description, ', ') FROM order_items i WHERE i.order_id = o.id)"
+                                             " AS items FROM orders o WHERE o.note_id = ? ORDER BY o.created_at", (n["id"],)).fetchall(),
                            errors={})
 
 

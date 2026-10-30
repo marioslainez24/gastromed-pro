@@ -93,6 +93,34 @@
   {% endif %}
 {% endif %}
 
+<section class="card" id="formularios">
+  <h2>Formularios de gastroenterología</h2>
+  {% for f in gi_forms %}
+    <article class="gi-summary">
+      <h3>{{ f.title }}{% if editable %} <a class="small" href="{{ url_for('gi.form_edit', note_id=n.id, form_code=f.code) }}">editar</a>{% endif %}</h3>
+      <dl class="dl small">{% for lab, val in f.summary %}<dt>{{ lab }}</dt><dd class="{{ 'alarm-text' if lab.startswith('Signos de alarma') }}">{{ val }}</dd>{% endfor %}</dl>
+    </article>
+  {% else %}<p class="muted small">Ninguno.</p>{% endfor %}
+  {% if editable %}
+  <details class="mt"><summary>Agregar formulario</summary>
+    <div class="chip-list mt">{% for code, (title, _f) in GI_FORMS.items() %}<a class="chip" href="{{ url_for('gi.form_edit', note_id=n.id, form_code=code) }}">{{ title }}</a>{% endfor %}</div>
+  </details>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Órdenes y cálculos de esta consulta</h2>
+  {% for o in orders %}<p><a href="{{ url_for('labs.order_view', order_id=o.id) }}">{{ {'laboratorio':'Laboratorio','imagen':'Imagen','endoscopia':'Endoscopia'}[o.order_type] }}</a> · {{ o.items }}</p>{% else %}<p class="muted small">Sin órdenes.</p>{% endfor %}
+  <div class="btn-row">
+    {% if can('ordenes.emitir') %}
+    <a class="btn btn-sm" href="{{ url_for('labs.order_new', patient_id=p.id, note_id=n.id, order_type='laboratorio') }}">Orden de laboratorio</a>
+    <a class="btn btn-sm" href="{{ url_for('labs.order_new', patient_id=p.id, note_id=n.id, order_type='imagen') }}">Orden de imagen</a>
+    <a class="btn btn-sm" href="{{ url_for('labs.order_new', patient_id=p.id, note_id=n.id, order_type='endoscopia') }}">Solicitud de endoscopia</a>
+    {% endif %}
+    <a class="btn btn-sm" href="{{ url_for('gi.calc_index', patient_id=p.id, note_id=n.id) }}">Calculadoras</a>
+  </div>
+</section>
+
 <section class="card" id="adendas">
   <h2>Adendas</h2>
   {% for a in addenda %}

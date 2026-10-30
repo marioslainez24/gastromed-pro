@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Pendientes{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Pendientes</h1>
+  <div class="seg" role="group" aria-label="Filtro">
+    <a href="{{ url_for('labs.pending') }}" {% if mine %}aria-current="page"{% endif %}>Asignados a mí</a>
+    <a href="{{ url_for('labs.pending', todos=1) }}" {% if not mine %}aria-current="page"{% endif %}>Toda la clínica</a>
+  </div>
+</div>
+
+<section class="card">
+  <h2>Resultados por revisar <span class="count">{{ results|length }}</span></h2>
+  {% if results %}
+  <form method="post" action="{{ url_for('labs.results_review') }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="next" value="{{ request.full_path }}">
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th><span class="sr-only">Seleccionar</span></th><th>Paciente</th><th>Prueba</th><th class="num">Valor</th><th>Rango</th><th>Toma</th></tr></thead>
+      <tbody>{% for r in results %}<tr>
+        <td><input type="checkbox" name="result_id" value="{{ r.id }}" aria-label="Seleccionar {{ r.name }} de {{ r.first_names }}" {% if not can('resultados.revisar') %}disabled{% endif %}></td>
+        <td><a href="{{ url_for('labs.patient_labs', patient_id=r.patient_id) }}">{{ r.first_names }} {{ r.last_names }}</a> <span class="muted small">{{ r.mrn }}</span></td>
+        <td>{{ r.name }}</td>
+        <td class="num {% if r.flag in ('alto','bajo') %}is-out{% endif %}">{{ r.value_text if r.value_num is none else ('%g' % r.value_num) }} {{ r.unit or '' }}{% if r.flag == 'alto' %} ↑{% elif r.flag == 'bajo' %} ↓{% endif %}</td>
+        <td class="small">{{ '%g' % r.ref_low if r.ref_low is not none else '' }}–{{ '%g' % r.ref_high if r.ref_high is not none else '' }}</td>
+        <td>{{ fmt_birth(r.taken_on) }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% if can('resultados.revisar') %}
+    <div class="grid2">
+      <label class="field">Comentario de revisión (opcional)<input name="review_comment" maxlength="500"></label>
+      <div class="stack">
+        <label class="check"><input type="checkbox" name="communicated" value="1"> Ya se comunicaron al paciente</label>
+        <input name="communication" maxlength="200" placeholder="¿Cómo? Ej.: en consulta, llamada telefónica" aria-label="Medio de comunicación">
+      </div>
+    </div>
+    <div><button class="btn btn-primary" type="submit">Marcar seleccionados como revisados</button></div>
+    {% endif %}
+  </form>
+  {% else %}<p class="muted small">No hay resultados pendientes de revisión.</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>Órdenes sin resultado <span class="count">{{ overdue|length }}</span></h2>
+  {% if overdue %}
+  <ul class="list">{% for o in overdue %}
+    <li class="row-between"><span><a class="strong" href="{{ url_for('labs.order_view', order_id=o.id) }}">{{ o.first_names }} {{ o.last_names }}</a> · {{ o.items }}
+      <br><span class="small muted">Emitida {{ fmt_dt(o.created_at, false) }} · responsable {{ o.responsible }}</span></span>
+      {% if o.expected_by %}<span class="tag {{ 'tag-danger' if o.expected_by < today else 'tag-warn' }}">{{ 'Vencida' if o.expected_by < today else 'Esperada' }} {{ fmt_birth(o.expected_by) }}</span>{% endif %}</li>
+  {% endfor %}</ul>
+  {% else %}<p class="muted small">Sin órdenes pendientes.</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>Tareas abiertas <span class="count">{{ tasks|length }}</span></h2>
+  {% if tasks %}
+  <ul class="list">{% for t in tasks %}
+    <li class="row-between"><span><b>{{ t.title }}</b>{% if t.first_names %} · <a href="{{ url_for('patients.view', patient_id=t.patient_id) }}">{{ t.first_names }} {{ t.last_names }}</a>{% endif %}
+      {% if t.detail %}<br><span class="small">{{ t.detail }}</span>{% endif %}
+      <br><span class="small muted">Asignada a {{ t.assignee }}{% if t.due_on %} · vence {{ fmt_birth(t.due_on) }}{% endif %}</span></span>
+      {% if can('tareas.gestionar') %}
+      <form method="post" action="{{ url_for('labs.task_done', task_id=t.id) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="btn btn-sm {{ 'btn-danger-quiet' if t.due_on and t.due_on < today }}" type="submit">Hecha</button></form>{% endif %}
+    </li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Sin tareas abiertas.</p>{% endif %}
+  {% if can('tareas.gestionar') %}
+  <details class="mt"><summary>Nueva tarea</summary>
+    <form method="post" action="{{ url_for('labs.task_new') }}" class="grid2 mt">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="next" value="{{ request.full_path }}">
+      <label class="field">Tarea<input name="title" required maxlength="200" placeholder="Ej.: Llamar a paciente para resultado de biopsia"></label>
+      <label class="field">Asignar a<select name="assigned_to">{% for u in users %}<option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>{{ u.full_name }}</option>{% endfor %}</select></label>
+      <label class="field">Vence<input type="date" name="due_on"></label>
+      <label class="field">Detalle<input name="detail" maxlength="1000"></label>
+      <div><button class="btn btn-sm" type="submit">Crear tarea</button></div>
+    </form>
+  </details>
+  {% endif %}
+</section>
+{% endblock %}

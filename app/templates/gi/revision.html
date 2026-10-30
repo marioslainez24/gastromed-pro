@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Revisión · {{ calc.name }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ calc.name }} <span class="muted small">versión {{ calc.version }}</span></h1>
+  {% if ap %}<span class="tag tag-ok big">Aprobada por {{ ap.full_name }} · {{ fmt_dt(ap.approved_at, false) }}</span>{% else %}<span class="tag tag-warn big">Pendiente de revisión clínica</span>{% endif %}</div>
+<section class="card">
+  <dl class="dl">
+    <dt>Fuente primaria</dt><dd>{{ calc.source }}</dd>
+    <dt>Verificada contra</dt><dd>{% for v in calc.verified_against %}{{ v }}<br>{% endfor %}</dd>
+    <dt>Población</dt><dd>{{ calc.population }}</dd>
+    <dt>Fórmula</dt><dd class="prewrap">{{ calc.formula }}</dd>
+    <dt>Redondeo</dt><dd>{{ calc.rounding }}</dd>
+    <dt>Datos ausentes</dt><dd>{{ calc.missing }}</dd>
+    <dt>Límites y advertencias</dt><dd>{{ calc.limitations }}</dd>
+    <dt>Variables</dt><dd>{% for f in calc.fields %}{{ f.label }}{% if f.unit %} ({{ f.unit }}){% endif %}{% if f.min is not none %} · rango aceptado {{ f.min }}–{{ f.max }}{% endif %}{% if not f.required %} · opcional{% endif %}<br>{% endfor %}</dd>
+  </dl>
+</section>
+<section class="card">
+  <h2>Casos de referencia (ejecutados ahora)</h2>
+  <div class="table-wrap"><table class="table small">
+    <thead><tr><th>Entradas</th><th>Esperado</th><th>Obtenido</th><th>¿Coincide?</th></tr></thead>
+    <tbody>{% for inp, exp, res, ok in checks %}<tr>
+      <td class="mono">{% for k, v in inp.items() %}{{ k }}={{ v }} {% endfor %}</td>
+      <td class="mono">{% for k, v in exp.items() %}{{ k }}={{ v }} {% endfor %}</td>
+      <td>{{ res.texto }}</td>
+      <td>{% if ok %}<span class="tag tag-ok">Sí</span>{% else %}<span class="tag tag-danger">NO</span>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="muted small">Los valores esperados se calcularon a mano a partir de la fórmula publicada; los límites de cada variable se prueban en los casos extremos.</p>
+</section>
+{% if not ap and can('calculadoras.aprobar') %}
+<section class="card">
+  <h2>Aprobación clínica</h2>
+  <form method="post" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="check"><input type="checkbox" name="confirm" value="1" required> Revisé la fuente, la fórmula, la población, los límites y los casos de referencia, y apruebo esta versión para uso clínico en mi consultorio.</label>
+    <label class="field">Comentario (opcional)<input name="comment" maxlength="500"></label>
+    <div><button class="btn btn-primary" type="submit">Aprobar versión {{ calc.version }}</button></div>
+  </form>
+</section>
+{% endif %}
+<p><a href="{{ url_for('gi.calc_use', code=calc.code) }}">Probar la calculadora</a> · <a href="{{ url_for('gi.calc_index') }}">Todas las calculadoras</a></p>
+{% endblock %}

@@ -84,6 +84,20 @@ def main():
         for name, dose, freq, src in [("Propranolol", "20 mg", "cada 12 horas", "otro_medico"), ("Metformina", "850 mg", "cada 12 horas", "referido_paciente")]:
             db.execute("INSERT INTO patient_medications(id, patient_id, name, dose, frequency, route, source, recorded_by, recorded_at)"
                        " VALUES (?,?,?,?,?,?,?,?,?)", (new_id(), pids[1], name, dose, freq, "oral", src, owner, utcnow()))
+        labs = {"2026-06-15": {"bt": 1.6, "alb": 3.4, "inr": 1.3, "creat": 0.9, "na": 136, "plt": 98, "ast": 62, "alt": 41},
+                "2026-08-20": {"bt": 2.1, "alb": 3.1, "inr": 1.4, "creat": 1.0, "na": 134, "plt": 91, "ast": 70, "alt": 45},
+                "2026-10-22": {"bt": 2.6, "alb": 2.9, "inr": 1.5, "creat": 1.1, "na": 132, "plt": 85, "ast": 75, "alt": 48}}
+        ranges = {"bt": (0.2, 1.2), "alb": (3.5, 5.2), "inr": (0.8, 1.2), "creat": (0.7, 1.3), "na": (135, 145), "plt": (150, 400),
+                  "ast": (5, 40), "alt": (5, 41)}
+        units = {"bt": "mg/dL", "alb": "g/dL", "inr": None, "creat": "mg/dL", "na": "mmol/L", "plt": "10^3/µL", "ast": "U/L", "alt": "U/L"}
+        for d, vals in labs.items():
+            for code, v in vals.items():
+                lo, hi = ranges[code]
+                flag = "bajo" if v < lo else "alto" if v > hi else "normal"
+                db.execute("INSERT INTO lab_results(id, org_id, patient_id, test_code, value_num, unit, ref_low, ref_high, flag, taken_on,"
+                           " laboratory, status, entered_by, entered_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                           (new_id(), org["org_id"], pids[1], code, v, units[code], lo, hi, flag, d, "Laboratorio demo",
+                            "pendiente_revision" if d == "2026-10-22" else "revisado", owner, utcnow()))
         for desc, onset in [("Cirrosis hepática compensada (ficticio)", "2023"), ("Várices esofágicas en profilaxis (ficticio)", "2024")]:
             db.execute("INSERT INTO patient_problems(id, patient_id, description, onset_text, recorded_by, recorded_at) VALUES (?,?,?,?,?,?)",
                        (new_id(), pids[1], desc, onset, owner, utcnow()))

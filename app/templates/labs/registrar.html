@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Registrar resultados{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Registrar resultados · {{ p.first_names }} {{ p.last_names }}</h1><span class="pill mono">{{ p.mrn }}</span></div>
+{% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form method="post" class="stack" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% if order %}<input type="hidden" name="order_id" value="{{ order.id }}">{% endif %}
+  <section class="card">
+    <div class="grid4">
+      <label class="field">Fecha de toma de muestra<input type="date" name="taken_on" required max="{{ today }}" value="{{ form.get('taken_on', '') }}"></label>
+      <label class="field">Laboratorio<input name="laboratory" maxlength="160" value="{{ form.get('laboratory', '') }}"></label>
+      <label class="field">Informe adjunto (opcional)
+        <select name="file_id"><option value="">— Ninguno —</option>{% for f in files %}<option value="{{ f.id }}" {% if form.get('file_id') == f.id %}selected{% endif %}>{{ f.title }}{% if f.study_date %} · {{ fmt_birth(f.study_date) }}{% endif %}</option>{% endfor %}</select>
+      </label>
+      {% if order %}<div class="field"><span>Orden</span><span class="small">{{ fmt_dt(order.created_at, false) }} · folio {{ order.id[:8]|upper }}</span></div>{% endif %}
+    </div>
+    <p class="muted small">Copie los valores y los <b>rangos de referencia del informe del laboratorio</b>. El sistema no inventa rangos: si los deja vacíos, el resultado se guarda sin marca alto/bajo. Los resultados quedan <b>pendientes de revisión médica</b>.</p>
+  </section>
+
+  <section class="card">
+    <div class="table-wrap">
+    <table class="table lab-entry">
+      <thead><tr><th>Prueba</th><th>Resultado</th><th>Unidad</th><th>Ref. mín.</th><th>Ref. máx.</th></tr></thead>
+      <tbody>
+      {% set ns = namespace(grp='') %}
+      {% for t in tests %}
+        {% set show = (not selected) or (t.code in selected) %}
+        {% if t.grp != ns.grp %}{% set ns.grp = t.grp %}<tr class="grp-row {% if selected and t.grp not in selected_groups %}hidden-row{% endif %}" data-lab-row><th colspan="5">{{ t.grp }}</th></tr>{% endif %}
+        {% set lr = last_ranges.get(t.code) %}
+        <tr class="{% if not show %}hidden-row{% endif %}" data-lab-row>
+          <th scope="row"><input type="hidden" name="code" value="{{ t.code }}">{{ t.name }}</th>
+          <td>{% if t.kind == 'numerico' %}<input name="v_{{ t.code }}" inputmode="decimal" autocomplete="off" value="{{ form.get('v_' ~ t.code, '') }}" aria-label="{{ t.name }}">
+              {% else %}<input name="v_{{ t.code }}" list="qual" autocomplete="off" value="{{ form.get('v_' ~ t.code, '') }}" aria-label="{{ t.name }}">{% endif %}</td>
+          <td><input name="u_{{ t.code }}" value="{{ form.get('u_' ~ t.code) or (lr.unit if lr else (t.unit or '')) }}" class="w-unit" aria-label="Unidad de {{ t.name }}"></td>
+          <td>{% if t.kind == 'numerico' %}<input name="lo_{{ t.code }}" inputmode="decimal" value="{{ form.get('lo_' ~ t.code) or (('%g' % lr.ref_low) if lr and lr.ref_low is not none else '') }}" class="w-num" aria-label="Mínimo de {{ t.name }}">{% endif %}</td>
+          <td>{% if t.kind == 'numerico' %}<input name="hi_{{ t.code }}" inputmode="decimal" value="{{ form.get('hi_' ~ t.code) or (('%g' % lr.ref_high) if lr and lr.ref_high is not none else '') }}" class="w-num" aria-label="Máximo de {{ t.name }}">{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <datalist id="qual">{% for q in QUAL %}<option value="{{ q }}">{% endfor %}</datalist>
+    {% if selected %}<p><button type="button" class="btn btn-quiet btn-sm" data-show-all-labs>Mostrar todas las pruebas del catálogo</button></p>{% endif %}
+    <p class="muted small">Los rangos sugeridos son los últimos que se registraron en esta clínica para esa prueba: verifique que coincidan con el informe actual.</p>
+  </section>
+  <div class="actions"><button class="btn btn-primary" type="submit">Guardar resultados</button> <a class="btn btn-quiet" href="{{ url_for('labs.patient_labs', patient_id=p.id) }}">Cancelar</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Nueva orden{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ ORDER_TYPES[otype] }} · {{ p.first_names }} {{ p.last_names }}</h1><span class="pill mono">{{ p.mrn }}</span></div>
+{% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form method="post" class="stack" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="patient_id" value="{{ p.id }}"><input type="hidden" name="order_type" value="{{ otype }}">
+  {% if note_id %}<input type="hidden" name="note_id" value="{{ note_id }}">{% endif %}
+  {% if otype == 'laboratorio' %}
+  <section class="card">
+    <h2>Pruebas</h2>
+    <div class="check-grid">
+    {% set ns = namespace(grp='') %}
+    {% for t in catalog %}
+      {% if t.grp != ns.grp %}{% set ns.grp = t.grp %}<h3 class="check-grp">{{ t.grp }}</h3>{% endif %}
+      <label class="check"><input type="checkbox" name="tests" value="{{ t.code }}" {% if t.code in form.getlist('tests') %}checked{% endif %}> {{ t.name }}</label>
+    {% endfor %}
+    </div>
+    <label class="field mt">Otras pruebas (una por línea)<textarea name="items_text" rows="2">{{ form.get('items_text', '') }}</textarea></label>
+  </section>
+  {% else %}
+  <section class="card">
+    <label class="field">{{ 'Estudios de imagen' if otype == 'imagen' else 'Procedimiento endoscópico' }} (uno por línea)
+      <textarea name="items_text" rows="4" required placeholder="{{ 'Ej.: Ultrasonido abdominal superior' if otype == 'imagen' else 'Ej.: Endoscopia digestiva alta con toma de biopsias' }}">{{ form.get('items_text', '') }}</textarea></label>
+  </section>
+  {% endif %}
+  <section class="card">
+    <div class="grid4">
+      <label class="field">Prioridad<select name="priority">{% for k, v in PRIORITIES.items() %}<option value="{{ k }}" {% if form.get('priority') == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+      <label class="field">Responsable de revisar el resultado<select name="responsible_id">{% for c in clinicians %}<option value="{{ c.id }}" {% if (form.get('responsible_id') or current_user.id) == c.id %}selected{% endif %}>{{ c.full_name }}</option>{% endfor %}</select></label>
+      <label class="field">Resultado esperado para<input type="date" name="expected_by" value="{{ form.get('expected_by') or default_expected }}"></label>
+    </div>
+    <label class="field">Indicación clínica / datos relevantes para el estudio<textarea name="indication" rows="3" maxlength="1000">{{ form.get('indication', '') }}</textarea></label>
+    {% if otype == 'endoscopia' %}<p class="muted small">El informe estructurado de endoscopia, consentimiento, sedación e imágenes llegan en la Fase 3.</p>{% endif %}
+  </section>
+  <div class="actions"><button class="btn btn-primary" type="submit">Emitir orden</button> <a class="btn btn-quiet" href="{{ url_for('labs.patient_labs', patient_id=p.id) }}">Cancelar</a></div>
+</form>
+{% endblock %}

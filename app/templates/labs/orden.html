@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Orden{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{{ ORDER_TYPES[o.order_type] }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
+  <p class="muted small">Emitida {{ fmt_dt(o.created_at) }} por {{ o.author }} · Folio <span class="mono">{{ o.id[:8]|upper }}</span> · Prioridad {{ PRIORITIES[o.priority] }}
+   · Responsable: {{ o.responsible }}{% if o.expected_by %} · Esperado: {{ fmt_birth(o.expected_by) }}{% endif %}</p></div>
+  <span class="tag big {{ 'tag-ok' if o.status in ('resultado_recibido','cerrada') else ('tag-danger' if o.status == 'anulada' else 'tag-warn') }}">{{ ORDER_STATUS[o.status] }}</span>
+</div>
+{% if o.void_reason %}<div class="flash flash-error">Anulada: {{ o.void_reason }}</div>{% endif %}
+<div class="btn-row">
+  <a class="btn btn-primary" href="{{ url_for('labs.order_pdf', order_id=o.id, papel='carta') }}" target="_blank" rel="noopener">PDF carta</a>
+  <a class="btn" href="{{ url_for('labs.order_pdf', order_id=o.id, papel='a4') }}" target="_blank" rel="noopener">PDF A4</a>
+  {% if o.order_type == 'laboratorio' and o.status not in ('cerrada','anulada') and can('resultados.registrar') %}
+  <a class="btn" href="{{ url_for('labs.results_new', patient_id=p.id, order_id=o.id) }}">Registrar resultados de esta orden</a>{% endif %}
+</div>
+<section class="card">
+  <h2>Estudios</h2>
+  <ol>{% for it in items %}<li>{{ it.description }}</li>{% endfor %}</ol>
+  {% if o.indication %}<h3>Indicación</h3><p class="prewrap">{{ o.indication }}</p>{% endif %}
+</section>
+{% if results %}
+<section class="card">
+  <h2>Resultados recibidos</h2>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Prueba</th><th class="num">Valor</th><th>Rango</th><th>Toma</th><th>Estado</th></tr></thead>
+    <tbody>{% for r in results %}<tr class="{% if r.status == 'anulado' %}is-void{% endif %}">
+      <td>{{ r.name }}</td><td class="num {% if r.flag in ('alto','bajo') %}is-out{% endif %}">{{ r.value_text if r.value_num is none else ('%g' % r.value_num) }} {{ r.unit or '' }}</td>
+      <td class="small">{{ '%g' % r.ref_low if r.ref_low is not none else '' }}–{{ '%g' % r.ref_high if r.ref_high is not none else '' }}</td>
+      <td>{{ fmt_birth(r.taken_on) }}</td><td class="small">{{ {'pendiente_revision':'Pendiente de revisión','revisado':'Revisado','anulado':'Anulado'}[r.status] }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endif %}
+{% if o.status not in ('cerrada','anulada') and can('ordenes.emitir') %}
+<section class="card">
+  <div class="btn-row">
+    <form method="post" action="{{ url_for('labs.order_status', order_id=o.id) }}" class="inline" data-confirm="¿Cerrar la orden? Ya no aparecerá como pendiente.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="cerrar">
+      <button class="btn" type="submit">Cerrar orden</button></form>
+  </div>
+  <details><summary>Anular orden</summary>
+    <form method="post" action="{{ url_for('labs.order_status', order_id=o.id) }}" class="stack mt">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="anular">
+      <label>Motivo<input name="reason" required maxlength="300"></label>
+      <button class="btn btn-danger-quiet" type="submit">Anular</button></form>
+  </details>
+</section>
+{% endif %}
+{% endblock %}

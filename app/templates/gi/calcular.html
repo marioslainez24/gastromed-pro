@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ calc.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{{ calc.name }} <span class="muted small">v. {{ calc.version }}</span></h1>
+  {% if p %}<p class="muted small">Paciente: <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a> · {{ p.mrn }}</p>{% endif %}</div>
+  {% if ap %}<span class="tag tag-ok">Aprobada para uso clínico</span>{% else %}<span class="tag tag-warn big">Modo prueba: pendiente de revisión clínica</span>{% endif %}
+</div>
+<div class="cols">
+  <section class="col-main card">
+    <form method="post" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      {% if p %}<input type="hidden" name="patient_id" value="{{ p.id }}">{% endif %}
+      {% if note_id %}<input type="hidden" name="note_id" value="{{ note_id }}">{% endif %}
+      {% for f in calc.fields %}
+        {% if f.kind == 'number' %}
+        <label class="field">{{ f.label }}{% if f.unit %} <span class="muted small">({{ f.unit }})</span>{% endif %}
+          <input name="{{ f.key }}" inputmode="decimal" value="{{ values.get(f.key, '') }}" {% if f.required %}required{% endif %} class="w-num">
+          {% if f.lab and f.lab in imported %}{% set r = imported[f.lab] %}
+            <span class="import-note">Del expediente: {{ '%g' % r.value_num }} {{ r.unit or '' }} · muestra del <b>{{ fmt_birth(r.taken_on) }}</b>{% if r.status == 'pendiente_revision' %} · <i>sin revisar</i>{% endif %}{% if (r.unit or '') != (f.unit or '') and not f.unit.startswith(r.unit or '~') %} · <b>unidad distinta: no se importó</b>{% endif %}</span>
+          {% endif %}
+        </label>
+        {% elif f.kind == 'select' %}
+        <label class="field">{{ f.label }}<select name="{{ f.key }}" {% if f.required %}required{% endif %}><option value="">—</option>{% for v, l in f.options %}<option value="{{ v }}" {% if values.get(f.key) == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+        {% else %}
+        <label class="check"><input type="checkbox" name="{{ f.key }}" value="1" {% if values.get(f.key) == '1' %}checked{% endif %}> {{ f.label }}</label>
+        {% endif %}
+      {% endfor %}
+      {% if p and imported %}<p class="flash flash-warn small">Algunos datos se tomaron del expediente con su fecha. Verifique que correspondan al momento clínico actual.</p>{% endif %}
+      <div class="actions"><button class="btn btn-primary" type="submit" name="save" value="0">Calcular</button></div>
+      {% if result and p and ap and can('clinico.editar') %}
+      <div class="card save-box">
+        <label class="check"><input type="checkbox" name="confirm_inputs" value="1"> Confirmo que revisé los datos y sus fechas.</label>
+        <button class="btn" type="submit" name="save" value="1">Guardar resultado en el expediente</button>
+      </div>
+      {% elif result and p and not ap %}<p class="muted small">Para guardar el resultado en el expediente, la calculadora debe aprobarse primero (<a href="{{ url_for('gi.calc_review', code=calc.code) }}">revisión clínica</a>).</p>{% endif %}
+    </form>
+  </section>
+  <aside class="col-side">
+    {% if error %}<div class="card flash-error" role="alert"><b>No se puede calcular.</b><p>{{ error }}</p></div>{% endif %}
+    {% if result %}
+    <section class="card result-box" aria-live="polite">
+      <p class="result-value">{{ result.valor }}</p>
+      <p class="strong">{{ result.texto }}</p>
+      <p class="small">{{ result.interpretacion }}</p>
+      {% for w in result.get('advertencias', []) %}<p class="small warn-text">{{ w }}</p>{% endfor %}
+      {% if result.detalle %}<details><summary class="small">Detalle</summary><dl class="dl small">{% for k, v in result.detalle.items() %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}</dl></details>{% endif %}
+      <p class="muted tiny">{{ result.aviso }}</p>
+    </section>
+    {% endif %}
+    <section class="card small">
+      <p><b>Fuente:</b> {{ calc.source }}</p>
+      <p><b>Población:</b> {{ calc.population }}</p>
+      <p><b>Límites:</b> {{ calc.limitations }}</p>
+      <a href="{{ url_for('gi.calc_review', code=calc.code) }}">Fórmula y casos de prueba</a>
+    </section>
+  </aside>
+</div>
+{% endblock %}
