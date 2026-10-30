@@ -40,7 +40,8 @@
     <label class="field">Nota administrativa (no clínica)
       <input name="admin_note" maxlength="300" value="{{ values.admin_note }}" placeholder="Ej.: trae resultados previos, prefiere confirmación por llamada">
     </label>
-    <p class="muted small">Hora de la clínica. El sistema impide cruces con otras citas activas del mismo profesional.</p>
+    {% if errors.fuera_horario %}<label class="check warn-box"><input type="checkbox" name="fuera_horario" value="1"> Agendar de todas formas fuera del horario de atención.</label>{% endif %}
+    <p class="muted small">Hora de la clínica. El sistema impide cruces con otras citas activas del mismo profesional y fechas bloqueadas (vacaciones o ausencias).</p>
   </fieldset>
   <div class="actions"><button class="btn btn-primary" type="submit">Agendar</button> <a class="btn btn-quiet" href="{{ url_for('agenda.day') }}">Cancelar</a></div>
 </form>

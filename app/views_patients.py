@@ -15,6 +15,7 @@ ADMIN_FIELDS = {  # campo: (obligatorio, longitud máxima)
     "document_type": (True, 20), "document_number": (False, 40), "phone": (False, 40), "email": (False, 160),
     "address": (False, 300), "origin": (False, 120), "emergency_contact_name": (False, 160),
     "emergency_contact_phone": (False, 40), "referring_physician": (False, 160), "payer": (False, 160),
+    "reminder_channel": (False, 20),
 }
 FIELD_NAMES = {"first_names": "Nombres", "last_names": "Apellidos", "birth_date": "Fecha de nacimiento", "sex": "Sexo",
                "document_type": "Tipo de documento", "document_number": "Número de documento", "email": "Correo"}
@@ -65,9 +66,28 @@ def validate_admin(form) -> tuple[dict, dict]:
                 errors["birth_date"] = "Fecha fuera de rango."
         except ValueError:
             errors["birth_date"] = "Fecha no válida."
+    data["reminder_channel"] = data["reminder_channel"] or "ninguno"
+    if data["reminder_channel"] not in ("ninguno", "correo", "whatsapp"):
+        errors["reminder_channel"] = "Valor no válido."
+    elif data["reminder_channel"] != "ninguno":
+        if form.get("reminder_consent") != "1":
+            errors["reminder_channel"] = "Marque que el paciente autorizó recibir recordatorios por ese medio."
+        elif data["reminder_channel"] == "correo" and not data["email"]:
+            errors["reminder_channel"] = "Para recordatorios por correo registre el correo del paciente."
+        elif data["reminder_channel"] == "whatsapp" and len(digits(data["phone"])) < 8:
+            errors["reminder_channel"] = "Para recordatorios por WhatsApp registre un teléfono válido."
     if data["email"] and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", data["email"]):
         errors["email"] = "Correo no válido."
     return data, errors
+
+
+def _set_reminder(db, pid, channel, previous_consent):
+    """Guarda la autorización de recordatorios (fecha y quién la registró). Sin canal → se retira la autorización."""
+    if channel == "ninguno":
+        db.execute("UPDATE patients SET reminder_channel = 'ninguno', reminder_consent_at = NULL, reminder_consent_by = NULL WHERE id = ?", (pid,))
+    else:
+        db.execute("UPDATE patients SET reminder_channel = ?, reminder_consent_at = COALESCE(?, ?), reminder_consent_by = COALESCE(reminder_consent_by, ?)"
+                   " WHERE id = ?", (channel, previous_consent, utcnow(), g.user["id"], pid))
 
 
 def find_duplicates(db, org_id, data, exclude_id=None):
@@ -149,6 +169,7 @@ def new():
                      data["document_type"], data["document_number"], data["phone"], data["email"], data["address"], data["origin"],
                      data["emergency_contact_name"], data["emergency_contact_phone"], data["referring_physician"], data["payer"],
                      _search_text(data_full), now, g.user["id"], now, g.user["id"]))
+                _set_reminder(db, pid, data["reminder_channel"], None)
                 audit("paciente_creado", "paciente", pid, {"mrn": mrn, "posible_duplicado_confirmado": bool(dups)}, db=db)
             flash(f"Paciente registrado con el identificador {mrn}.", "ok")
             return redirect(url_for("patients.view", patient_id=pid))
@@ -218,6 +239,7 @@ def edit(patient_id):
                 if cur.rowcount == 0:
                     abort(409, description="Otro usuario modificó este expediente mientras usted lo editaba. "
                                            "Sus cambios NO se guardaron. Abra el expediente de nuevo y repita la edición.")
+                _set_reminder(db, p["id"], data["reminder_channel"], p["reminder_consent_at"])
                 audit("paciente_editado", "paciente", p["id"], {"campos": changed}, db=db)
             flash("Datos del paciente actualizados.", "ok")
             return redirect(url_for("patients.view", patient_id=p["id"]))

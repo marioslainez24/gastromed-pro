@@ -141,13 +141,14 @@ def view(note_id):
                            " AND id <> ? ORDER BY finalized_at DESC LIMIT 1", (p["id"], n["id"])).fetchone()
     prescriptions = db.execute("SELECT id, issued_at, status FROM prescriptions WHERE note_id = ? ORDER BY issued_at", (n["id"],)).fetchall()
     audit("nota_consultada", "nota", n["id"])
-    return render_template("notas/ver.html", n=n, p=p, fields=fields, addenda=addenda, allergies=allergies, editable=editable,
+    from .views_extras import with_dictation
+    return with_dictation(render_template("notas/ver.html", n=n, p=p, fields=fields, addenda=addenda, allergies=allergies, editable=editable,
                            sections=TEMPLATES[n["template"]], text_labels=TEXT_FIELDS, vitals=VITALS, bmi=bmi(fields.get("vitales", {})),
                            prior=prior, prior_fields=json.loads(prior["fields"]) if prior else None, prescriptions=prescriptions,
                            gi_forms=note_forms(db, n["id"]), GI_FORMS=GI_FORMS,
                            orders=db.execute("SELECT o.*, (SELECT GROUP_CONCAT(description, ', ') FROM order_items i WHERE i.order_id = o.id)"
                                              " AS items FROM orders o WHERE o.note_id = ? ORDER BY o.created_at", (n["id"],)).fetchall(),
-                           errors={})
+                           errors={}), editable)
 
 
 @bp.route("/<note_id>/guardar", methods=["POST"])

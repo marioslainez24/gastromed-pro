@@ -16,6 +16,7 @@ from datetime import datetime
 from pathlib import Path
 
 PORT = int(os.environ.get("GASTROMED_PORT", "8000"))
+HTTPS_PORT = int(os.environ.get("GASTROMED_HTTPS_PORT", "8443"))
 
 
 def data_root() -> Path:
@@ -106,6 +107,73 @@ def lan_addresses() -> list[str]:
     return sorted(ip for ip in ips if not ip.startswith(("127.", "169.254.")))
 
 
+def ensure_certificate(datos: Path, ips: list[str]):
+    """Certificado propio (autofirmado) para cifrar la conexión del celular por Wi-Fi. Gratis, sin terceros.
+    Se regenera si cambia la dirección IP de la PC."""
+    import ipaddress
+    from datetime import timedelta, timezone
+    from cryptography import x509
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.x509.oid import NameOID
+    crt, key = datos / "https-cert.pem", datos / "https-key.pem"
+    wanted = set(ips) | {"127.0.0.1"}
+    if crt.exists() and key.exists():
+        try:
+            c = x509.load_pem_x509_certificate(crt.read_bytes())
+            have = {str(i) for i in c.extensions.get_extension_for_class(x509.SubjectAlternativeName).value.get_values_for_type(x509.IPAddress)}
+            if wanted <= have and c.not_valid_after_utc > datetime.now(timezone.utc) + timedelta(days=30):
+                return crt, key
+        except Exception:  # noqa: BLE001
+            pass
+    pk = ec.generate_private_key(ec.SECP256R1())
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "GastroMed Pro (consultorio)")])
+    now = datetime.now(timezone.utc)
+    san = [x509.DNSName("localhost")] + [x509.IPAddress(ipaddress.ip_address(i)) for i in sorted(wanted)]
+    cert = (x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(pk.public_key())
+            .serial_number(x509.random_serial_number()).not_valid_before(now - timedelta(days=1)).not_valid_after(now + timedelta(days=825))
+            .add_extension(x509.SubjectAlternativeName(san), critical=False)
+            .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
+            .sign(pk, hashes.SHA256()))
+    key.write_bytes(pk.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
+    crt.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+    return crt, key
+
+
+def https_server(app, crt: Path, key: Path):
+    """Servidor https para el celular (Wi-Fi cifrado; necesario también para el micrófono del dictado)."""
+    import logging
+    import ssl
+    from werkzeug.serving import make_server
+    logging.getLogger("werkzeug").setLevel(logging.ERROR)  # sin registrar cada página en la ventana
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+    ctx.load_cert_chain(str(crt), str(key))
+    srv = make_server("0.0.0.0", HTTPS_PORT, app, threaded=True, ssl_context=ctx)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv
+
+
+def reminder_loop(app):
+    """Recordatorios por correo: revisa cada 10 minutos. El resumen no muestra datos de pacientes."""
+    from app.db import connect
+    from app.reminders import run_email_reminders
+    time.sleep(30)
+    while True:
+        try:
+            db = connect(app.config["GM"].DATABASE_PATH)
+            try:
+                res = run_email_reminders(db, app.config["GM_FERNET"])
+                if res:
+                    print(f"  [{datetime.now():%H:%M}] Recordatorios por correo: {res.count('enviado')} enviado(s),"
+                          f" {res.count('fallido')} con error (ver Ajustes → Recordatorios).", flush=True)
+            finally:
+                db.close()
+        except Exception as e:  # noqa: BLE001
+            print("  Error en recordatorios:", type(e).__name__, flush=True)
+        time.sleep(600)
+
+
 def backup_loop(app):
     """Respaldo diario: al iniciar si el último tiene más de 24 h, y luego se revisa cada hora."""
     from app import APP_VERSION
@@ -143,22 +211,45 @@ def main():
     root = data_root()
     env_file = first_run_config(root)
     os.environ["GASTROMED_ENV_FILE"] = str(env_file)
+    ips = lan_addresses()
+    https_ok = False
+    try:
+        crt, key = ensure_certificate(env_file.parent, ips)
+        os.environ["GASTROMED_HTTPS_PORT"] = str(HTTPS_PORT)
+        https_ok = True
+    except Exception as e:  # noqa: BLE001
+        print("  Aviso: no se pudo preparar https para el celular:", e)
 
     from app import APP_VERSION, create_app
     app = create_app()
     cfg = app.config["GM"]
+    if https_ok:
+        try:
+            https_server(app, crt, key)
+        except OSError as e:
+            https_ok = False
+            os.environ.pop("GASTROMED_HTTPS_PORT", None)
+            app = create_app()
+            print("  Aviso: el puerto", HTTPS_PORT, "está ocupado; el celular usará http sin cifrar.", e)
     print("=" * 66)
     print(f"  GastroMed Pro {APP_VERSION}")
     print("=" * 66)
     print(f"  En esta PC:        http://localhost:{PORT}")
-    for ip in lan_addresses():
-        print(f"  Desde el celular:  http://{ip}:{PORT}   (mismo Wi-Fi)")
+    for ip in ips:
+        if https_ok:
+            print(f"  Desde el celular:  https://{ip}:{HTTPS_PORT}   (mismo Wi-Fi, conexión cifrada)")
+        else:
+            print(f"  Desde el celular:  http://{ip}:{PORT}   (mismo Wi-Fi)")
+    if https_ok and ips:
+        print("    La primera vez el celular dirá «La conexión no es privada»: toque «Configuración")
+        print("    avanzada» → «Continuar». Es normal: el certificado lo creó esta PC, no una empresa externa.")
     print(f"  Datos:             {Path(cfg.DATABASE_PATH).parent}")
     print(f"  Respaldos:         {cfg.BACKUP_DIR}  (automático cada 24 h)")
     print("\n  NO CIERRE ESTA VENTANA mientras use el sistema. Para apagarlo, ciérrela.")
     print("=" * 66, flush=True)
 
     threading.Thread(target=backup_loop, args=(app,), daemon=True).start()
+    threading.Thread(target=reminder_loop, args=(app,), daemon=True).start()
     if not no_browser:
         threading.Timer(1.5, lambda: webbrowser.open(f"http://localhost:{PORT}")).start()
     from waitress import serve

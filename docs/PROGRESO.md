@@ -7,6 +7,31 @@ El Dr. Lainez indicó que **no desea** las funciones administrativas y financier
 liquidaciones, inventario ni reportes financieros). No se desarrollarán salvo que él lo solicite de nuevo.
 Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsulta, IA opcional) o mejoras de las fases 1–3.
 
+## Decisión 30-oct-2026: de la Fase 5 solo recordatorios y dictado, sin servicios de pago
+El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
+se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
+
+## Etapa 7 · 30-oct-2026 · Recordatorios, dictado y mejoras (v0.7.0)
+
+**Qué quedó funcionando (todo gratuito)**
+- **Recordatorio por correo automático** desde la cuenta Gmail del consultorio (contraseña de aplicación, cifrada en la PC). Revisión cada 10 min;
+  envía X horas antes (configurable). Solo a pacientes con canal «Correo» y autorización registrada (quién y cuándo). Sin datos clínicos en el mensaje.
+  Errores se registran como «falló» con el motivo (nunca se simula un envío); máximo 3 intentos; sin duplicados; al reprogramar se reenvía.
+  Correo de prueba desde Ajustes.
+- **WhatsApp sin API de pago:** botón por cita que abre WhatsApp (wa.me) con el mensaje escrito; la persona pulsa «Enviar». Requiere autorización del paciente.
+- **Dictado por voz** con el reconocimiento integrado de Chrome/Edge (gratis), en notas clínicas e informes de endoscopia; comandos «punto», «coma»,
+  «punto y aparte», «nueva línea», «dos puntos». Desactivado por defecto; para activarlo hay que aceptar el aviso (el audio lo procesa Google/Microsoft).
+  Micrófono permitido solo en pantallas editables con el dictado activo. No inventa contenido: transcribe lo que el médico dice y él lo revisa.
+- **Logo e imagen de firma** (cifrados) en recetas, órdenes e informes de endoscopia. La imagen de firma no es firma electrónica.
+- **Horario de atención** por profesional (fuera de horario pide confirmación) y **bloqueos/vacaciones** (impiden agendar y reprogramar). Colores por tipo de cita.
+- **Conexión cifrada para el celular:** el programa crea su propio certificado y atiende en https://IP:8443; las conexiones http desde otros equipos se redirigen a https.
+
+**Cómo se comprobó**: 100 pruebas automáticas (13 nuevas con servidor de correo de prueba local); navegador real; prueba de humo del ejecutable con https.
+
+**Pendiente / límites**: el dictado necesita internet y Chrome/Edge; en el celular hay que aceptar una vez el aviso del certificado (no es de una
+autoridad comercial, que sería de pago). WhatsApp no es automático (sería de pago). Dictado local sin internet (Whisper) no incluido por peso y velocidad en una PC sin GPU.
+Probar en sitio: envío real con Gmail del consultorio y micrófono del celular por https.
+
 ## Etapa 6 · 30-oct-2026 · Fase 3 (v0.6.0)
 
 **Qué quedó funcionando**

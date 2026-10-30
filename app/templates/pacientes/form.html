@@ -57,6 +57,15 @@
       {{ field('payer', 'Seguro, convenio o condición de pago', attrs='maxlength="160"') }}
     </div>
   </fieldset>
+  <fieldset>
+    <legend>Recordatorios de citas</legend>
+    <div class="grid2">
+      <label class="field {% if errors.get('reminder_channel') %}has-error{% endif %}">Medio
+        <select name="reminder_channel">{% for k, v in [('ninguno','No enviar recordatorios'),('correo','Correo electrónico'),('whatsapp','WhatsApp')] %}<option value="{{ k }}" {% if (data.get('reminder_channel') or 'ninguno') == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+        {% if errors.get('reminder_channel') %}<span class="err">{{ errors['reminder_channel'] }}</span>{% endif %}</label>
+      <label class="check"><input type="checkbox" name="reminder_consent" value="1" {% if data.get('reminder_consent_at') or request.form.get('reminder_consent') %}checked{% endif %}> El paciente autorizó recibir recordatorios de citas por este medio (sin información clínica).</label>
+    </div>
+  </fieldset>
   {% if dups %}
   <label class="check warn-box"><input type="checkbox" name="confirmo_distinto" value="1" required> Revisé los expedientes anteriores y confirmo que se trata de <b>otra persona</b>.</label>
   {% endif %}

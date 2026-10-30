@@ -1,4 +1,7 @@
 """GastroMed Pro — aplicación Flask."""
+import ipaddress
+import os
+
 from flask import Flask, g, redirect, render_template, request, url_for
 
 from . import util
@@ -6,7 +9,14 @@ from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.6.0"
+APP_VERSION = "0.7.0"
+
+
+def _loopback(addr) -> bool:
+    try:
+        return ipaddress.ip_address(addr or "").is_loopback
+    except ValueError:
+        return False
 
 
 def create_app(config: Config | None = None) -> Flask:
@@ -39,14 +49,21 @@ def create_app(config: Config | None = None) -> Flask:
     from .views_labs import bp as labs_bp
     from .views_gi import bp as gi_bp
     from .views_endoscopy import bp as endo_bp
+    from .views_extras import bp as extras_bp
     for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp, record_bp, files_bp, account_bp, setup_bp, labs_bp, gi_bp,
-               endo_bp):
+               endo_bp, extras_bp):
         app.register_blueprint(bp)
 
     app.teardown_appcontext(close_db)
 
+    https_port = os.environ.get("GASTROMED_HTTPS_PORT", "")
+
     @app.before_request
     def _before():
+        # Conexiones desde otros equipos (celular) por http → se envían a https (Wi-Fi cifrado). En esta PC sigue http://localhost.
+        if https_port and request.scheme == "http" and not _loopback(request.remote_addr):
+            host = (request.host or "").rsplit(":", 1)[0]
+            return redirect(f"https://{host}:{https_port}{request.full_path.rstrip('?')}", code=302)
         if request.endpoint in ("static", "auth.manifest", "auth.service_worker"):
             return
         if request.endpoint != "setup.first_run" and needs_setup():
@@ -78,7 +95,7 @@ def create_app(config: Config | None = None) -> Flask:
     def _ctx():
         return {"can": can, "label": util.label, "fmt_dt": util.fmt_dt, "fmt_time": util.fmt_time, "age": util.age,
                 "fmt_birth": util.fmt_birth, "current_user": g.get("user"), "csrf_token": g.get("csrf_token"),
-                "app_version": APP_VERSION, "env": cfg.ENV, "demo_mode": cfg.DEMO}
+                "app_version": APP_VERSION, "env": cfg.ENV, "demo_mode": cfg.DEMO, "clinic_cfg": util.clinic_settings}
 
     def _err(code, title, msg):
         def handler(e):

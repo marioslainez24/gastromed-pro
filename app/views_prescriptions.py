@@ -108,7 +108,8 @@ def pdf(rx_id):
     if size not in ("carta", "a4"):
         abort(400)
     allergies = db.execute("SELECT * FROM patient_allergies WHERE patient_id = ? AND active = 1", (p["id"],)).fetchall()
-    data = prescription_pdf(r, items, p, s, size, allergies)
+    from .views_extras import load_assets
+    data = prescription_pdf(r, items, p, s, size, allergies, load_assets(g.user["org_id"]))
     audit("receta_pdf_generado", "receta", r["id"], {"papel": size})
     resp = make_response(data)
     resp.headers["Content-Type"] = "application/pdf"

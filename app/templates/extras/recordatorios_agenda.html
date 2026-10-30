@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Recordatorios{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Recordatorios de citas</h1>
+  <div class="seg">{% for h in [24, 48, 168] %}<a href="{{ url_for('extras.reminders_today', horas=h) }}" {% if hours == h %}aria-current="page"{% endif %}>{{ {24:'24 horas',48:'48 horas',168:'7 días'}[h] }}</a>{% endfor %}</div></div>
+<p class="muted small">Correo: {% if s.reminders_enabled %}automático, {{ s.reminder_hours_before }} h antes de la cita.{% else %}desactivado{% if can('ajustes.editar') %} (<a href="{{ url_for('extras.reminders_settings') }}">configurar</a>){% endif %}.{% endif %}
+  WhatsApp: toque el botón y pulse «Enviar» en WhatsApp. Solo aparecen los botones de pacientes que autorizaron ese canal en su ficha.</p>
+<section class="card">
+{% if rows %}
+<div class="table-wrap"><table class="table"><thead><tr><th>Cita</th><th>Paciente</th><th>Canal elegido</th><th>Correo</th><th>WhatsApp</th></tr></thead><tbody>
+{% for a in rows %}
+<tr>
+  <td><a href="{{ url_for('agenda.view', appt_id=a.id) }}">{{ fmt_dt(a.starts_at) }}</a><div class="small muted">{{ label('appt_status', a.status) }}</div></td>
+  <td><a href="{{ url_for('patients.view', patient_id=a.patient_id) }}">{{ a.first_names }} {{ a.last_names }}</a></td>
+  <td>{% if not a.reminder_consent_at or a.reminder_channel == 'ninguno' %}<span class="muted small">Sin autorización</span>{% elif a.reminder_channel == 'correo' %}Correo{% else %}WhatsApp{% endif %}</td>
+  <td>{% if a.mail_status == 'enviado' %}<span class="tag tag-ok">Enviado</span>{% elif a.mail_status == 'fallido' %}<span class="tag tag-danger" title="{{ a.mail_detail or '' }}">Falló</span> <span class="small muted">{{ a.mail_detail or '' }}</span>{% elif a.reminder_channel == 'correo' and a.reminder_consent_at %}<span class="small muted">Pendiente</span>{% else %}—{% endif %}</td>
+  <td>{% if a.reminder_channel == 'whatsapp' and a.reminder_consent_at and a.phone and can('agenda.editar') %}
+    <form method="post" action="{{ url_for('extras.whatsapp', appt_id=a.id) }}" target="_blank" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="btn btn-sm wa-btn" type="submit">{% if a.wa_status %}Abrir de nuevo{% else %}WhatsApp{% endif %}</button></form>
+    {% if a.wa_status %}<span class="small muted">abierto</span>{% endif %}
+  {% else %}—{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}<div class="empty"><p>No hay citas solicitadas o confirmadas en este período.</p></div>{% endif %}
+</section>
+{% endblock %}

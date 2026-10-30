@@ -18,7 +18,7 @@
       {{ tf('address', 'Dirección del consultorio', 'maxlength="300"') }}
       {{ tf('contact_email', 'Correo de contacto', 'maxlength="160" type="email"') }}
     </div>
-    <p class="muted small">Logo e imagen de firma: se habilitan con el módulo de archivos privados (siguiente etapa). Una imagen de firma <b>no</b> es una firma electrónica verificable.</p>
+    <p class="muted small">Logo e imagen de firma: más abajo, en «Logo y firma». Una imagen de firma <b>no</b> es una firma electrónica verificable.</p>
   </fieldset>
   <fieldset><legend>Región</legend>
     <div class="grid2">
@@ -38,4 +38,22 @@
   </fieldset>
   <div class="actions"><button class="btn btn-primary" type="submit">Guardar ajustes</button></div>
 </form>
+<section class="card" id="imagenes">
+  <h2>Logo y firma para recetas, órdenes e informes</h2>
+  <div class="grid2">
+  {% for kind, title in [('logo','Logo del consultorio'), ('firma','Imagen de su firma')] %}
+    <div class="stack">
+      <h3>{{ title }}</h3>
+      {% if assets.get(kind) %}<img class="asset-preview" src="{{ url_for('extras.assets_view', kind=kind) }}" alt="{{ title }} actual">{% else %}<p class="muted small">No cargado.</p>{% endif %}
+      <form method="post" action="{{ url_for('extras.assets_upload') }}" enctype="multipart/form-data" class="stack">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="kind" value="{{ kind }}">
+        <input type="file" name="imagen" accept="image/png,image/jpeg" required aria-label="{{ title }}">
+        <div><button class="btn btn-sm" type="submit">Cargar</button></div>
+      </form>
+      {% if assets.get(kind) %}<form method="post" action="{{ url_for('extras.assets_upload') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="remove" value="1"><button class="link-btn small" type="submit">Quitar</button></form>{% endif %}
+    </div>
+  {% endfor %}
+  </div>
+  <p class="muted small">PNG o JPG, máximo 2 MB. Para la firma, use una foto de su firma en papel blanco (idealmente PNG con fondo transparente). Una imagen de firma no equivale a una firma electrónica verificable.</p>
+</section>
 {% endblock %}

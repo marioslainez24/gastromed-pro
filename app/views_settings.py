@@ -65,7 +65,8 @@ def clinic():
             flash("Configuración guardada.", "ok")
             return redirect(url_for("settings.clinic"))
     tzs = sorted(t for t in available_timezones() if t.startswith("America/"))
-    return render_template("ajustes/clinica.html", data=data, errors=errors, tzs=tzs), 422 if errors else 200
+    from .views_extras import load_assets
+    return render_template("ajustes/clinica.html", data=data, errors=errors, tzs=tzs, assets=load_assets(g.user["org_id"])), 422 if errors else 200
 
 
 @bp.route("/usuarios")

@@ -21,8 +21,10 @@ Todo se guarda en esta PC, en `C:\GastroMed`.
 
 ## Uso diario
 - Doble clic en `GastroMedPro.exe`. **No cierre la ventana negra** mientras use el sistema; ciérrela para apagarlo.
-- **Celular:** conectado al mismo Wi-Fi, abra en el navegador la dirección que muestra la ventana negra
-  (por ejemplo `http://192.168.1.25:8000`) y guárdela como favorito.
+- **Celular:** conectado al mismo Wi-Fi, abra en Chrome la dirección **https** que muestra la ventana negra
+  (por ejemplo `https://192.168.1.25:8443`) y guárdela como favorito. La primera vez dirá «La conexión no es privada»:
+  toque **Configuración avanzada → Continuar**. Es normal: el certificado lo creó su propia PC (uno comercial es de pago).
+  La conexión queda cifrada aunque alguien más esté en el Wi-Fi.
 - Si vuelve a hacer doble clic con el programa abierto, solo se abre el navegador.
 
 ## Respaldos
@@ -43,8 +45,23 @@ Reemplace el `GastroMedPro.exe` viejo por el nuevo (con el programa cerrado). Lo
 1. *Ajustes → Clínica y documentos:* colegiación, dirección y teléfonos (salen en las recetas).
 2. *Menú de usuario → Verificación en dos pasos:* actívela.
 3. *Ajustes → Usuarios y permisos:* cree las cuentas de recepción y enfermería.
+4. *Ajustes → Clínica y documentos → Logo y firma:* suba el logo y una foto de su firma.
+5. *Ajustes → Horarios y vacaciones:* su horario de atención y las fechas bloqueadas.
+
+## Recordatorios de citas (gratis)
+- **Correo automático:** necesita una cuenta de Gmail del consultorio con *Verificación en dos pasos* activada.
+  En myaccount.google.com/apppasswords cree una «contraseña de aplicación» (16 letras) y péguela en
+  *Ajustes → Recordatorios y dictado*. Pulse «Enviar prueba». Marque «Enviar recordatorios automáticos».
+- **WhatsApp:** en *Agenda → Recordatorios* toque el botón verde de cada cita; se abre WhatsApp con el mensaje escrito y usted pulsa Enviar.
+- En la ficha de cada paciente elija el canal (Correo o WhatsApp) y marque que el paciente lo autorizó.
+- El programa debe estar abierto para que salgan los correos automáticos.
+
+## Dictado por voz (gratis)
+*Ajustes → Recordatorios y dictado → Dictado:* lea el aviso, márquelo y active. En las notas aparece **🎤 Dictar** bajo cada campo.
+Use Chrome o Edge, con internet. Diga «punto», «coma», «punto y aparte» o «nueva línea». Revise siempre el texto.
 
 ## Límites (léalos)
 - La PC debe estar encendida y el programa abierto.
-- Solo funciona dentro del Wi-Fi del consultorio; la conexión celular ↔ PC aún no está cifrada (HTTPS local: próxima versión).
+- Solo funciona dentro del Wi-Fi del consultorio (fuera de él no se puede entrar, por seguridad).
+- El dictado envía el audio a Google o Microsoft para convertirlo en texto; no dicte nombres, DNI ni teléfonos.
 - Si algo falla, la ventana negra muestra el error: tome una foto y compártala.

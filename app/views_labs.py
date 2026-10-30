@@ -173,7 +173,8 @@ def order_pdf(order_id):
     size = request.args.get("papel") or s["paper_size"]
     if size not in ("carta", "a4"):
         abort(400)
-    data = make(o, items, p, s, size, ORDER_TYPES[o["order_type"]], PRIORITIES[o["priority"]])
+    from .views_extras import load_assets
+    data = make(o, items, p, s, size, ORDER_TYPES[o["order_type"]], PRIORITIES[o["priority"]], load_assets(g.user["org_id"]))
     audit("orden_pdf", "orden", o["id"])
     resp = make_response(data)
     resp.headers["Content-Type"] = "application/pdf"

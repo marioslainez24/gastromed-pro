@@ -23,7 +23,7 @@ B = f"http://127.0.0.1:{PORT}"
 
 def main(exe):
     root = Path(tempfile.mkdtemp()) / "GastroMed"
-    env = dict(os.environ, GASTROMED_ROOT=str(root), GASTROMED_PORT=str(PORT), GASTROMED_HOST="127.0.0.1",
+    env = dict(os.environ, GASTROMED_ROOT=str(root), GASTROMED_PORT=str(PORT), GASTROMED_HOST="127.0.0.1", GASTROMED_HTTPS_PORT="8766",
                USERPROFILE=str(root.parent))
     (root.parent / "Desktop").mkdir(parents=True, exist_ok=True)
     log = open(root.parent / "exe.log", "w", encoding="utf-8", errors="replace")
@@ -100,7 +100,17 @@ def main(exe):
         post(f"/procedimientos/{proc_id}/finalizar", {"csrf_token": csrf, "version": ver})
         pdf = get(f"/procedimientos/{proc_id}/pdf").read()
         assert pdf.startswith(b"%PDF-") and b"/Image" in pdf, "PDF de endoscopia sin imagen"
-        print("Flujo principal y endoscopia correctos. Esperando respaldo automático…", flush=True)
+        for path in ("/ajustes/recordatorios", "/ajustes/horarios", "/agenda/recordatorios"):
+            assert get(path).status == 200, path
+        # Conexión cifrada para el celular (certificado propio)
+        import ssl
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        r = urllib.request.urlopen("https://127.0.0.1:8766/ingresar", context=ctx, timeout=30)
+        assert r.status == 200 and "GastroMed" in r.read().decode(), "https no responde"
+        assert (root / "datos" / "https-cert.pem").exists()
+        print("Flujo principal, endoscopia, recordatorios y https correctos. Esperando respaldo automático…", flush=True)
         for _ in range(60):
             if list((root / "respaldos").glob("gastromed-*.gmbak")):
                 break

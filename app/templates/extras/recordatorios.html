@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Recordatorios y dictado{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Ajustes</h1></div>
+{% include "ajustes/_tabs.html" %}
+
+<section class="card">
+  <h2>Recordatorios de citas por correo (gratis)</h2>
+  <p class="muted small">El programa envía el recordatorio automáticamente desde <b>su propia cuenta de Gmail</b>, sin servicios de pago. Solo se envía a pacientes que en su ficha eligieron «Correo» y dieron su autorización. El mensaje <b>no</b> incluye diagnósticos ni motivo de consulta.</p>
+  <form method="post" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="guardar">
+    <label class="check"><input type="checkbox" name="reminders_enabled" value="1" {% if s.reminders_enabled %}checked{% endif %}> Enviar recordatorios automáticos por correo</label>
+    <div class="grid2">
+      <label class="field">Enviar con cuántas horas de anticipación<input type="number" name="reminder_hours_before" min="1" max="168" value="{{ s.reminder_hours_before }}" required></label>
+      <label class="field">Cuenta de correo que envía (Gmail)<input type="email" name="smtp_user" value="{{ s.smtp_user or '' }}" maxlength="200" placeholder="miconsultorio@gmail.com" autocomplete="off"></label>
+      <label class="field">Contraseña de aplicación de Google<input type="password" name="smtp_password" maxlength="64" autocomplete="new-password" placeholder="{{ 'Guardada (escriba solo para cambiarla)' if has_pw else '16 letras, sin espacios' }}"></label>
+      <div class="grid2">
+        <label class="field">Servidor<input name="smtp_host" value="{{ s.smtp_host }}" maxlength="120"></label>
+        <label class="field">Puerto<select name="smtp_port">{% for pt in [587, 465, 25, 2525] %}<option {% if s.smtp_port == pt %}selected{% endif %}>{{ pt }}</option>{% endfor %}</select></label>
+      </div>
+    </div>
+    <details class="help"><summary>¿Cómo obtengo la «contraseña de aplicación» de Gmail? (5 minutos, una sola vez)</summary>
+      <ol class="small">
+        <li>Use (o cree) una cuenta de Gmail para el consultorio.</li>
+        <li>Entre a <b>myaccount.google.com</b> → <b>Seguridad</b> → active la <b>Verificación en dos pasos</b>.</li>
+        <li>En la misma página busque <b>«Contraseñas de aplicaciones»</b> (o vaya a myaccount.google.com/apppasswords).</li>
+        <li>Escriba el nombre «GastroMed» y pulse <b>Crear</b>. Google le muestra 16 letras: cópielas aquí.</li>
+      </ol>
+      <p class="small muted">No use la contraseña normal de su correo: Google la rechaza. La contraseña de aplicación se guarda cifrada en su computadora. Gmail permite cientos de envíos al día, suficiente para un consultorio.</p>
+    </details>
+    <label class="field">Mensaje del recordatorio<textarea name="reminder_template" rows="4" maxlength="600" required>{{ s.reminder_template }}</textarea>
+      <span class="muted small">Puede usar: {nombre} {consultorio} {fecha} {hora} {telefono}. Debe incluir {fecha} y {hora}.</span></label>
+    <div class="card-sub"><p class="small muted">Vista previa:</p><p class="pre-wrap">{{ sample }}</p></div>
+    <div class="actions"><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+  <form method="post" class="inline-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="probar">
+    <label class="field">Enviar un correo de prueba a<input type="email" name="test_to" required maxlength="200" placeholder="su correo personal"></label>
+    <button class="btn" type="submit">Enviar prueba</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Recordatorios por WhatsApp (gratis, con un toque)</h2>
+  <p class="small">La API oficial de WhatsApp para envíos automáticos es de pago, por eso no se usa. En su lugar, en <a href="{{ url_for('extras.reminders_today') }}">Agenda → Recordatorios</a> aparece un botón <b>WhatsApp</b> por cada cita: al tocarlo se abre WhatsApp (en el celular o WhatsApp Web) con el mensaje ya escrito y usted solo pulsa «Enviar». Funciona con el WhatsApp normal o Business del consultorio.</p>
+</section>
+
+<section class="card" id="dictado">
+  <h2>Dictado de notas por voz</h2>
+  <p class="small">Usa el reconocimiento de voz que ya trae <b>Google Chrome</b> o <b>Microsoft Edge</b>, sin costo. Aparece un botón 🎤 junto a cada campo de texto de las notas clínicas y de los informes de endoscopia. Usted habla, el texto aparece en el campo y <b>usted lo revisa y corrige antes de guardar</b>; el programa no inventa ni agrega contenido.</p>
+  <div class="flash flash-warn"><b>Aviso de privacidad:</b> para convertir voz en texto, el navegador envía el audio a los servidores de Google (Chrome) o Microsoft (Edge). El texto resultante se guarda solo en su computadora. Recomendación: no dicte nombres completos, DNI ni teléfonos del paciente; esos datos ya están en la ficha. Necesita internet para dictar. En el celular, abra el programa con la dirección <b>https://</b>.</div>
+  <form method="post" action="{{ url_for('extras.dictation_settings') }}" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="check"><input type="checkbox" name="dictation_enabled" value="1" {% if s.dictation_enabled %}checked{% endif %}> Activar el dictado por voz</label>
+    <label class="field">Idioma y acento<select name="dictation_lang">{% for k, v in [('es-MX','Español (México)'),('es-US','Español (Estados Unidos)'),('es-419','Español (Latinoamérica)'),('es-ES','Español (España)')] %}<option value="{{ k }}" {% if s.dictation_lang == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+    <label class="check"><input type="checkbox" name="ack_privacy" value="1" {% if s.dictation_enabled %}checked{% endif %}> Leí el aviso: el audio lo procesa Google o Microsoft, y reviso cada texto dictado.</label>
+    <div class="actions"><button class="btn btn-primary" type="submit">Guardar dictado</button></div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Últimos envíos</h2>
+  {% if log %}
+  <div class="table-wrap"><table class="table"><thead><tr><th>Paciente</th><th>Cita</th><th>Canal</th><th>Estado</th><th>Detalle</th><th>Último intento</th></tr></thead><tbody>
+  {% for r in log %}<tr><td>{{ r.first_names }} {{ r.last_names }}</td><td>{{ fmt_dt(r.starts_at) }}</td><td>{{ 'Correo' if r.channel == 'correo' else 'WhatsApp' }}</td>
+    <td>{% if r.status == 'enviado' %}<span class="tag tag-ok">Enviado</span>{% elif r.status == 'fallido' %}<span class="tag tag-danger">Falló ({{ r.attempts }})</span>{% else %}<span class="tag">Abierto en WhatsApp</span>{% endif %}</td>
+    <td class="small">{{ r.detail or '' }}</td><td>{{ fmt_dt(r.last_at) }}</td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<p class="muted small">Todavía no hay envíos.</p>{% endif %}
+</section>
+{% endblock %}

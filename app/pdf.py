@@ -28,11 +28,36 @@ ST = {
 }
 
 
+def _img_flowable(data: bytes, max_w, max_h):
+    from PIL import Image as PILImage
+    from reportlab.platypus import Image as RLImage
+    w, h = PILImage.open(io.BytesIO(data)).size
+    k = min(max_w / w, max_h / h)
+    return RLImage(io.BytesIO(data), width=w * k, height=h * k)
+
+
+def _with_logo(story, assets, width):
+    """Coloca el logo de la clínica a la izquierda del encabezado (si fue cargado en Ajustes)."""
+    if not assets or not assets.get("logo"):
+        return story
+    logo = _img_flowable(assets["logo"], 30 * mm, 22 * mm)
+    t = Table([[logo, story]], colWidths=[34 * mm, width - 34 * mm])
+    t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+    return [t]
+
+
+def _sig_img(assets):
+    """Imagen de firma escaneada (no es una firma electrónica verificable)."""
+    if not assets or not assets.get("firma"):
+        return ""
+    return _img_flowable(assets["firma"], 60 * mm, 15 * mm)
+
+
 def _e(s) -> str:
     return escape(str(s or ""))
 
 
-def prescription_pdf(r, items, p, s, size: str, allergies) -> bytes:
+def prescription_pdf(r, items, p, s, size: str, allergies, assets=None) -> bytes:
     buf = io.BytesIO()
     pagesize = LETTER if size == "carta" else A4
     doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm,
@@ -49,6 +74,7 @@ def prescription_pdf(r, items, p, s, size: str, allergies) -> bytes:
     contact = [x for x in [s["address"], f"Tel.: {s['phones']}" if s["phones"] else None, s["contact_email"]] if x]
     if contact:
         story.append(Paragraph(_e(" · ".join(contact)), ST["sub"]))
+    story = _with_logo(story, assets, width)
     story.append(Spacer(1, 4 * mm))
 
     head = Table([[Paragraph("RECETA MÉDICA", ST["title"]),
@@ -90,7 +116,7 @@ def prescription_pdf(r, items, p, s, size: str, allergies) -> bytes:
         story += [Spacer(1, 2 * mm), Paragraph("Indicaciones generales", ST["title"]),
                   Paragraph(_e(r["general_instructions"]).replace("\n", "<br/>"), ST["body"])]
 
-    sig = Table([[""], [Paragraph(f"<b>{_e(s['doctor_display_name'])}</b><br/>Firma y sello", ST["sub"])]],
+    sig = Table([[_sig_img(assets)], [Paragraph(f"<b>{_e(s['doctor_display_name'])}</b><br/>Firma y sello", ST["sub"])]],
                 colWidths=[70 * mm], rowHeights=[18 * mm, None])
     sig.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("ALIGN", (0, 1), (0, 1), "CENTER"),
                              ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
@@ -119,7 +145,7 @@ def prescription_pdf(r, items, p, s, size: str, allergies) -> bytes:
     return buf.getvalue()
 
 
-def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str) -> bytes:
+def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str, assets=None) -> bytes:
     """Solicitud de laboratorio, imagen o endoscopia."""
     buf = io.BytesIO()
     pagesize = LETTER if size == "carta" else A4
@@ -136,6 +162,7 @@ def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str) -
     contact = [x for x in [s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
     if contact:
         story.append(Paragraph(_e(" · ".join(contact)), ST["sub"]))
+    story = _with_logo(story, assets, width)
     story.append(Spacer(1, 4 * mm))
     head = Table([[Paragraph(f"SOLICITUD DE {_e(type_label.upper())}", ST["title"]),
                    Paragraph(f"Fecha: {issued:%d/%m/%Y}<br/>Folio: {o['id'][:8].upper()}<br/>Prioridad: {_e(priority_label)}", ST["subr"])]],
@@ -156,7 +183,7 @@ def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str) -
     if o["indication"]:
         story += [Spacer(1, 4 * mm), Paragraph("Indicación clínica / datos relevantes", ST["title"]),
                   Paragraph(_e(o["indication"]).replace("\n", "<br/>"), ST["body"])]
-    sig = Table([[""], [Paragraph(f"<b>{_e(s['doctor_display_name'])}</b><br/>Firma y sello", ST["sub"])]],
+    sig = Table([[_sig_img(assets)], [Paragraph(f"<b>{_e(s['doctor_display_name'])}</b><br/>Firma y sello", ST["sub"])]],
                 colWidths=[70 * mm], rowHeights=[18 * mm, None])
     sig.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("ALIGN", (0, 1), (0, 1), "CENTER"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
     outer = Table([[sig]], colWidths=[width])
@@ -199,7 +226,7 @@ def _annotated_jpeg(raw: bytes, annotations: list, max_px=900) -> bytes:
     return out.getvalue()
 
 
-def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D) -> bytes:
+def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None) -> bytes:
     from reportlab.platypus import Image as RLImage
     buf = io.BytesIO()
     pagesize = LETTER if size == "carta" else A4
@@ -212,6 +239,7 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D) -> bytes:
                        s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
     if sub:
         story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
+    story = _with_logo(story, assets, width)
     head = Table([[Paragraph(f"INFORME DE {_e(title.upper())}", ST["title"]),
                    Paragraph(f"Fecha: {fmt_birth(pr['performed_on'])}<br/>Folio: {pr['id'][:8].upper()}"
                              + ("" if pr["status"] == "finalizado" else "<br/><b>BORRADOR</b>"), ST["subr"])]],
@@ -322,7 +350,7 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D) -> bytes:
     for a in addenda:
         sec(f"Adenda · {a['full_name']} · {a['created_at'][:10]}", a["text"])
     signed = pr["status"] == "finalizado"
-    sig = Table([[""], [Paragraph(f"<b>{_e(s['doctor_display_name'])}</b><br/>Firma y sello", ST["sub"])]], colWidths=[70 * mm], rowHeights=[16 * mm, None])
+    sig = Table([[_sig_img(assets)], [Paragraph(f"<b>{_e(s['doctor_display_name'])}</b><br/>Firma y sello", ST["sub"])]], colWidths=[70 * mm], rowHeights=[16 * mm, None])
     sig.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("ALIGN", (0, 1), (0, 1), "CENTER"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
     outer = Table([[sig]], colWidths=[width])
     outer.setStyle(TableStyle([("ALIGN", (0, 0), (0, 0), "RIGHT")]))

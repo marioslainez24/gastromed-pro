@@ -63,7 +63,9 @@ def day():
     s, e = _day_bounds(d)
     rows = _appointments_between(s, e, prac)
     waiting = [r for r in rows if r["status"] == "presente"]
-    return render_template("agenda/dia.html", d=d, d_label=fmt_date_long(d), rows=rows, waiting=waiting,
+    from .views_extras import day_blocks
+    blocks = day_blocks(get_db(), g.user["org_id"], d, prac)
+    return render_template("agenda/dia.html", d=d, d_label=fmt_date_long(d), rows=rows, waiting=waiting, blocks=blocks,
                            prev=d - timedelta(days=1), next=d + timedelta(days=1), today=local_today(),
                            practitioners=practitioners(), prac=prac, transitions=TRANSITIONS)
 
@@ -157,7 +159,15 @@ def new():
         if len(values["admin_note"]) > 300:
             errors["admin_note"] = "Máximo 300 caracteres."
         if not errors:
+            from .views_extras import availability_problems
             end = start + timedelta(minutes=minutes)
+            block, outside = availability_problems(get_db(), g.user["org_id"], values["practitioner_id"], start, end)
+            if block:
+                errors["starts_local"] = (f"La agenda está bloqueada del {block['start_date']} al {block['end_date']}"
+                                          f"{' (' + block['reason'] + ')' if block['reason'] else ''}. Elija otra fecha.")
+            elif outside and request.form.get("fuera_horario") != "1":
+                errors["fuera_horario"] = "El horario elegido está fuera del horario de atención del profesional. Marque la casilla para agendar de todas formas."
+        if not errors:
             site = get_db().execute("SELECT id FROM sites WHERE org_id = ? AND active = 1 ORDER BY created_at LIMIT 1",
                                     (g.user["org_id"],)).fetchone()
             aid = new_id()
@@ -257,6 +267,10 @@ def reschedule(appt_id):
     except ValueError:
         abort(400, description="Fecha, hora o duración no válidas.")
     reason = (request.form.get("detail") or "").strip()[:300] or None
+    from .views_extras import availability_problems
+    block, _ = availability_problems(get_db(), g.user["org_id"], a["practitioner_id"], start, start + timedelta(minutes=minutes))
+    if block:
+        abort(409, description=f"La agenda está bloqueada del {block['start_date']} al {block['end_date']}. Elija otra fecha.")
     db = get_db()
     try:
         with write_tx(db):
@@ -270,6 +284,8 @@ def reschedule(appt_id):
                        " to_starts_at, detail) VALUES (?,?,?,?,?,?,?,?,?,?)",
                        (new_id(), a["id"], utcnow(), g.user["id"], "reprogramada", a["status"], "solicitada", a["starts_at"],
                         to_utc_str(start), reason))
+            # Nueva fecha → el recordatorio debe enviarse de nuevo con la fecha correcta.
+            db.execute("DELETE FROM appointment_reminders WHERE appointment_id = ?", (a["id"],))
             audit("cita_reprogramada", "cita", a["id"], {"de": a["starts_at"], "a": to_utc_str(start)}, db=db)
     except sqlite3.IntegrityError as exc:
         if "cruce_de_horario" in str(exc):

@@ -330,3 +330,26 @@ table .bristol-icon { width: 48px; height: 17px; }
   .page { max-width: none; padding: 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* v0.7: colores por tipo de cita, dictado, imágenes */
+.appt.type-primera_vez, .wk-appt.type-primera_vez { border-left: 4px solid #2563eb; }
+.appt.type-seguimiento, .wk-appt.type-seguimiento { border-left: 4px solid #0f6e66; }
+.appt.type-procedimiento, .wk-appt.type-procedimiento { border-left: 4px solid #b45309; }
+.appt.type-teleconsulta, .wk-appt.type-teleconsulta { border-left: 4px solid #7c3aed; }
+.appt[class*="type-"] { padding-left: .5rem; }
+.type-legend { display: flex; flex-wrap: wrap; gap: .8rem; font-size: .8rem; }
+.type-legend span::before { content: ""; display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; margin-right: .3rem; vertical-align: middle; }
+.type-legend .tl-primera_vez::before { background: #2563eb; } .type-legend .tl-seguimiento::before { background: #0f6e66; }
+.type-legend .tl-procedimiento::before { background: #b45309; } .type-legend .tl-teleconsulta::before { background: #7c3aed; }
+.mic-btn { justify-self: start; align-self: flex-start; width: auto; font-size: .9rem; padding: .2rem .9rem; margin-top: .3rem; min-height: 36px; min-width: 44px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); cursor: pointer; font-size: 1rem; }
+.mic-btn.is-on { background: #dc2626; border-color: #dc2626; color: #fff; animation: micpulse 1.2s infinite; }
+@keyframes micpulse { 50% { opacity: .65; } }
+.dictation-live { display: inline-block; margin-left: .5rem; }
+.asset-preview { max-width: 220px; max-height: 110px; object-fit: contain; background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: .3rem; }
+.wa-btn { background: #128c7e; color: #fff; border-color: #128c7e; }
+.chips { display: flex; flex-wrap: wrap; gap: .4rem 1rem; }
+.inline-form { display: flex; flex-wrap: wrap; gap: .6rem; align-items: flex-end; margin-top: 1rem; }
+.inline-form .field { flex: 1 1 240px; }
+.card-sub { background: var(--surface-2); border-radius: 8px; padding: .4rem .8rem; }
+details.help { background: var(--surface-2); border-radius: 8px; padding: .5rem .8rem; }
+details.help summary { cursor: pointer; font-weight: 600; }

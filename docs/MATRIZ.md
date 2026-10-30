@@ -43,8 +43,8 @@ Actualizada: 30 de octubre de 2026 · versión 0.3.0 · ver también `COMPARATIV
 | 3.3 | Prevención de cruces y reservas simultáneas (garantía en base de datos) | ✅ | `test_reservas_simultaneas…` (6 solicitudes paralelas → 1 aceptada) |
 | 3.4 | Estados y transiciones válidas; llegada y sala de espera | ✅ | `test_flujo_completo…`, `test_cancelar_libera…` |
 | 3.5 | Reprogramación con historial | ✅ | `test_todas_las_pantallas_cargan` |
-| 3.6 | Disponibilidad por consultorio y equipo; horarios del profesional; bloqueos/vacaciones; lista de espera | ⬜ | |
-| 3.7 | Reserva online, recordatorios, calendarios externos | 🔌⬜ | Fase 5 |
+| 3.6 | Disponibilidad por consultorio y equipo; horarios del profesional; bloqueos/vacaciones; lista de espera | 🟡 | Horarios y bloqueos ✅ (`test_blocks_and_working_hours`); por equipo y lista de espera ⬜ |
+| 3.7 | Reserva online, recordatorios, calendarios externos | 🟡 | Recordatorios por correo propio ✅ y WhatsApp manual (wa.me) ✅ (`test_fase5`); reserva online y calendarios: no solicitados |
 | 4.1 | Nota de primera vez / subsecuente; plantillas SOAP y narrativa | ✅ | |
 | 4.2 | Signos vitales con rangos de plausibilidad; IMC (OMS: kg/m²) | ✅ | IMC verificado: 70 kg / 170 cm = 24,2 |
 | 4.3 | Borrador con autoguardado en servidor y aviso de cambios sin guardar | ✅ | Prueba + navegador real |
@@ -59,17 +59,17 @@ Actualizada: 30 de octubre de 2026 · versión 0.3.0 · ver también `COMPARATIV
 | 5.4 | Advertencia de alergias no investigadas antes de emitir | ✅ | |
 | 5.5 | Interacciones / vademécum | 🔌 | **No disponible**: se indica en pantalla; no se inventa base farmacológica |
 | 5.6 | Colegiación, dirección, teléfonos editables | ✅ | `test_guardar_ajustes` |
-| 5.7 | Logo e imagen de firma en recetas | ⬜ | Módulo de archivos listo; falta integrarlo al PDF |
+| 5.7 | Logo e imagen de firma en recetas | ✅ | También en órdenes e informes (`test_logo_and_signature_upload_and_pdf`) |
 | 5.8 | Firma electrónica verificable | 🔌 | No implementada; el PDF lo declara |
 | 6.1 | Archivos privados: PDF/JPG/PNG/HEIC, foto desde celular, validación por contenido, rechazo de PDF activos, 20 MB, cifrado en disco, acceso solo clínico | ✅ | `test_expediente_archivos.py` + navegador. Antivirus: 🟡 pendiente en servidor |
 | 6.2 | Respaldos cifrados, verificación y restauración (registros + adjuntos) | ✅ | `test_respaldo.py`. Programación diaria automática: ⬜ (en el servidor) |
 | 6.3 | Exportación completa (CSV + adjuntos descifrados) | ✅ | `test_exportacion_completa` |
 | 7.1 | Interfaz en español, PC y celular, modo claro/oscuro | ✅ | Capturas en `evidencia/capturas` (sin errores de JavaScript) |
-| 7.2 | PWA instalable sin guardar expedientes en el dispositivo | 🟡 | Manifiesto + service worker solo estático; instalar requiere HTTPS |
+| 7.2 | PWA instalable sin guardar expedientes en el dispositivo | 🟡 | Manifiesto + service worker solo estático; con certificado propio el celular puede no permitir instalarla |
 | 7.3 | Accesibilidad (teclado, contraste, foco visible, atajo «/») | 🟡 | Implementado; falta auditoría formal |
 | 7.4 | Configuración Honduras / HNL / America/Tegucigalpa | ✅ | |
 | 8.1 | Servidor privado en la PC del consultorio (Windows 11) con instalador de doble clic | 🟡 | Simulación completa probada (`test_consultorio.py`); falta validar en Windows real |
-| 8.2 | Acceso desde celular en el Wi-Fi del consultorio | 🟡 | Firewall solo red privada; sin HTTPS local todavía |
+| 8.2 | Acceso desde celular en el Wi-Fi del consultorio | ✅ | HTTPS con certificado propio en el puerto 8443; http desde la red se redirige (`test_lan_http_redirects_to_https`, prueba del .exe) |
 | 8.3 | Respaldo diario automático, verificado, con copia a disco externo y retención | ✅ | `test_instalacion_respaldo_y_diagnostico…`, `test_retencion…`; tarea de Windows 🟡 |
 | 8.4 | Modo demostración separado de los datos reales | ✅ | Base y puerto propios |
 
@@ -97,18 +97,19 @@ Actualizada: 30 de octubre de 2026 · versión 0.3.0 · ver también `COMPARATIV
 | 3 | Informes de endoscopia alta, colonoscopia, rectosigmoidoscopia, CPRE, USE; clasificaciones (Los Ángeles, Praga, Boston, Forrest, París) tras verificar definiciones/licencias; imágenes y anotaciones; patología hasta cierre; pólipos y vigilancia; calidad de colonoscopia; trazabilidad de endoscopios; prueba de captura UVC con señal ficticia | ⬜ |
 | 3b | Módulos de hepatología, EII, H. pylori, páncreas/vías biliares y nutrición | ⬜ |
 | 4 | **DESCARTADA por decisión del Dr. Lainez (30-oct-2026).** Catálogo y tarifas, presupuestos, cuentas por cobrar, caja, gastos, comprobantes internos (≠ factura fiscal SAR), liquidaciones, inventario con lotes y vencimientos | ⬜ |
-| 5 | Portal del paciente, reserva online, recordatorios (correo/WhatsApp), teleconsulta, campañas con consentimiento, IA opcional bajo las reglas del documento | 🔌⬜ |
+| 5 | Solo lo solicitado (v0.7.0): recordatorios por correo propio y WhatsApp manual ✅, dictado por voz del navegador ✅. Portal, reserva online, teleconsulta y campañas: no solicitados | 🟡 |
 
 ## Integraciones
 
 | Integración | Proveedor | Estado |
 |---|---|---|
-| Correo | Por elegir | 🔌 pendiente de cotizar y aprobar |
-| WhatsApp | API oficial vía proveedor autorizado | 🔌 pendiente |
+| Correo | Cuenta Gmail del consultorio (SMTP, contraseña de aplicación) | ✅ gratis; probar con la cuenta real |
+| WhatsApp | Enlace oficial wa.me (envío manual con un toque) | ✅ gratis; la API automática es de pago y no se usa |
 | Pagos en línea | Por elegir (sin guardar tarjetas) | 🔌 pendiente |
 | Firma electrónica | Por verificar requisitos en Honduras | 🔌 pendiente |
 | Videollamada | Por elegir | 🔌 pendiente |
-| IA | Por elegir, con acuerdo de datos | 🔌 pendiente (desactivada por defecto) |
+| Dictado (voz a texto) | Reconocimiento integrado de Chrome/Edge | ✅ gratis, desactivado por defecto, con aviso de privacidad |
+| IA generativa | Ninguna (de pago) | ⬜ no incluida por decisión del usuario |
 | Vademécum | Por identificar fuente con licencia | 🔌 pendiente |
 | Facturación fiscal | Requisitos SAR por verificar | 🔌 pendiente |
 

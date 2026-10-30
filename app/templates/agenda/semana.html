@@ -9,7 +9,7 @@
   <section class="week-day {% if dd == today %}is-today{% endif %}">
     <h2><a href="{{ url_for('agenda.day', fecha=dd.isoformat(), profesional=prac) }}" class="cap">{{ dl.split(' de ')[0] }}</a></h2>
     {% for a in rows %}
-      <a class="wk-appt st-{{ a.status }}" href="{{ url_for('agenda.view', appt_id=a.id) }}"><b>{{ fmt_time(a.starts_at) }}</b> {{ a.first_names }} {{ a.last_names }}<span class="small muted"> · {{ label('appt_status', a.status) }}</span></a>
+      <a class="wk-appt st-{{ a.status }} type-{{ a.appt_type }}" href="{{ url_for('agenda.view', appt_id=a.id) }}"><b>{{ fmt_time(a.starts_at) }}</b> {{ a.first_names }} {{ a.last_names }}<span class="small muted"> · {{ label('appt_status', a.status) }}</span></a>
     {% else %}<p class="muted small">—</p>{% endfor %}
   </section>
   {% endfor %}

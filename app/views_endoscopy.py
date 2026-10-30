@@ -89,12 +89,13 @@ def proc_view(proc_id):
                          " ORDER BY a.created_at", (pr["id"],)).fetchall()
     scope = db.execute("SELECT * FROM scopes WHERE id = ?", (pr["scope_id"],)).fetchone() if pr["scope_id"] else None
     audit("procedimiento_consultado", "procedimiento", pr["id"])
-    return render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, allergies=allergies, meds=meds,
+    from .views_extras import with_dictation
+    return with_dictation(render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, allergies=allergies, meds=meds,
                            images=_images(db, pr["id"]), specimens=specimens, stents=stents, addenda=addenda, scopes=scopes(),
                            scope=scope, empty_finding=dict.fromkeys(["segment", "type", "desc", "classification", "size_mm", "prague_c",
                                                                      "prague_m", "removed", "jar"]),
                            empty_jar=dict.fromkeys(["jar", "site", "desc", "pieces"]), users=db.execute("SELECT id, full_name FROM users WHERE org_id = ? AND active = 1 ORDER BY full_name",
-                                                         (g.user["org_id"],)).fetchall())
+                                                         (g.user["org_id"],)).fetchall()), editable)
 
 
 def _txt(src, k, n=4000):
@@ -415,7 +416,8 @@ def proc_pdf(proc_id):
     scope = db.execute("SELECT * FROM scopes WHERE id = ?", (pr["scope_id"],)).fetchone() if pr["scope_id"] else None
     addenda = db.execute("SELECT a.*, u.full_name FROM procedure_addenda a JOIN users u ON u.id = a.author_id WHERE a.procedure_id = ?"
                          " ORDER BY a.created_at", (pr["id"],)).fetchall()
-    data = procedure_pdf(pr, json.loads(pr["data"]), p, s, size, imgs, scope, addenda, D)
+    from .views_extras import load_assets
+    data = procedure_pdf(pr, json.loads(pr["data"]), p, s, size, imgs, scope, addenda, D, load_assets(g.user["org_id"]))
     audit("procedimiento_pdf", "procedimiento", pr["id"])
     resp = make_response(data)
     resp.headers["Content-Type"] = "application/pdf"

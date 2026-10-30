@@ -1,5 +1,7 @@
 <nav class="seg tabs" aria-label="Secciones de ajustes">
   <a href="{{ url_for('settings.clinic') }}" {% if request.endpoint == 'settings.clinic' %}aria-current="page"{% endif %}>Clínica y documentos</a>
+  <a href="{{ url_for('extras.schedules') }}" {% if request.endpoint == 'extras.schedules' %}aria-current="page"{% endif %}>Horarios y vacaciones</a>
+  <a href="{{ url_for('extras.reminders_settings') }}" {% if request.endpoint == 'extras.reminders_settings' %}aria-current="page"{% endif %}>Recordatorios y dictado</a>
   {% if can('usuarios.gestionar') %}<a href="{{ url_for('settings.users') }}" {% if request.endpoint == 'settings.users' %}aria-current="page"{% endif %}>Usuarios y permisos</a>{% endif %}
   {% if can('auditoria.ver') %}<a href="{{ url_for('settings.audit_log') }}" {% if request.endpoint == 'settings.audit_log' %}aria-current="page"{% endif %}>Auditoría</a>{% endif %}
 </nav>

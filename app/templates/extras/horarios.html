@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Horarios y vacaciones{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Ajustes</h1></div>
+{% include "ajustes/_tabs.html" %}
+<section class="card">
+  <h2>Horario de atención</h2>
+  <p class="muted small">Si define un horario, al agendar fuera de él el programa pide confirmación (no lo impide). Si no define ninguno, se puede agendar a cualquier hora.</p>
+  {% if pracs %}
+  <form method="post" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="horario">
+    <div class="grid2">
+      <label class="field">Profesional<select name="user_id" required>{% for u in pracs %}<option value="{{ u.id }}">{{ u.full_name }}</option>{% endfor %}</select></label>
+      <div class="grid2"><label class="field">Desde<input type="time" name="start_time" value="08:00" required></label><label class="field">Hasta<input type="time" name="end_time" value="12:00" required></label></div>
+    </div>
+    <fieldset><legend>Días</legend><div class="chips">{% for d in WEEKDAYS %}<label class="check"><input type="checkbox" name="weekday" value="{{ loop.index0 }}" {% if loop.index0 < 5 %}checked{% endif %}> {{ d }}</label>{% endfor %}</div></fieldset>
+    <p class="muted small">Para horario partido (mañana y tarde), agregue dos franjas.</p>
+    <div class="actions"><button class="btn btn-primary" type="submit">Agregar franja</button></div>
+  </form>
+  {% else %}<p class="muted">No hay profesionales activos.</p>{% endif %}
+  {% if sched %}
+  <div class="table-wrap"><table class="table"><thead><tr><th>Profesional</th><th>Día</th><th>Horario</th><th></th></tr></thead><tbody>
+  {% for r in sched %}<tr><td>{{ r.full_name }}</td><td>{{ WEEKDAYS[r.weekday] }}</td><td>{{ r.start_time }} – {{ r.end_time }}</td>
+    <td><form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="quitar_horario"><input type="hidden" name="id" value="{{ r.id }}"><button class="link-btn small" type="submit">Quitar</button></form></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% endif %}
+</section>
+<section class="card">
+  <h2>Vacaciones, feriados y días bloqueados</h2>
+  <p class="muted small">En las fechas bloqueadas no se pueden agendar ni reprogramar citas. Las citas ya existentes no se modifican: revíselas y reprogramelas.</p>
+  <form method="post" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="bloqueo">
+    <div class="grid2">
+      <label class="field">Aplica a<select name="user_id"><option value="">Toda la clínica</option>{% for u in pracs %}<option value="{{ u.id }}">{{ u.full_name }}</option>{% endfor %}</select></label>
+      <label class="field">Motivo<input name="reason" maxlength="200" placeholder="Vacaciones, congreso, feriado…"></label>
+      <label class="field">Desde<input type="date" name="start_date" required></label>
+      <label class="field">Hasta (inclusive)<input type="date" name="end_date" required></label>
+    </div>
+    <div class="actions"><button class="btn btn-primary" type="submit">Bloquear fechas</button></div>
+  </form>
+  {% if blocks %}
+  <div class="table-wrap"><table class="table"><thead><tr><th>Fechas</th><th>Aplica a</th><th>Motivo</th><th></th></tr></thead><tbody>
+  {% for b in blocks %}<tr><td>{{ fmt_birth(b.start_date) }} – {{ fmt_birth(b.end_date) }}</td><td>{{ b.full_name or 'Toda la clínica' }}</td><td>{{ b.reason or '' }}</td>
+    <td><form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="quitar_bloqueo"><input type="hidden" name="id" value="{{ b.id }}"><button class="link-btn small" type="submit">Quitar</button></form></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<p class="muted small">No hay bloqueos vigentes.</p>{% endif %}
+</section>
+{% endblock %}
