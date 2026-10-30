@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+{% block title %}{{ D.KINDS[pr.kind] }} · {{ p.first_names }} {{ p.last_names }}{% endblock %}
+{% macro sel(name, options, value, empty=true) -%}
+<select name="{{ name }}">{% if empty %}<option value="">—</option>{% endif %}{% for k, v in options %}<option value="{{ k }}" {% if value is not none and value|string == k|string %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+{%- endmacro %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ D.KINDS[pr.kind] }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
+    <p class="muted small">{{ p.mrn }} · {{ age(p.birth_date) }} · {{ label('sex', p.sex) }} · Endoscopista: {{ pr.author }} · Folio <span class="mono">{{ pr.id[:8]|upper }}</span></p>
+  </div>
+  <span class="tag big {{ 'tag-ok' if pr.status == 'finalizado' else 'tag-warn' }}">{{ 'Finalizado' if pr.status == 'finalizado' else 'Borrador' }}</span>
+</div>
+
+<section class="clinical-banner {% if p.allergy_status == 'con_alergias' %}is-alert{% elif p.allergy_status == 'no_investigado' %}is-unknown{% endif %}">
+  <div><strong>Alergias:</strong>
+  {% if allergies %}{% for a in allergies %}<span class="tag tag-danger">{{ a.substance }} ({{ label('severity', a.severity)|lower }})</span>{% endfor %}
+  {% else %}<span class="tag {{ 'tag-warn' if p.allergy_status == 'no_investigado' else 'tag-ok' }}">{{ label('allergy_status', p.allergy_status) }}</span>{% endif %}</div>
+  {% if p.clinical_alerts %}<div><strong>Alertas:</strong> {{ p.clinical_alerts }}</div>{% endif %}
+  {% if meds %}<div class="small"><strong>Medicamentos actuales:</strong> {% for m in meds %}{{ m.name }} {{ m.dose or '' }}{% if not loop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+</section>
+
+<div class="btn-row">
+  <a class="btn" href="{{ url_for('endo.proc_pdf', proc_id=pr.id, papel='carta') }}" target="_blank" rel="noopener">PDF carta{{ ' (borrador)' if pr.status != 'finalizado' }}</a>
+  <a class="btn" href="{{ url_for('endo.proc_pdf', proc_id=pr.id, papel='a4') }}" target="_blank" rel="noopener">PDF A4</a>
+  {% if editable %}<a class="btn btn-primary" href="{{ url_for('endo.capture', proc_id=pr.id) }}">Capturar imágenes del video</a>{% endif %}
+</div>
+
+{% if editable and request.args.get('confirmar') %}
+<section class="card confirm-box" role="alertdialog" aria-labelledby="cf">
+  <h2 id="cf">¿Finalizar el informe?</h2>
+  <p>Una vez finalizado no podrá modificarse (incluidas las imágenes seleccionadas); las correcciones se harán como adendas. Los frascos se registrarán para el seguimiento de patología.</p>
+  <form method="post" action="{{ url_for('endo.proc_finalize', proc_id=pr.id) }}" class="inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ pr.version }}">
+    <button class="btn btn-primary" type="submit">Sí, finalizar</button></form>
+  <a class="btn btn-quiet" href="{{ url_for('endo.proc_view', proc_id=pr.id) }}">Seguir editando</a>
+</section>
+{% endif %}
+
+{% if editable %}
+<form method="post" action="{{ url_for('endo.proc_save', proc_id=pr.id) }}" class="stack proc-form" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ pr.version }}">
+
+  <fieldset class="card"><legend>Indicación y consentimiento</legend>
+    <div class="grid4">
+      <label class="field">Fecha<input type="date" name="performed_on" value="{{ pr.performed_on }}" required></label>
+      <label class="field">Tipo de indicación{{ sel('indication_category', D.INDICATION_CATEGORIES.items(), pr.indication_category) }}</label>
+      <label class="field">Hora de inicio<input type="time" name="start_time" value="{{ d.start_time or '' }}"></label>
+      <label class="field">Hora de fin<input type="time" name="end_time" value="{{ d.end_time or '' }}"></label>
+    </div>
+    <label class="field">Indicación<textarea name="indication" rows="2" data-grow>{{ d.indication or '' }}</textarea></label>
+    <div class="grid2">
+      <label class="check"><input type="checkbox" name="consent_obtained" value="1" {% if d.consent_obtained %}checked{% endif %}> Consentimiento informado obtenido y firmado</label>
+      <label class="field">Versión / documento de consentimiento<input name="consent_version" maxlength="120" value="{{ d.consent_version or '' }}" placeholder="Ej.: Consentimiento colonoscopia v1 (2026)"></label>
+    </div>
+  </fieldset>
+
+  <fieldset class="card"><legend>Evaluación previa y preparación</legend>
+    <div class="grid4">
+      <label class="field">ASA{{ sel('asa', D.ASA, d.asa) }}</label>
+      <label class="field">Ayuno (horas)<input name="fasting_hours" inputmode="decimal" value="{{ d.fasting_hours if d.fasting_hours is not none else '' }}" class="w-num"></label>
+      {% if pr.kind in ('colonoscopia','rectosigmoidoscopia') %}
+      <label class="field">Producto de preparación<input name="prep_product" maxlength="200" value="{{ d.prep_product or '' }}"></label>
+      <label class="field">Esquema<input name="prep_regimen" maxlength="300" value="{{ d.prep_regimen or '' }}" placeholder="Ej.: dosis dividida"></label>
+      {% endif %}
+    </div>
+    <div class="grid2">
+      <label class="field">Comorbilidades relevantes<textarea name="comorbidities" rows="2" data-grow>{{ d.comorbidities or '' }}</textarea></label>
+      <label class="field">Anticoagulantes / antiagregantes (manejo)<textarea name="anticoagulation" rows="2" data-grow>{{ d.anticoagulation or '' }}</textarea></label>
+    </div>
+    <label class="field">Otros medicamentos relevantes<input name="relevant_meds" value="{{ d.relevant_meds or '' }}"></label>
+  </fieldset>
+
+  <fieldset class="card"><legend>Sedación y monitorización (documentadas por el profesional responsable)</legend>
+    <div class="grid4">
+      <label class="field">Tipo{{ sel('sedation_type', D.SEDATION.items(), d.sedation_type) }}</label>
+      <label class="field">Fármacos y dosis<input name="sedation_agents" maxlength="500" value="{{ d.sedation_agents or '' }}"></label>
+      <label class="field">Administrada por<input name="sedation_by" maxlength="200" value="{{ d.sedation_by or '' }}"></label>
+      <label class="field">Monitorización<input name="monitoring" maxlength="500" value="{{ d.monitoring or '' }}" placeholder="SpO₂, FC, PA, capnografía…"></label>
+    </div>
+    <p class="muted small">GastroMed Pro registra lo que el profesional documenta; no calcula ni sugiere dosis.</p>
+  </fieldset>
+
+  <fieldset class="card"><legend>Equipo, personal y técnica</legend>
+    <div class="grid4">
+      <label class="field">Endoscopio<select name="scope_id"><option value="">—</option>{% for s in scopes %}<option value="{{ s.id }}" {% if pr.scope_id == s.id %}selected{% endif %}>{{ s.name }}{% if s.serial %} · {{ s.serial }}{% endif %}</option>{% endfor %}</select></label>
+      <label class="field">Asistentes<input name="assistants" maxlength="300" value="{{ d.assistants or '' }}"></label>
+      <label class="field">Extensión alcanzada{{ sel('extent', D.EXTENT[pr.kind], pr.extent) }}</label>
+      <label class="field">¿Estudio completo?{{ sel('complete', [('1','Sí'),('0','No')], pr.complete) }}</label>
+    </div>
+    <label class="field">Motivo si fue incompleto<input name="incomplete_reason" maxlength="300" value="{{ d.incomplete_reason or '' }}"></label>
+    {% if not scopes %}<p class="muted small">Registre sus endoscopios en <a href="{{ url_for('endo.equipment') }}">Endoscopia → Equipos</a> para la trazabilidad.</p>{% endif %}
+    {% if pr.kind == 'colonoscopia' %}
+    <div class="grid4">
+      <label class="field">Tiempo de retirada (min)<input name="withdrawal_minutes" inputmode="decimal" value="{{ '%g' % pr.withdrawal_minutes if pr.withdrawal_minutes is not none else '' }}" class="w-num"></label>
+      <label class="field">Boston · colon derecho{{ sel('bbps_right', D.BBPS, pr.bbps_right) }}</label>
+      <label class="field">Boston · transverso{{ sel('bbps_transverse', D.BBPS, pr.bbps_transverse) }}</label>
+      <label class="field">Boston · izquierdo{{ sel('bbps_left', D.BBPS, pr.bbps_left) }}</label>
+    </div>
+    <p class="muted small">Escala de preparación de Boston (Lai 2009): 0–3 por segmento, total 0–9. Se considera adecuada con ≥2 en cada segmento.</p>
+    {% endif %}
+  </fieldset>
+
+  <fieldset class="card"><legend>Hallazgos por segmento</legend>
+    <div id="findings" data-rows="find">
+    {% set rows = d.findings or [empty_finding] %}
+    {% for f in rows %}{% set i = loop.index0 %}
+      <div class="row-card" data-row>
+        <div class="grid4">
+          <label class="field">Segmento{{ sel('find-%d-segment' % i, D.SEGMENTS[pr.kind]|map('string')|zip_self, f.segment) }}</label>
+          <label class="field">Tipo de hallazgo{{ sel('find-%d-type' % i, D.FINDING_TYPES|zip_self, f.type) }}</label>
+          <label class="field">Clasificación
+            <select name="find-{{ i }}-class"><option value="">—</option>
+              {% for grp, (gl, opts) in D.CLASSIFICATIONS.items() %}<optgroup label="{{ gl }}">{% for code, short, desc in opts %}<option value="{{ code }}" {% if f.classification == code %}selected{% endif %}>{{ short }} · {{ desc }}</option>{% endfor %}</optgroup>{% endfor %}
+            </select></label>
+          <label class="field">Tamaño (mm)<input name="find-{{ i }}-size" inputmode="decimal" value="{{ '%g' % f.size_mm if f.size_mm else '' }}" class="w-num"></label>
+        </div>
+        <label class="field">Descripción<input name="find-{{ i }}-desc" maxlength="1000" value="{{ f.desc or '' }}"></label>
+        <div class="grid4">
+          <label class="field">Barrett · Praga C (cm)<input name="find-{{ i }}-pc" inputmode="decimal" value="{{ '%g' % f.prague_c if f.prague_c is not none else '' }}" class="w-num"></label>
+          <label class="field">Barrett · Praga M (cm)<input name="find-{{ i }}-pm" inputmode="decimal" value="{{ '%g' % f.prague_m if f.prague_m is not none else '' }}" class="w-num"></label>
+          <label class="field">Resección / técnica<input name="find-{{ i }}-removed" maxlength="120" value="{{ f.removed or '' }}" placeholder="Ej.: asa fría, completa"></label>
+          <label class="field">Frasco n.º<input name="find-{{ i }}-jar" inputmode="numeric" value="{{ f.jar or '' }}" class="w-num"></label>
+        </div>
+        <button type="button" class="link-btn small" data-row-remove>Quitar hallazgo</button>
+      </div>
+    {% endfor %}
+    </div>
+    <button type="button" class="btn btn-quiet btn-sm" data-row-add="findings">＋ Agregar hallazgo</button>
+    <p class="muted small">Clasificaciones: Los Ángeles, Forrest, París, Praga C/M y tamaño de várices (definiciones verificadas; ver documentación). Otras clasificaciones se habilitarán progresivamente.</p>
+  </fieldset>
+
+  <fieldset class="card"><legend>Biopsias y frascos</legend>
+    <div id="jars" data-rows="jar">
+    {% set jrows = d.jars or [empty_jar] %}
+    {% for j in jrows %}{% set i = loop.index0 %}
+      <div class="row-card grid4" data-row>
+        <label class="field">Frasco n.º<input name="jar-{{ i }}-number" inputmode="numeric" value="{{ j.jar or loop.index }}" class="w-num"></label>
+        <label class="field">Sitio<input name="jar-{{ i }}-site" maxlength="200" value="{{ j.site or '' }}" placeholder="Ej.: antro y cuerpo (Sydney)"></label>
+        <label class="field">Descripción<input name="jar-{{ i }}-desc" maxlength="500" value="{{ j.desc or '' }}"></label>
+        <label class="field">Fragmentos<input name="jar-{{ i }}-pieces" inputmode="numeric" value="{{ j.pieces or '' }}" class="w-num"></label>
+        <button type="button" class="link-btn small" data-row-remove>Quitar frasco</button>
+      </div>
+    {% endfor %}
+    </div>
+    <button type="button" class="btn btn-quiet btn-sm" data-row-add="jars">＋ Agregar frasco</button>
+  </fieldset>
+
+  <fieldset class="card"><legend>Intervenciones, material y complicaciones</legend>
+    <div class="grid2">
+      <label class="field">Intervenciones / terapéutica<textarea name="interventions" rows="3" data-grow>{{ d.interventions or '' }}</textarea></label>
+      <label class="field">Material utilizado (accesorios, lotes)<textarea name="materials" rows="3" data-grow>{{ d.materials or '' }}</textarea></label>
+    </div>
+    <div class="check-grid">{% for k, v in D.COMPLICATIONS.items() %}<label class="check"><input type="checkbox" name="complications" value="{{ k }}" {% if k in d.complications %}checked{% endif %}> {{ v }}</label>{% endfor %}</div>
+    <label class="field">Detalle de complicaciones y manejo<textarea name="complication_detail" rows="2" data-grow>{{ d.complication_detail or '' }}</textarea></label>
+    <h3>Prótesis colocadas</h3>
+    <div id="stents" data-rows="stent">
+    {% set srows = d.stents or [] %}
+    {% for s in srows %}{% set i = loop.index0 %}
+      <div class="row-card grid4" data-row>
+        <label class="field">Tipo{{ sel('stent-%d-kind' % i, D.STENT_KINDS|zip_self, s.kind) }}</label>
+        <label class="field">Descripción (marca, medidas)<input name="stent-{{ i }}-desc" maxlength="300" value="{{ s.desc or '' }}"></label>
+        <label class="field">Revisión / retiro previsto<input type="date" name="stent-{{ i }}-due" value="{{ s.review_due or '' }}"></label>
+        <button type="button" class="link-btn small" data-row-remove>Quitar</button>
+      </div>
+    {% endfor %}
+    </div>
+    <template id="tpl-stents"><div class="row-card grid4" data-row>
+        <label class="field">Tipo{{ sel('stent-0-kind', D.STENT_KINDS|zip_self, none) }}</label>
+        <label class="field">Descripción (marca, medidas)<input name="stent-0-desc" maxlength="300"></label>
+        <label class="field">Revisión / retiro previsto<input type="date" name="stent-0-due"></label>
+        <button type="button" class="link-btn small" data-row-remove>Quitar</button></div></template>
+    <button type="button" class="btn btn-quiet btn-sm" data-row-add="stents">＋ Agregar prótesis</button>
+  </fieldset>
+
+  <fieldset class="card"><legend>Conclusión y seguimiento</legend>
+    <label class="field">Conclusión <span class="req" aria-hidden="true">*</span><textarea name="conclusion" rows="3" data-grow>{{ d.conclusion or '' }}</textarea></label>
+    <label class="field">Recomendaciones<textarea name="recommendations" rows="3" data-grow>{{ d.recommendations or '' }}</textarea></label>
+    <div class="grid2">
+      <label class="field">Seguimiento (texto)<input name="follow_up" maxlength="500" value="{{ d.follow_up or '' }}" placeholder="Ej.: colonoscopia de vigilancia según patología"></label>
+      <label class="field">Fecha de control / vigilancia<input type="date" name="surveillance_due" value="{{ pr.surveillance_due or '' }}"></label>
+    </div>
+    <p class="muted small">El intervalo de vigilancia lo define el médico según la guía que utilice; el sistema no lo calcula automáticamente. La fecha alimenta la lista de recordatorios.</p>
+  </fieldset>
+
+  <div class="sticky-actions">
+    <button class="btn" type="submit" name="then" value="guardar">Guardar</button>
+    {% if can('notas.finalizar') %}<button class="btn btn-primary" type="submit" name="then" value="finalizar">Finalizar…</button>{% endif %}
+  </div>
+</form>
+{% else %}
+  {# ---------------- Vista de solo lectura ---------------- #}
+  <section class="card note-read">
+    <h2>Indicación</h2><p>{{ D.INDICATION_CATEGORIES.get(pr.indication_category, '') }}{% if d.indication %} · {{ d.indication }}{% endif %}</p>
+    <h2>Evaluación previa y sedación</h2>
+    <p class="small">Consentimiento: {{ 'obtenido' if d.consent_obtained else 'no registrado' }}{% if d.consent_version %} ({{ d.consent_version }}){% endif %}
+      {% if d.asa %} · ASA {{ d.asa }}{% endif %} · Sedación: {{ D.SEDATION.get(d.sedation_type, 'no registrada') }}{% if d.sedation_agents %} · {{ d.sedation_agents }}{% endif %}
+      {% if d.sedation_by %} · por {{ d.sedation_by }}{% endif %}{% if scope %} · Equipo: {{ scope.name }}{% endif %}</p>
+    <h2>Técnica</h2>
+    <p class="small">Extensión: {{ dict(D.EXTENT[pr.kind]).get(pr.extent, '—') }}{% if pr.complete is not none %} · {{ 'Completo' if pr.complete else 'Incompleto' }}{% endif %}
+      {% if pr.withdrawal_minutes is not none %} · Retirada {{ '%g' % pr.withdrawal_minutes }} min{% endif %}
+      {% if pr.bbps_right is not none %} · Boston {{ pr.bbps_right }}/{{ pr.bbps_transverse }}/{{ pr.bbps_left }} = {{ pr.bbps_right + pr.bbps_transverse + pr.bbps_left }}{% endif %}</p>
+    {% if d.findings %}<h2>Hallazgos</h2><ul>{% for f in d.findings %}<li><b>{{ f.segment }}</b>: {{ f.type or '' }}{% if f.desc %} · {{ f.desc }}{% endif %}
+      {% if f.classification %} · {{ D.CLASSIFICATIONS[D.CLASS_LOOKUP[f.classification][0]][0] }} {{ D.CLASS_LOOKUP[f.classification][1] }}{% endif %}
+      {% if f.prague_c is not none or f.prague_m is not none %} · Praga C{{ '%g' % (f.prague_c or 0) }} M{{ '%g' % (f.prague_m or 0) }}{% endif %}
+      {% if f.size_mm %} · {{ '%g' % f.size_mm }} mm{% endif %}{% if f.jar %} · frasco {{ f.jar }}{% endif %}</li>{% endfor %}</ul>{% endif %}
+    {% if d.interventions %}<h2>Intervenciones</h2><p class="prewrap">{{ d.interventions }}</p>{% endif %}
+    <h2>Complicaciones</h2><p>{% if d.complications %}{% for c in d.complications %}{{ D.COMPLICATIONS[c] }}{% if not loop.last %}, {% endif %}{% endfor %}{% if d.complication_detail %} · {{ d.complication_detail }}{% endif %}{% else %}Ninguna registrada{% endif %}</p>
+    <h2>Conclusión</h2><p class="prewrap">{{ d.conclusion or '' }}</p>
+    {% if d.recommendations %}<h2>Recomendaciones</h2><p class="prewrap">{{ d.recommendations }}</p>{% endif %}
+    {% if pr.surveillance_due or d.follow_up %}<h2>Seguimiento</h2><p>{{ d.follow_up or '' }}{% if pr.surveillance_due %} · Control: {{ fmt_birth(pr.surveillance_due) }}{% endif %}</p>{% endif %}
+    {% if pr.status == 'finalizado' %}<p class="muted small">Finalizado {{ fmt_dt(pr.finalized_at) }} · Huella SHA-256 <span class="mono">{{ pr.content_sha256[:16] }}…</span></p>{% endif %}
+  </section>
+{% endif %}
+
+<section class="card" id="imagenes">
+  <div class="row-between"><h2>Imágenes <span class="count">{{ images|length }}</span></h2>
+    {% if editable %}
+    <form method="post" action="{{ url_for('endo.image_add', proc_id=pr.id) }}" enctype="multipart/form-data" class="inline-upload">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="confirm_patient" value="{{ p.id }}">
+      <label class="btn btn-sm">Importar imágenes (JPG/PNG)<input type="file" name="imagen" accept="image/jpeg,image/png" multiple data-autosubmit-file hidden></label>
+    </form>{% endif %}
+  </div>
+  {% if images %}
+  <div class="img-grid">
+  {% for im in images %}
+    <figure class="img-card {% if im.in_report %}is-selected{% endif %}" data-img-card>
+      <div class="img-wrap" data-annot-area {% if editable %}data-annot-edit{% endif %}>
+        <img src="{{ url_for('files.download', file_id=im.file_id) }}" alt="Imagen {{ loop.index }} del procedimiento" loading="lazy">
+        <svg class="annot-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" data-annot-svg></svg>
+      </div>
+      {% if editable %}
+      <form method="post" action="{{ url_for('endo.image_update', proc_id=pr.id, img_id=im.id) }}" class="stack img-meta">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="annotations" value="{{ im.annotations }}" data-annot-input>
+        <select name="location" aria-label="Localización anatómica"><option value="">Localización…</option>{% for s in D.SEGMENTS[pr.kind] %}<option {% if im.location == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+        <input name="caption" maxlength="200" value="{{ im.caption or '' }}" placeholder="Leyenda" aria-label="Leyenda">
+        <label class="check small"><input type="checkbox" name="in_report" value="1" {% if im.in_report %}checked{% endif %}> Incluir en el informe</label>
+        <p class="tiny muted">Clic sobre la imagen para agregar una marca numerada (máx. 12). El archivo original no se modifica.</p>
+        <div class="actions"><button class="btn btn-sm" type="submit">Guardar</button><button type="button" class="link-btn small" data-annot-clear>Quitar marcas</button></div>
+      </form>
+      {% else %}
+      <figcaption class="small">{{ im.location or '' }}{% if im.caption %} · {{ im.caption }}{% endif %}{% if im.in_report %} · <b>en informe</b>{% endif %}</figcaption>
+      <input type="hidden" value="{{ im.annotations }}" data-annot-input>
+      {% endif %}
+    </figure>
+  {% endfor %}
+  </div>
+  {% else %}<p class="muted small">Sin imágenes.</p>{% endif %}
+</section>
+
+{% if pr.status == 'finalizado' %}
+<section class="card" id="patologia">
+  <h2>Seguimiento de patología</h2>
+  {% if specimens %}
+  {% if specimens|selectattr('status','equalto','pendiente_envio')|list and can('clinico.editar') %}
+  <form method="post" action="{{ url_for('endo.specimens_send', proc_id=pr.id) }}" class="grid4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="field">Laboratorio de patología<input name="laboratory" maxlength="160"></label>
+    <label class="field">Fecha de envío<input type="date" name="sent_on"></label>
+    <div><button class="btn btn-sm" type="submit">Marcar frascos como enviados</button></div>
+  </form>
+  {% endif %}
+  {% for s in specimens %}
+  <article class="specimen">
+    <div class="row-between"><b>Frasco {{ s.jar }} · {{ s.site }}</b>
+      <span class="tag {{ 'tag-ok' if s.status == 'cerrado' else ('tag-danger' if s.status == 'extraviado' else 'tag-warn') }}">{{ {'pendiente_envio':'Pendiente de envío','enviado':'Enviado','resultado_recibido':'Resultado recibido','cerrado':'Cerrado','extraviado':'Extraviado'}[s.status] }}</span></div>
+    {% if s.description %}<p class="small">{{ s.description }}</p>{% endif %}
+    {% if s.sent_on %}<p class="small muted">Enviado {{ fmt_birth(s.sent_on) }}{% if s.laboratory %} a {{ s.laboratory }}{% endif %}</p>{% endif %}
+    {% if s.result_text %}
+      <p><b>{{ D.RESULT_CATEGORIES[s.result_category] }}</b>{% if s.dysplasia and s.dysplasia != 'no_aplica' %} · displasia {{ D.DYSPLASIA[s.dysplasia]|lower }}{% endif %} · {{ fmt_birth(s.result_on) }}</p>
+      <p class="prewrap small">{{ s.result_text }}</p>
+      {% if s.communication %}<p class="small muted">Comunicado: {{ s.communication }}</p>{% endif %}
+    {% endif %}
+    {% if can('resultados.revisar') and can('clinico.editar') %}
+      {% if s.status in ('enviado','pendiente_envio') %}
+      <details><summary class="small">Registrar resultado</summary>
+        <form method="post" action="{{ url_for('endo.specimen_result', sid=s.id) }}" class="stack mt">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="grid4">
+            <label class="field">Categoría{{ sel('result_category', D.RESULT_CATEGORIES.items(), none) }}</label>
+            <label class="field">Displasia{{ sel('dysplasia', D.DYSPLASIA.items(), 'no_aplica', false) }}</label>
+            <label class="field">Fecha del informe<input type="date" name="result_on"></label>
+          </div>
+          <label class="field">Diagnóstico histológico (texto del informe)<textarea name="result_text" rows="3" required></textarea></label>
+          <div><button class="btn btn-sm" type="submit">Guardar resultado</button></div>
+        </form></details>
+      {% endif %}
+      {% if s.status == 'resultado_recibido' %}
+      <form method="post" action="{{ url_for('endo.specimen_close', sid=s.id) }}" class="grid2">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input name="communication" required maxlength="300" placeholder="¿Cómo se comunicó? Ej.: en consulta de control" aria-label="Comunicación">
+        <div><button class="btn btn-sm" type="submit">Comunicado: cerrar seguimiento</button></div>
+      </form>
+      {% endif %}
+      {% if s.status in ('enviado','pendiente_envio') %}
+      <details><summary class="small muted">Reportar frasco extraviado</summary>
+        <form method="post" action="{{ url_for('endo.specimen_close', sid=s.id) }}" class="stack mt">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="extraviado">
+          <input name="communication" maxlength="300" placeholder="Detalle y acciones tomadas" aria-label="Detalle">
+          <button class="btn btn-sm btn-danger-quiet" type="submit">Registrar extravío</button></form></details>
+      {% endif %}
+    {% endif %}
+  </article>
+  {% endfor %}
+  {% else %}<p class="muted small">No se enviaron muestras.</p>{% endif %}
+  {% if stents %}
+  <h3>Prótesis</h3>
+  <ul class="list">{% for s in stents %}<li>{{ s.kind }}{% if s.description %} · {{ s.description }}{% endif %} · colocada {{ fmt_birth(s.placed_on) }}
+    {% if s.review_due %} · revisión {{ fmt_birth(s.review_due) }}{% endif %} · <b>{{ s.status }}</b></li>{% endfor %}</ul>
+  {% endif %}
+</section>
+
+<section class="card" id="adendas">
+  <h2>Adendas</h2>
+  {% for a in addenda %}<article class="addendum"><p class="small muted">{{ fmt_dt(a.created_at) }} · {{ a.full_name }}</p><p class="prewrap">{{ a.text }}</p></article>
+  {% else %}<p class="muted small">Sin adendas.</p>{% endfor %}
+  {% if can('clinico.editar') %}
+  <form method="post" action="{{ url_for('endo.proc_addendum', proc_id=pr.id) }}" class="stack mt">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Nueva adenda<textarea name="text" rows="3" required></textarea></label>
+    <button class="btn" type="submit">Agregar adenda</button></form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

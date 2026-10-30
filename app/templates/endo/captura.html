@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Captura · {{ D.KINDS[pr.kind] }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Captura de imágenes</h1>
+  <p class="muted small">{{ D.KINDS[pr.kind] }} · {{ fmt_birth(pr.performed_on) }} · Folio {{ pr.id[:8]|upper }}</p></div>
+  <a class="btn btn-quiet" href="{{ url_for('endo.proc_view', proc_id=pr.id) }}#imagenes" data-capture-exit>Terminar y volver al informe</a>
+</div>
+
+<div class="capture" data-capture data-upload="{{ url_for('endo.image_add', proc_id=pr.id) }}" data-patient="{{ p.id }}" data-csrf="{{ csrf_token }}">
+  <section class="card confirm-patient-box" data-step="confirm">
+    <h2>1. Confirme el paciente</h2>
+    <p class="big-name">{{ p.first_names }} {{ p.last_names }}</p>
+    <p>{{ p.mrn }} · {{ age(p.birth_date) }} · {{ label('sex', p.sex) }}{% if p.document_number %} · {{ p.document_number }}{% endif %}</p>
+    <label class="check"><input type="checkbox" data-confirm-patient> Confirmo que el paciente en la sala es <b>{{ p.first_names }} {{ p.last_names }}</b> y que este es el procedimiento correcto.</label>
+  </section>
+
+  <section class="card" data-step="source">
+    <h2>2. Fuente de video</h2>
+    <div class="grid4">
+      <label class="field">Dispositivo<select data-device disabled><option value="">— Señal de prueba (sin equipo) —</option></select></label>
+      <label class="field">Resolución<select data-resolution disabled><option value="1280x720">1280 × 720</option><option value="1920x1080">1920 × 1080</option><option value="720x576">720 × 576 (PAL)</option><option value="640x480">640 × 480</option></select></label>
+      <div class="field"><span>&nbsp;</span><button class="btn" type="button" data-start disabled>Iniciar video</button></div>
+      <div class="field"><span>&nbsp;</span><button class="btn btn-quiet" type="button" data-stop disabled>Detener cámara</button></div>
+    </div>
+    <p class="small muted" data-status>Confirme el paciente para habilitar la cámara.</p>
+  </section>
+
+  <section class="card capture-stage">
+    <div class="video-box"><video data-video playsinline muted></video><canvas data-test-canvas width="1280" height="720" hidden></canvas>
+      <div class="patient-watermark" aria-hidden="true">{{ p.last_names }} · {{ p.mrn }}</div></div>
+    <div class="actions">
+      <button class="btn btn-primary btn-lg" type="button" data-shot disabled>Capturar (barra espaciadora)</button>
+      <span class="small muted" data-count>0 imágenes capturadas</span>
+    </div>
+    <div class="thumbs" data-thumbs></div>
+  </section>
+
+  <section class="card small muted">
+    <h2>Compatibilidad</h2>
+    <ul>
+      <li>Funciona con capturadoras HDMI/USB que Windows reconoce como <b>cámara (UVC)</b>, en Chrome o Edge, en esta PC (<code>localhost</code>). Desde el celular no se habilita porque el navegador exige conexión segura para usar la cámara.</li>
+      <li>No se garantiza compatibilidad con todos los endoscopios ni capturadoras: verifique con su equipo. Si su torre requiere un controlador o programa propio, la integración tendría que evaluarse aparte.</li>
+      <li>«Señal de prueba» genera una imagen sintética para practicar sin equipo.</li>
+      <li>Las imágenes se guardan cifradas en el procedimiento de este paciente. Al salir de esta página la cámara se apaga.</li>
+    </ul>
+  </section>
+</div>
+<script src="{{ url_for('static', filename='js/captura.js') }}?v={{ app_version }}" defer></script>
+{% endblock %}

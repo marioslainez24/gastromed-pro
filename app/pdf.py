@@ -1,5 +1,6 @@
 """Generación de PDF (ReportLab). Tamaños carta (216×279 mm) y A4 (210×297 mm)."""
 import io
+import json
 from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
@@ -175,6 +176,171 @@ def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str) -
             canvas.translate(pagesize[0] / 2, pagesize[1] / 2)
             canvas.rotate(35)
             canvas.drawCentredString(0, 0, "ANULADA")
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
+    return buf.getvalue()
+
+
+def _annotated_jpeg(raw: bytes, annotations: list, max_px=900) -> bytes:
+    """Copia de la imagen con las anotaciones dibujadas (el original no se modifica)."""
+    from PIL import Image as PILImage, ImageDraw
+    im = PILImage.open(io.BytesIO(raw)).convert("RGB")
+    im.thumbnail((max_px, max_px))
+    if annotations:
+        dr = ImageDraw.Draw(im)
+        r = max(9, im.width // 45)
+        for n, a in enumerate(annotations, 1):
+            x, y = a["x"] * im.width, a["y"] * im.height
+            dr.ellipse([x - r, y - r, x + r, y + r], fill=(255, 210, 0), outline=(0, 0, 0), width=2)
+            dr.text((x - r / 3, y - r / 1.6), str(n), fill=(0, 0, 0))
+    out = io.BytesIO()
+    im.save(out, "JPEG", quality=85)
+    return out.getvalue()
+
+
+def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D) -> bytes:
+    from reportlab.platypus import Image as RLImage
+    buf = io.BytesIO()
+    pagesize = LETTER if size == "carta" else A4
+    title = D.KINDS[pr["kind"]]
+    doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=14 * mm, bottomMargin=20 * mm,
+                            title=f"Informe de {title}", author=s["doctor_display_name"], creator="GastroMed Pro")
+    width = pagesize[0] - 32 * mm
+    story = [Paragraph(_e(s["doctor_display_name"]), ST["doctor"])]
+    sub = [x for x in [s["specialty"], f"Colegiación: {s['license_number']}" if s["license_number"] else None,
+                       s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
+    if sub:
+        story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
+    head = Table([[Paragraph(f"INFORME DE {_e(title.upper())}", ST["title"]),
+                   Paragraph(f"Fecha: {fmt_birth(pr['performed_on'])}<br/>Folio: {pr['id'][:8].upper()}"
+                             + ("" if pr["status"] == "finalizado" else "<br/><b>BORRADOR</b>"), ST["subr"])]],
+                 colWidths=[width * 0.6, width * 0.4])
+    head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                              ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+    story += [Spacer(1, 2 * mm), head]
+    pt = Table([[Paragraph(f"<b>Paciente:</b> {_e(p['first_names'])} {_e(p['last_names'])} · {_e(p['mrn'])}", ST["body"]),
+                 Paragraph(f"<b>Edad:</b> {_e(age(p['birth_date']))} · {_e(label('sex', p['sex']))}", ST["body"])]],
+               colWidths=[width * 0.62, width * 0.38])
+    pt.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eef4f3")), ("LEFTPADDING", (0, 0), (-1, -1), 6)]))
+    story += [Spacer(1, 2 * mm), pt, Spacer(1, 3 * mm)]
+
+    def sec(t, body):
+        if body:
+            story.append(Paragraph(_e(t), ST["title"]))
+            story.append(Paragraph(_e(body).replace("\n", "<br/>"), ST["body"]))
+            story.append(Spacer(1, 2 * mm))
+
+    sec("Indicación", (D.INDICATION_CATEGORIES.get(pr["indication_category"] or "", "") + ". " if pr["indication_category"] else "") + (d.get("indication") or ""))
+    pre = []
+    pre.append("Consentimiento informado: " + ("obtenido" if d.get("consent_obtained") else "NO registrado") +
+               (f" ({d['consent_version']})" if d.get("consent_version") else ""))
+    if d.get("asa"):
+        pre.append(f"Clasificación ASA: {d['asa']}")
+    if d.get("comorbidities"):
+        pre.append(f"Comorbilidades: {d['comorbidities']}")
+    if d.get("anticoagulation"):
+        pre.append(f"Anticoagulación/antiagregación: {d['anticoagulation']}")
+    if d.get("prep_product"):
+        pre.append(f"Preparación: {d['prep_product']}" + (f" ({d['prep_regimen']})" if d.get("prep_regimen") else ""))
+    sed = D.SEDATION.get(d.get("sedation_type") or "", "No registrada")
+    pre.append(f"Sedación: {sed}" + (f" · {d['sedation_agents']}" if d.get("sedation_agents") else "") +
+               (f" · administrada por {d['sedation_by']}" if d.get("sedation_by") else ""))
+    if d.get("monitoring"):
+        pre.append(f"Monitorización: {d['monitoring']}")
+    eq = [x for x in [f"Equipo: {scope['name']}" + (f" (serie {scope['serial']})" if scope and scope['serial'] else "") if scope else None,
+                      f"Asistentes: {d['assistants']}" if d.get("assistants") else None,
+                      f"Horario: {d.get('start_time') or '?'}–{d.get('end_time') or '?'}" if d.get("start_time") else None] if x]
+    sec("Evaluación previa, preparación y sedación", "\n".join(pre + eq))
+    ext = dict(D.EXTENT[pr["kind"]]).get(pr["extent"] or "", "")
+    tech = [f"Extensión: {ext}" if ext else None,
+            ("Estudio completo" if pr["complete"] == 1 else ("Estudio incompleto" + (f": {d['incomplete_reason']}" if d.get("incomplete_reason") else "")))
+            if pr["complete"] is not None else None,
+            f"Tiempo de retirada: {pr['withdrawal_minutes']:g} min" if pr["withdrawal_minutes"] is not None else None]
+    if pr["bbps_right"] is not None:
+        tot = (pr["bbps_right"] or 0) + (pr["bbps_transverse"] or 0) + (pr["bbps_left"] or 0)
+        tech.append(f"Preparación (escala de Boston): derecho {pr['bbps_right']}, transverso {pr['bbps_transverse']}, izquierdo {pr['bbps_left']} · total {tot}/9")
+    sec("Técnica", "\n".join(x for x in tech if x))
+    if d.get("findings"):
+        story.append(Paragraph("Hallazgos", ST["title"]))
+        rows = [[Paragraph("<b>Segmento</b>", ST["small"]), Paragraph("<b>Hallazgo</b>", ST["small"]), Paragraph("<b>Clasificación / tamaño</b>", ST["small"]),
+                 Paragraph("<b>Frasco</b>", ST["small"])]]
+        for f in d["findings"]:
+            cl = []
+            if f.get("classification"):
+                grp, short, desc = D.CLASS_LOOKUP[f["classification"]]
+                cl.append(f"{D.CLASSIFICATIONS[grp][0]} {short}")
+            if f.get("prague_c") is not None or f.get("prague_m") is not None:
+                cl.append(f"Praga C{f.get('prague_c') or 0:g} M{f.get('prague_m') or 0:g}")
+            if f.get("size_mm"):
+                cl.append(f"{f['size_mm']:g} mm")
+            if f.get("removed"):
+                cl.append(f"Resección: {f['removed']}")
+            rows.append([Paragraph(_e(f["segment"]), ST["small"]),
+                         Paragraph(_e(" · ".join(x for x in [f.get("type"), f.get("desc")] if x)), ST["body"]),
+                         Paragraph(_e(" · ".join(cl)), ST["small"]), Paragraph(str(f.get("jar") or ""), ST["small"])])
+        t = Table(rows, colWidths=[width * 0.2, width * 0.45, width * 0.27, width * 0.08], repeatRows=1)
+        t.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#c9d4d3")), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                               ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#eef4f3"))]))
+        story += [t, Spacer(1, 2 * mm)]
+    if d.get("jars"):
+        sec("Muestras enviadas a patología", "\n".join(f"Frasco {j['jar']}: {j['site']}" + (f" — {j['desc']}" if j.get("desc") else "")
+                                                      + (f" ({j['pieces']} fragmentos)" if j.get("pieces") else "") for j in d["jars"]))
+    sec("Intervenciones", d.get("interventions"))
+    sec("Material utilizado", d.get("materials"))
+    comps = ", ".join(D.COMPLICATIONS[c] for c in d.get("complications", []))
+    sec("Complicaciones", (comps + (f". {d['complication_detail']}" if d.get("complication_detail") else "")) if comps else "Ninguna registrada.")
+    if d.get("stents"):
+        sec("Prótesis colocadas", "\n".join(f"{x['kind']}" + (f" — {x['desc']}" if x.get("desc") else "") +
+                                             (f" · revisión/retiro previsto: {fmt_birth(x['review_due'])}" if x.get("review_due") else "") for x in d["stents"]))
+    sec("Conclusión", d.get("conclusion"))
+    sec("Recomendaciones", d.get("recommendations"))
+    sec("Seguimiento", (d.get("follow_up") or "") + (f"\nControl / vigilancia indicada para: {fmt_birth(pr['surveillance_due'])}"
+                                                     if pr["surveillance_due"] else ""))
+    if images:
+        story.append(Paragraph("Imágenes", ST["title"]))
+        cells, row = [], []
+        cw = (width - 4 * mm) / 3
+        for im, raw in images:
+            ann = json.loads(im["annotations"] or "[]")
+            jpg = _annotated_jpeg(raw, ann)
+            from PIL import Image as PILImage
+            w, h = PILImage.open(io.BytesIO(jpg)).size
+            img = RLImage(io.BytesIO(jpg), width=cw - 2 * mm, height=(cw - 2 * mm) * h / w)
+            cap = " · ".join(x for x in [im["location"], im["caption"]] if x)
+            if ann:
+                cap += (" · " if cap else "") + "; ".join(f"{i}: {a['text']}" for i, a in enumerate(ann, 1) if a.get("text"))
+            row.append([img, Paragraph(_e(cap), ST["small"])])
+            if len(row) == 3:
+                cells.append(row)
+                row = []
+        if row:
+            cells.append(row + [""] * (3 - len(row)))
+        t = Table(cells, colWidths=[cw] * 3)
+        t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 1 * mm)]))
+        story += [t, Spacer(1, 2 * mm)]
+    for a in addenda:
+        sec(f"Adenda · {a['full_name']} · {a['created_at'][:10]}", a["text"])
+    signed = pr["status"] == "finalizado"
+    sig = Table([[""], [Paragraph(f"<b>{_e(s['doctor_display_name'])}</b><br/>Firma y sello", ST["sub"])]], colWidths=[70 * mm], rowHeights=[16 * mm, None])
+    sig.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("ALIGN", (0, 1), (0, 1), "CENTER"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+    outer = Table([[sig]], colWidths=[width])
+    outer.setStyle(TableStyle([("ALIGN", (0, 0), (0, 0), "RIGHT")]))
+    story += [Spacer(1, 6 * mm), KeepTogether([outer])]
+
+    def on_page(canvas, dd):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 7.5)
+        canvas.setFillColor(MUTED)
+        canvas.drawString(16 * mm, 11 * mm, "Generado con GastroMed Pro. " + ("Informe finalizado; requiere firma manuscrita." if signed
+                                                                            else "BORRADOR: no válido como informe definitivo."))
+        canvas.drawRightString(pagesize[0] - 16 * mm, 11 * mm, f"Página {dd.page}")
+        if not signed:
+            canvas.setFont("Helvetica-Bold", 60)
+            canvas.setFillColor(colors.Color(0.6, 0.6, 0.6, alpha=0.2))
+            canvas.translate(pagesize[0] / 2, pagesize[1] / 2)
+            canvas.rotate(35)
+            canvas.drawCentredString(0, 0, "BORRADOR")
         canvas.restoreState()
 
     doc.build(story, onFirstPage=on_page, onLaterPages=on_page)

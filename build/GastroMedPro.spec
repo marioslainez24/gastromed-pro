@@ -8,7 +8,7 @@ binaries, hiddenimports = [], []
 for pkg in ("reportlab", "tzdata"):
     d, b, h = collect_all(pkg)
     datas += d; binaries += b; hiddenimports += h
-hiddenimports += collect_submodules("app") + collect_submodules("waitress")
+hiddenimports += collect_submodules("app") + collect_submodules("waitress") + ["PIL.Image", "PIL.ImageDraw", "PIL.JpegImagePlugin", "PIL.PngImagePlugin"]
 
 a = Analysis(["../gastromed_exe.py"], pathex=[".."], binaries=binaries, datas=datas, hiddenimports=hiddenimports,
              excludes=["tkinter", "pytest", "pypdf"], noarchive=False)

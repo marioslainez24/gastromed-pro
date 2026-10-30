@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Indicadores de calidad{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Indicadores de calidad en colonoscopia</h1></div>
+<form method="get" class="card grid4">
+  <label class="field">Desde<input type="date" name="desde" value="{{ start }}"></label>
+  <label class="field">Hasta<input type="date" name="hasta" value="{{ end }}"></label>
+  <label class="field">Endoscopista<select name="endoscopista"><option value="">Todos</option>{% for u in users %}<option value="{{ u.id }}" {% if author == u.id %}selected{% endif %}>{{ u.full_name }}</option>{% endfor %}</select></label>
+  <div class="field"><span>&nbsp;</span><button class="btn" type="submit">Calcular</button></div>
+</form>
+<div class="metric-grid">
+{% for name, num, den, note in metrics %}
+  <section class="card metric">
+    <h2>{{ name }}</h2>
+    <p class="metric-value">{% if den %}{{ '%.1f' % (100 * num / den) }} %{% else %}—{% endif %}</p>
+    <p class="small">{{ num }} / {{ den }}</p>
+    <p class="muted small">{{ note }}</p>
+  </section>
+{% endfor %}
+</div>
+<p class="muted small">Solo se cuentan informes finalizados. Las metas de referencia dependen de la guía utilizada por la clínica; GastroMed Pro muestra los datos con sus denominadores y exclusiones para que el médico los interprete.</p>
+{% endblock %}

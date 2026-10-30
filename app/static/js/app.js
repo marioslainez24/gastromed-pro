@@ -220,6 +220,73 @@
     });
   });
 
+  // ---- Filas repetibles (hallazgos, frascos, prótesis) -----------------------
+  $$("[data-row-add]").forEach(function (btn) {
+    var box = document.getElementById(btn.getAttribute("data-row-add"));
+    var prefix = box.getAttribute("data-rows");
+    function renumber() {
+      $$("[data-row]", box).forEach(function (row, i) {
+        $$("input, select, textarea", row).forEach(function (el) {
+          el.name = el.name.replace(new RegExp("^" + prefix + "-\\d+-"), prefix + "-" + i + "-");
+        });
+      });
+    }
+    btn.addEventListener("click", function () {
+      var rows = $$("[data-row]", box), clone;
+      if (rows.length >= 40) return;
+      if (rows.length) { clone = rows[rows.length - 1].cloneNode(true); }
+      else { clone = document.getElementById("tpl-" + box.id).content.firstElementChild.cloneNode(true); }
+      $$("input, textarea", clone).forEach(function (el) { el.value = ""; });
+      $$("select", clone).forEach(function (el) { el.selectedIndex = 0; });
+      box.appendChild(clone); renumber();
+      var n = $("input[name$='-number']", clone); if (n) n.value = rows.length + 1;
+      dirty = true;
+    });
+    box.addEventListener("click", function (e) {
+      if (!e.target.matches("[data-row-remove]")) return;
+      var rows = $$("[data-row]", box);
+      var row = e.target.closest("[data-row]");
+      if (rows.length === 1 && prefix !== "stent") { $$("input, textarea", row).forEach(function (el) { el.value = ""; }); $$("select", row).forEach(function (el) { el.selectedIndex = 0; }); }
+      else { row.remove(); renumber(); }
+      dirty = true;
+    });
+  });
+
+  // ---- Subir archivo al elegirlo -------------------------------------------
+  $$("[data-autosubmit-file]").forEach(function (inp) { inp.addEventListener("change", function () { if (inp.files.length) inp.form.submit(); }); });
+
+  // ---- Anotaciones sobre imágenes (marcas numeradas; el original no se modifica)
+  $$("[data-img-card]").forEach(function (card) {
+    var area = $("[data-annot-area]", card), svg = $("[data-annot-svg]", card), input = $("[data-annot-input]", card);
+    if (!area || !input) return;
+    var marks = [];
+    try { marks = JSON.parse(input.value || "[]"); } catch (e) { marks = []; }
+    var NS = "http://www.w3.org/2000/svg";
+    function draw() {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      marks.forEach(function (m, i) {
+        var c = document.createElementNS(NS, "circle"); c.setAttribute("cx", m.x * 100); c.setAttribute("cy", m.y * 100); c.setAttribute("r", 3.2);
+        c.setAttribute("class", "annot-dot"); svg.appendChild(c);
+        var t = document.createElementNS(NS, "text"); t.setAttribute("x", m.x * 100); t.setAttribute("y", m.y * 100 + 1.4);
+        t.setAttribute("class", "annot-num"); t.setAttribute("text-anchor", "middle"); t.textContent = String(i + 1); svg.appendChild(t);
+      });
+      input.value = JSON.stringify(marks);
+    }
+    draw();
+    if (area.hasAttribute("data-annot-edit")) {
+      area.addEventListener("click", function (e) {
+        if (marks.length >= 12) return;
+        var r = area.getBoundingClientRect();
+        var text = window.prompt("Texto de la marca " + (marks.length + 1) + " (opcional):", "") ;
+        if (text === null) return;
+        marks.push({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height, text: text.slice(0, 60) });
+        draw(); dirty = true;
+      });
+      var clr = $("[data-annot-clear]", card);
+      if (clr) clr.addEventListener("click", function () { marks = []; draw(); dirty = true; });
+    }
+  });
+
   // ---- PWA: registro del service worker (solo recursos estáticos) -----------
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(function () {});

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Endoscopia{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Endoscopia</h1>
+  <div class="btn-row"><a class="btn" href="{{ url_for('endo.quality') }}">Indicadores de calidad</a><a class="btn" href="{{ url_for('endo.equipment') }}">Equipos y reprocesamiento</a></div></div>
+<p class="muted small">Para un nuevo informe, abra el expediente del paciente → pestaña «Procedimientos».</p>
+
+<div class="grid2">
+<section class="card">
+  <h2>Patología pendiente <span class="count">{{ path|length }}</span></h2>
+  {% if path %}<ul class="list">{% for s in path %}
+    <li class="row-between"><span><a href="{{ url_for('endo.proc_view', proc_id=s.procedure_id) }}#patologia">{{ s.first_names }} {{ s.last_names }}</a> · frasco {{ s.jar }} ({{ s.site }})
+      <br><span class="small muted">{{ D.KINDS[s.kind] }} del {{ fmt_birth(s.performed_on) }}</span></span>
+      <span class="tag tag-warn">{{ {'pendiente_envio':'Por enviar','enviado':'Enviado','resultado_recibido':'Por comunicar'}[s.status] }}</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Todo el seguimiento de patología está cerrado.</p>{% endif %}
+</section>
+<section class="card">
+  <h2>Vigilancia y controles (próximos 60 días y vencidos)</h2>
+  {% if recalls %}<ul class="list">{% for r in recalls %}
+    <li class="row-between"><span><a href="{{ url_for('patients.view', patient_id=r.patient_id) }}">{{ r.first_names }} {{ r.last_names }}</a> · {{ D.KINDS[r.kind] }}
+      <br><span class="small muted">Último: {{ fmt_birth(r.performed_on) }}</span></span>
+      <span class="tag {{ 'tag-danger' if r.surveillance_due < today else 'tag-warn' }}">{{ fmt_birth(r.surveillance_due) }}</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Sin controles próximos.</p>{% endif %}
+</section>
+</div>
+
+<section class="card">
+  <h2>Prótesis colocadas</h2>
+  {% if stents %}<ul class="list">{% for s in stents %}
+    <li class="row-between"><span><b>{{ s.first_names }} {{ s.last_names }}</b> · {{ s.kind }}{% if s.description %} · {{ s.description }}{% endif %}
+      <br><span class="small muted">Colocada {{ fmt_birth(s.placed_on) }}</span></span>
+      <span>{% if s.review_due %}<span class="tag {{ 'tag-danger' if s.review_due < today else 'tag-warn' }}">Revisión {{ fmt_birth(s.review_due) }}</span>{% else %}<span class="tag tag-danger">Sin fecha de revisión</span>{% endif %}
+      {% if can('clinico.editar') %}<form method="post" action="{{ url_for('endo.stent_update', stent_id=s.id) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <select name="status" aria-label="Estado"><option value="retirada">Retirada</option><option value="recambiada">Recambiada</option><option value="migrada">Migrada</option></select>
+        <button class="btn btn-sm" type="submit">Actualizar</button></form>{% endif %}</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted small">No hay prótesis activas.</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>Procedimientos recientes</h2>
+  {% if recent %}<div class="table-wrap"><table class="table">
+    <thead><tr><th>Fecha</th><th>Paciente</th><th>Estudio</th><th>Estado</th></tr></thead>
+    <tbody>{% for r in recent %}<tr><td>{{ fmt_birth(r.performed_on) }}</td><td>{{ r.first_names }} {{ r.last_names }} <span class="muted small">{{ r.mrn }}</span></td>
+      <td><a href="{{ url_for('endo.proc_view', proc_id=r.id) }}">{{ D.KINDS[r.kind] }}</a></td>
+      <td><span class="tag {{ 'tag-ok' if r.status == 'finalizado' else 'tag-warn' }}">{{ 'Finalizado' if r.status == 'finalizado' else 'Borrador' }}</span></td></tr>{% endfor %}</tbody>
+  </table></div>{% else %}<p class="muted small">Sin procedimientos.</p>{% endif %}
+</section>
+{% endblock %}

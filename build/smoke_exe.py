@@ -76,7 +76,31 @@ def main(exe):
         rx = r.url.split("/")[-1]
         pdf = get(f"/recetas/{rx}/pdf").read()
         assert pdf.startswith(b"%PDF-") and len(pdf) > 1500, "PDF inválido"
-        print("Flujo principal correcto. Esperando respaldo automático…", flush=True)
+        # Fase 3: informe de endoscopia con imagen, finalización y PDF con fotografía (prueba Pillow dentro del .exe)
+        r = post(f"/pacientes/{pid}/procedimientos/nuevo", {"csrf_token": csrf, "kind": "eda"})
+        proc_id = r.url.split("/")[-1]
+        import io as _io, uuid as _uuid
+        jpg = bytes.fromhex("ffd8ffe000104a46494600010100000100010000ffdb004300080606070605080707070909080a0c140d0c0b0b0c1912130f141d1a1f1e1d1a1c1c20242e2720222c231c1c2837292c30313434341f27393d38323c2e333432ffc0000b080001000101011100ffc4001f0000010501010101010100000000000000000102030405060708090a0bffc400b5100002010303020403050504040000017d01020300041105122131410613516107227114328191a1082342b1c11552d1f02433627282090a161718191a25262728292a3435363738393a434445464748494a535455565758595a636465666768696a737475767778797a838485868788898a92939495969798999aa2a3a4a5a6a7a8a9aab2b3b4b5b6b7b8b9bac2c3c4c5c6c7c8c9cad2d3d4d5d6d7d8d9dae1e2e3e4e5e6e7e8e9eaf1f2f3f4f5f6f7f8f9faffda0008010100003f00fbd3ffd9")
+        bnd = "----gm" + _uuid.uuid4().hex
+        body = (f"--{bnd}\r\nContent-Disposition: form-data; name=\"csrf_token\"\r\n\r\n{csrf}\r\n"
+                f"--{bnd}\r\nContent-Disposition: form-data; name=\"confirm_patient\"\r\n\r\n{pid}\r\n"
+                f"--{bnd}\r\nContent-Disposition: form-data; name=\"imagen\"; filename=\"a.jpg\"\r\nContent-Type: image/jpeg\r\n\r\n").encode() + jpg + f"\r\n--{bnd}--\r\n".encode()
+        req = urllib.request.Request(f"{B}/procedimientos/{proc_id}/imagenes", data=body, headers={"Content-Type": f"multipart/form-data; boundary={bnd}",
+                                                                                              "X-Requested-With": "fetch"})
+        assert op.open(req, timeout=60).status == 200
+        html = get(f"/procedimientos/{proc_id}").read().decode()
+        img_id = re.search(r'/procedimientos/' + proc_id + r'/imagenes/([0-9a-f]{32})', html).group(1)
+        ver = re.search(r'name="version" value="(\d+)"', html).group(1)
+        post(f"/procedimientos/{proc_id}/imagenes/{img_id}", {"csrf_token": csrf, "in_report": "1", "annotations": '[{"x":0.5,"y":0.5,"text":"lesión"}]'})
+        post(f"/procedimientos/{proc_id}/guardar", {"csrf_token": csrf, "version": ver, "performed_on": "2026-10-01", "indication_category": "diagnostica",
+                                                 "indication": "Dispepsia", "consent_obtained": "1", "sedation_type": "topica", "extent": "segunda_porcion",
+                                                 "conclusion": "Estudio normal."})
+        html = get(f"/procedimientos/{proc_id}").read().decode()
+        ver = re.search(r'name="version" value="(\d+)"', html).group(1)
+        post(f"/procedimientos/{proc_id}/finalizar", {"csrf_token": csrf, "version": ver})
+        pdf = get(f"/procedimientos/{proc_id}/pdf").read()
+        assert pdf.startswith(b"%PDF-") and b"/Image" in pdf, "PDF de endoscopia sin imagen"
+        print("Flujo principal y endoscopia correctos. Esperando respaldo automático…", flush=True)
         for _ in range(60):
             if list((root / "respaldos").glob("gastromed-*.gmbak")):
                 break

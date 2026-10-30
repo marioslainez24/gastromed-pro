@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Equipos y reprocesamiento{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Endoscopios y reprocesamiento</h1></div>
+<section class="card">
+  <h2>Equipos</h2>
+  {% if eq %}<ul class="list">{% for s in eq %}{% set last = (s.last or '').split('|') %}
+    <li class="row-between"><span><b>{{ s.name }}</b> · {{ s.kind }}{% if s.serial %} · serie {{ s.serial }}{% endif %}</span>
+      {% if s.last %}<span class="tag {{ 'tag-ok' if last[0] == 'apto' else 'tag-danger' }}">Último reprocesamiento: {{ 'apto' if last[0] == 'apto' else 'NO APTO' }} · {{ fmt_dt(last[1]) }}</span>
+      {% else %}<span class="tag tag-warn">Sin reprocesamiento registrado</span>{% endif %}</li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Sin equipos registrados.</p>{% endif %}
+  {% if can('ajustes.editar') %}
+  <details class="mt"><summary>Registrar equipo</summary>
+    <form method="post" class="grid4 mt">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="nuevo_equipo">
+      <label class="field">Nombre<input name="name" required maxlength="120" placeholder="Ej.: Gastroscopio 1"></label>
+      <label class="field">Tipo<select name="kind">{% for k in ['gastroscopio','colonoscopio','duodenoscopio','ecoendoscopio','otro'] %}<option>{{ k }}</option>{% endfor %}</select></label>
+      <label class="field">N.º de serie<input name="serial" maxlength="80"></label>
+      <div class="field"><span>&nbsp;</span><button class="btn" type="submit">Registrar</button></div>
+    </form></details>
+  {% endif %}
+</section>
+{% if eq and can('endoscopia.reprocesamiento') %}
+<section class="card">
+  <h2>Registrar reprocesamiento</h2>
+  <form method="post" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="reprocesamiento">
+    <div class="grid4">
+      <label class="field">Equipo<select name="scope_id">{% for s in eq if s.active %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select></label>
+      <label class="field">Procedimiento previo (opcional)<select name="procedure_id"><option value="">—</option>{% for r in recent %}<option value="{{ r.id }}">{{ fmt_birth(r.performed_on) }} · {{ D.KINDS[r.kind] }} · {{ r.last_names }}</option>{% endfor %}</select></label>
+      <label class="field">Método<select name="method"><option value="manual">Manual</option><option value="automatizado">Automatizado</option></select></label>
+      <label class="field">Prueba de fuga<select name="leak_test"><option value="aprobada">Aprobada</option><option value="fallida">Fallida</option><option value="no_realizada">No realizada</option></select></label>
+      <label class="field">Desinfectante<input name="agent" maxlength="120"></label>
+      <label class="field">Lote<input name="agent_lot" maxlength="60"></label>
+      <label class="field">Resultado<select name="result"><option value="apto">Apto para uso</option><option value="no_apto">No apto</option></select></label>
+      <label class="field">Notas<input name="notes" maxlength="500"></label>
+    </div>
+    <div><button class="btn btn-primary" type="submit">Registrar</button></div>
+  </form>
+</section>
+{% endif %}
+<section class="card">
+  <h2>Bitácora de reprocesamiento</h2>
+  {% if log %}<div class="table-wrap"><table class="table small">
+    <thead><tr><th>Fecha</th><th>Equipo</th><th>Método</th><th>Fuga</th><th>Desinfectante / lote</th><th>Resultado</th><th>Responsable</th></tr></thead>
+    <tbody>{% for r in log %}<tr><td>{{ fmt_dt(r.done_at) }}</td><td>{{ r.name }}</td><td>{{ r.method }}</td><td>{{ r.leak_test }}</td>
+      <td>{{ r.agent or '' }} {{ r.agent_lot or '' }}</td><td><span class="tag {{ 'tag-ok' if r.result == 'apto' else 'tag-danger' }}">{{ r.result }}</span></td><td>{{ r.full_name }}</td></tr>{% endfor %}</tbody>
+  </table></div>{% else %}<p class="muted small">Sin registros.</p>{% endif %}
+  <p class="muted small">Los registros no se pueden modificar ni borrar.</p>
+</section>
+{% endblock %}

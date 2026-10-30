@@ -6,7 +6,7 @@ from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.5.0"
+APP_VERSION = "0.6.0"
 
 
 def create_app(config: Config | None = None) -> Flask:
@@ -38,7 +38,9 @@ def create_app(config: Config | None = None) -> Flask:
     from .views_setup import bp as setup_bp, needs_setup
     from .views_labs import bp as labs_bp
     from .views_gi import bp as gi_bp
-    for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp, record_bp, files_bp, account_bp, setup_bp, labs_bp, gi_bp):
+    from .views_endoscopy import bp as endo_bp
+    for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp, record_bp, files_bp, account_bp, setup_bp, labs_bp, gi_bp,
+               endo_bp):
         app.register_blueprint(bp)
 
     app.teardown_appcontext(close_db)
@@ -62,7 +64,7 @@ def create_app(config: Config | None = None) -> Flask:
         h["X-Content-Type-Options"] = "nosniff"
         h["X-Frame-Options"] = "DENY"
         h["Referrer-Policy"] = "no-referrer"
-        h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
+        h.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
         h["Cross-Origin-Opener-Policy"] = "same-origin"
         if cfg.COOKIE_SECURE:
             h["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
@@ -97,5 +99,7 @@ def create_app(config: Config | None = None) -> Flask:
     app.register_error_handler(500, _err(500, "Error interno",
                                          "Ocurrió un error inesperado. No se guardaron cambios parciales. Intente de nuevo."))
     app.jinja_env.globals["PERMISSIONS"] = PERMISSIONS
+    app.jinja_env.globals["dict"] = dict
+    app.jinja_env.filters["zip_self"] = lambda seq: [(x, x) for x in seq]
     app.jinja_env.globals["SESSION_COOKIE"] = SESSION_COOKIE
     return app

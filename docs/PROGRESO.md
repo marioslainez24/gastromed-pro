@@ -2,6 +2,21 @@
 
 Este archivo permite continuar el trabajo en futuras conversaciones. Léalo primero.
 
+## Etapa 6 · 30-oct-2026 · Fase 3 (v0.6.0)
+
+**Qué quedó funcionando**
+- Informes estructurados de EDA, colonoscopia, rectosigmoidoscopia, CPRE y USE: indicación (tipo), consentimiento, ASA, comorbilidades, anticoagulación, preparación, sedación y monitorización documentadas por el profesional, equipo y asistentes, extensión y completitud, tiempo de retirada, escala de Boston, hallazgos por segmento con clasificaciones (Los Ángeles, Forrest, París, Praga C/M, tamaño de várices), biopsias por frasco, intervenciones, material, complicaciones, prótesis, conclusión, recomendaciones y fecha de vigilancia.
+- Finalización inmutable (base de datos) con huella SHA-256 y adendas; datos mínimos obligatorios para finalizar.
+- Imágenes: importación JPG/PNG o captura desde capturadora UVC (o señal de prueba), confirmación explícita del paciente, marca de agua con el paciente en el video, la cámara se apaga al salir; localización anatómica, leyenda, selección para el informe y marcas numeradas que NO alteran el original. PDF del informe con fotografías anotadas.
+- Patología: frascos creados al finalizar, envío, resultado (categoría y displasia; inmutable), comunicación y cierre; extravío; tarea automática de seguimiento.
+- Tablero de endoscopia: patología pendiente, vigilancia próxima/vencida, prótesis con fecha de revisión, procedimientos recientes.
+- Indicadores de calidad con numerador, denominador y exclusiones: intubación cecal, ADR (confirmado por patología, ≥45 años, tamizaje), preparación adecuada, retirada ≥6 min, complicaciones.
+- Endoscopios y bitácora de reprocesamiento inmutable (fuga fallida no puede ser «apto»).
+
+**Cómo se comprobó**: 87 pruebas automáticas; navegador real con capturadora simulada; prueba de humo del ejecutable ampliada a endoscopia con imagen en PDF.
+
+**Pendiente / límites**: compatibilidad con la capturadora real del consultorio (probar en sitio); intervalos de vigilancia NO se calculan (los fija el médico); clasificaciones adicionales (Kudo, NICE, Zargar, Spigelman…) pendientes.
+
 ## Etapa 5 · 30-oct-2026 · Fase 2 (v0.5.0)
 
 **Qué quedó funcionando**

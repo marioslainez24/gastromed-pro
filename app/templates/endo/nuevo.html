@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Nuevo procedimiento{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Nuevo procedimiento · {{ p.first_names }} {{ p.last_names }}</h1><span class="pill mono">{{ p.mrn }}</span></div>
+<form method="post" class="card narrow stack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% if appt %}<input type="hidden" name="appointment_id" value="{{ appt }}">{% endif %}
+  <fieldset class="radios"><legend>Tipo de estudio</legend>
+    {% for k, v in KINDS.items() %}<label class="check"><input type="radio" name="kind" value="{{ k }}" {% if loop.first %}checked{% endif %}> {{ v }}</label>{% endfor %}
+  </fieldset>
+  <div class="actions"><button class="btn btn-primary" type="submit">Crear informe en borrador</button>
+    <a class="btn btn-quiet" href="{{ url_for('endo.patient_procs', patient_id=p.id) }}">Cancelar</a></div>
+</form>
+{% endblock %}

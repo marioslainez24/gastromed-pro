@@ -35,14 +35,17 @@ PERMISSIONS = {
     "ordenes.emitir": "Emitir órdenes de laboratorio, imagen y endoscopia",
     "tareas.gestionar": "Crear y completar tareas",
     "calculadoras.aprobar": "Aprobar calculadoras para uso clínico",
+    "endoscopia.reprocesamiento": "Registrar reprocesamiento de endoscopios",
 }
 
 DEFAULT_ROLES = {
     "propietario": ("Médico propietario y administrador", list(PERMISSIONS)),
     "medico": ("Médico colaborador", ["pacientes.ver_admin", "pacientes.editar_admin", "clinico.ver", "clinico.editar",
                                        "notas.finalizar", "recetas.emitir", "recetas.anular", "agenda.ver", "agenda.editar",
-                                       "resultados.registrar", "resultados.revisar", "ordenes.emitir", "tareas.gestionar"]),
-    "enfermeria": ("Enfermería", ["pacientes.ver_admin", "clinico.ver", "agenda.ver", "resultados.registrar", "tareas.gestionar"]),
+                                       "resultados.registrar", "resultados.revisar", "ordenes.emitir", "tareas.gestionar",
+                                       "endoscopia.reprocesamiento"]),
+    "enfermeria": ("Enfermería", ["pacientes.ver_admin", "clinico.ver", "agenda.ver", "resultados.registrar", "tareas.gestionar",
+                                  "endoscopia.reprocesamiento"]),
     "recepcion": ("Recepción", ["pacientes.ver_admin", "pacientes.editar_admin", "agenda.ver", "agenda.editar", "tareas.gestionar"]),
     "caja": ("Caja y contabilidad", ["pacientes.ver_admin", "agenda.ver"]),
 }
