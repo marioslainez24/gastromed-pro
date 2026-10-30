@@ -1,0 +1,71 @@
+# GastroMed Pro: guía para continuar el desarrollo (leer primero)
+
+Usuario: Dr. Mario Lainez, gastroenterólogo en Honduras. No es programador. Comunicación en español sencillo y sin jerga técnica.
+Repositorio: github.com/marioslainez24/gastromed-pro (rama `main`). Descarga para el usuario: `/releases/latest` → `GastroMedPro.exe`.
+Bitácora detallada: `docs/PROGRESO.md`. Estado de cada requisito: `docs/MATRIZ.md`. Copias de ambos en el Proyecto «gastromed» de claude.ai.
+
+## Decisiones del usuario (no cambiarlas sin preguntar)
+- Todo se guarda en **su PC con Windows 11**, que actúa como servidor privado. No usar nube ni Vultr.
+- Entrega: **un solo .exe**. No se le pide instalar nada más ni pagar ningún servicio. Se usa con pacientes reales.
+- **Sin servicios de pago.** Si algo cuesta, se sustituye por una opción gratuita y se explica la diferencia.
+  - WhatsApp: enlace wa.me con envío manual (no la API).
+  - Correo: su Gmail con contraseña de aplicación.
+  - Dictado: Web Speech API de Chrome/Edge, con aviso de privacidad.
+  - HTTPS: certificado autofirmado.
+- **Fase 4 (finanzas: cobros, caja, inventario, presupuestos) DESCARTADA.**
+- **Fase 5:** solo recordatorios y dictado. Portal del paciente, reserva en línea, teleconsulta y campañas no fueron solicitados.
+- Reglas del documento de requisitos original:
+  - Sin integraciones falsas ni precios o fórmulas inventados.
+  - Calculadoras con fuente y caso verificado.
+  - IA o dictado no inventa contenido; el médico aprueba.
+  - Ningún dato identificable a terceros sin autorización.
+  - Auditoría encadenada; registros finalizados inmutables.
+  - Pacientes ficticios en pruebas; secretos fuera del código.
+  - Distinguir siempre ✅ hecho y probado, ⬜ pendiente y 🔌 proveedor externo.
+
+## Arquitectura
+Flask 3 + Jinja2 + SQLite, con WAL, tablas STRICT y triggers de inmutabilidad y de cruce de citas.
+- **PDF y cifrado:** ReportLab para los PDF; Fernet (`cryptography`) para archivos, logo y firma, contraseña SMTP, secretos MFA y respaldos.
+- **Frontend:** JS y CSS propios, sin librerías externas. CSP estricta: nada de scripts en línea; los datos se pasan con atributos `data-*`.
+- **Migraciones:** `migrations/000N_*.sql`, aplicadas en orden. Nunca modificar una migración publicada: crear una nueva.
+- **Permisos:** por acción en `app/security.py` (roles: propietario, medico, enfermeria, recepcion, caja).
+- **Módulos:** un `views_*.py` por módulo. Al crear uno nuevo, registrar su blueprint en `app/__init__.py`.
+- **Versión:** `APP_VERSION` en `app/__init__.py` y `build/version_info.txt`. Subirla en cada etapa.
+- **Lanzador del ejecutable** (`gastromed_exe.py`):
+  - Datos en `C:\GastroMed\datos` y respaldos en `C:\GastroMed\respaldos`. Las claves se guardan en `datos\gastromed.env` y se deja una copia en el Escritorio.
+  - waitress en el puerto 8000; HTTPS con werkzeug en el 8443 con certificado propio (`datos\https-cert.pem`). El http desde la red se redirige a https; localhost sigue en http.
+  - Hilos de fondo: respaldo cada 24 h (verificado restaurando) y recordatorios por correo cada 10 min.
+  - La configuración inicial solo se permite desde localhost.
+
+## Flujo de trabajo que funcionó
+1. Crear tareas, programar y escribir pruebas pytest para cada función nueva. Ejemplo: un servidor SMTP falso en localhost; nunca simular un éxito.
+2. Correr `python3 -m pytest -q` (100 pruebas en v0.7.0).
+3. Revisar en el navegador con Playwright y guardar capturas en `evidencia/capturas/`.
+4. Correr la prueba del exe en local: `build/smoke_exe.py` con un script que ejecute `python3 gastromed_exe.py`. Si waitress no está instalado, usar un sustituto con `werkzeug.make_server` en `PYTHONPATH`.
+5. Actualizar `docs/PROGRESO.md` y `docs/MATRIZ.md` (y `INSTALACION_WINDOWS.md` si cambia el uso). Copiarlos al Proyecto con `project_write`.
+6. Commit con atribución, `git push`. GitHub Actions (`.github/workflows/construir-exe.yml`, windows-latest) hace lo siguiente: pruebas, PyInstaller (`build/GastroMedPro.spec`), prueba de humo del exe y Release `vX.Y.Z-N`.
+7. Esperar la CI en segundo plano con un ciclo `until` sobre `gh api repos/.../actions/runs?head_sha=...`.
+8. Confirmar la publicación con `gh api repos/marioslainez24/gastromed-pro/releases/latest`.
+
+## Trampas conocidas
+- **Red del entorno:**
+  - PyPI y npm bloqueados: usar los paquetes ya instalados.
+  - Los registros y artefactos de Actions no se pueden descargar y GraphQL está bloqueado. Usar REST: `/actions/runs/<id>/jobs` para el estado de cada paso y `/check-runs/<job>/annotations` para el texto del error. `smoke_exe.py` imprime `::error title=Prueba del ejecutable::` con el traceback.
+- **Consola de Windows (cp1252):** no imprimir «→» ni emojis en la salida del exe ni de las pruebas, o forzar UTF-8 con `reconfigure`.
+- **Cabeceras de seguridad:**
+  - La CSP `form-action 'self'` bloquea los formularios que redirigen a otros dominios. Ejemplo: la página de recordatorios de WhatsApp define su propia CSP con `https://wa.me`.
+  - `Permissions-Policy` se aplica con `setdefault`. Las pantallas que necesitan cámara o micrófono ponen su propia cabecera (ver `with_dictation`).
+- **Plantillas Jinja:** `str.replace("{% endblock %}", …)` sin límite modifica el PRIMER bloque (el de `title`). Insertar antes del último `{% endblock %}` con `rindex`.
+- **Diseño y servidor:**
+  - `label`/`.field` son grid: un botón dentro necesita `justify-self: start`.
+  - Matar el servidor local con `fuser -k 8000/tcp`, no con `pkill -f`.
+- **Pruebas:**
+  - `env["org"]` es un dict; usar `env["org"]["org_id"]`.
+  - `agenda.new` redirige al día, no a la cita.
+  - Los pacientes con el mismo DNI dan 409.
+  - ReportLab reutiliza imágenes idénticas: usar imágenes distintas en las pruebas.
+- **Pendientes de verificar en el sitio:**
+  - Fórmula de Lille (diferencia de bilirrubina) y regla de diálisis en MELD 3.0.
+  - Capturadora de video real.
+  - Envío real con Gmail.
+  - Micrófono del celular por https con certificado autofirmado.
