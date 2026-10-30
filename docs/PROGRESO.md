@@ -2,6 +2,11 @@
 
 Este archivo permite continuar el trabajo en futuras conversaciones. Léalo primero.
 
+## Decisión 30-oct-2026: Fase 4 descartada
+El Dr. Lainez indicó que **no desea** las funciones administrativas y financieras (cobros, presupuestos, caja, convenios, comprobantes,
+liquidaciones, inventario ni reportes financieros). No se desarrollarán salvo que él lo solicite de nuevo.
+Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsulta, IA opcional) o mejoras de las fases 1–3.
+
 ## Etapa 6 · 30-oct-2026 · Fase 3 (v0.6.0)
 
 **Qué quedó funcionando**

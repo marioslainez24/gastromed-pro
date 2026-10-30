@@ -96,7 +96,7 @@ Actualizada: 30 de octubre de 2026 · versión 0.3.0 · ver también `COMPARATIV
 | 2 | Órdenes de laboratorio/imagen/endoscopia, resultados estructurados y tendencias, tareas y responsables, formularios GI (reflujo, disfagia, dolor abdominal, diarrea, estreñimiento, sangrado, anemia, ictericia, EII, páncreas/biliar), Bristol propio, diarios de síntomas, calculadoras validadas (Child-Pugh, MELD-Na, MELD 3.0, FIB-4, APRI, Maddrey, Lille, Glasgow-Blatchford, Rockall, BISAP) con fuente primaria, casos de referencia y revisión clínica | ⬜ |
 | 3 | Informes de endoscopia alta, colonoscopia, rectosigmoidoscopia, CPRE, USE; clasificaciones (Los Ángeles, Praga, Boston, Forrest, París) tras verificar definiciones/licencias; imágenes y anotaciones; patología hasta cierre; pólipos y vigilancia; calidad de colonoscopia; trazabilidad de endoscopios; prueba de captura UVC con señal ficticia | ⬜ |
 | 3b | Módulos de hepatología, EII, H. pylori, páncreas/vías biliares y nutrición | ⬜ |
-| 4 | Catálogo y tarifas, presupuestos, cuentas por cobrar, caja, gastos, comprobantes internos (≠ factura fiscal SAR), liquidaciones, inventario con lotes y vencimientos | ⬜ |
+| 4 | **DESCARTADA por decisión del Dr. Lainez (30-oct-2026).** Catálogo y tarifas, presupuestos, cuentas por cobrar, caja, gastos, comprobantes internos (≠ factura fiscal SAR), liquidaciones, inventario con lotes y vencimientos | ⬜ |
 | 5 | Portal del paciente, reserva online, recordatorios (correo/WhatsApp), teleconsulta, campañas con consentimiento, IA opcional bajo las reglas del documento | 🔌⬜ |
 
 ## Integraciones
