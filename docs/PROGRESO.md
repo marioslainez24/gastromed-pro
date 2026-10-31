@@ -11,6 +11,20 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 12 · 31-oct-2026 · Asistente para redactar la historia de la enfermedad actual (v0.12.0)
+
+**Pedido del Dr. Lainez:** lo que más tiempo le toma en la consulta es escribir la historia de la enfermedad actual.
+**Qué quedó funcionando**
+- «✍ Asistente de historia» encima del campo *Historia de la enfermedad actual* (SOAP) o de *Nota narrativa*: elige el motivo (los 13 formularios GI)
+  y marca opciones con clics (tiempo de evolución exacto con unidad, evolución, localización, carácter, síntomas, factores, signos de alarma…).
+  «Escribir en la historia» agrega un párrafo redactado (`app/hea.py`) al final del campo; el médico lo corrige o dicta lo que falte.
+- Regla: el texto contiene SOLO lo marcado. Los negativos («Niega…») se escriben únicamente si el médico marca
+  «Interrogué los signos de alarma…». Valores no válidos se descartan. Con nada marcado solo sale la frase inicial.
+- Las opciones marcadas se guardan también como formulario de la nota (datos estructurados).
+- Los campos del asistente pertenecen a un formulario aparte (`form="hea-form"`) para no mezclarse con los de la nota (p. ej. «signos_alarma»).
+**Cómo se comprobó**: 126 pruebas (4 nuevas en `test_asistente_historia.py`); navegador real PC y celular actualizando desde la v0.11.0 con perfil
+persistente (redacción, autoguardado y recarga); prueba del ejecutable con el asistente.
+
 ## Etapa 11 · 31-oct-2026 · Diagnósticos frecuentes con CIE-10 en la conclusión de endoscopia (v0.11.0)
 
 **Pedido del Dr. Lainez:** un desplegable con los diagnósticos más usados (p. ej., esofagitis grado A de Los Ángeles, gastropatía hipertensiva) con CIE-10.

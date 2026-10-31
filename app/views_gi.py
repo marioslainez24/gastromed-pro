@@ -3,7 +3,7 @@ import json
 import re
 from datetime import date
 
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from flask import jsonify, Blueprint, abort, flash, g, redirect, render_template, request, url_for
 from markupsafe import Markup
 
 from . import calculators as C
@@ -63,6 +63,41 @@ def form_edit(note_id, form_code):
     title, fields = gi_forms.FORMS[form_code]
     return render_template("gi/formulario.html", n=n, p=p, form_code=form_code, title=title, fields=fields, data=data,
                            errors=errors, existing=existing, BRISTOL=gi_forms.BRISTOL), 422 if errors else 200
+
+
+@bp.route("/notas/<note_id>/historia", methods=["POST"])
+@require("clinico.editar")
+def hea_compose(note_id):
+    """Redacta el párrafo de la historia con lo marcado en el asistente y guarda las opciones como formulario de la nota."""
+    from werkzeug.datastructures import MultiDict
+    from . import hea
+    from .util import age
+    n = _get_note(note_id)
+    if n["status"] != "borrador" or n["author_id"] != g.user["id"]:
+        abort(409, description="Solo el autor puede usar el asistente mientras la nota está en borrador.")
+    code = request.form.get("hx-motivo")
+    if code not in gi_forms.FORMS:
+        return jsonify({"error": "Elija el motivo de consulta."}), 422
+    prefix = f"hx-{code}-"
+    src = MultiDict([(k[len(prefix):], v) for k, vs in request.form.lists() if k.startswith(prefix) for v in vs])
+    db = get_db()
+    p = db.execute("SELECT sex, birth_date FROM patients WHERE id = ?", (n["patient_id"],)).fetchone()
+    text, data, errors = hea.compose(code, src, {"sex": p["sex"], "age": age(p["birth_date"])})
+    if errors:
+        return jsonify({"error": " ".join(errors)}), 422
+    if data:
+        with write_tx(db):
+            existing = db.execute("SELECT id FROM clinical_forms WHERE note_id = ? AND form_code = ?", (n["id"], code)).fetchone()
+            if existing:
+                db.execute("UPDATE clinical_forms SET data = ?, updated_at = ?, version = version + 1 WHERE id = ?",
+                           (json.dumps(data, ensure_ascii=False), utcnow(), existing["id"]))
+            else:
+                db.execute("INSERT INTO clinical_forms(id, org_id, patient_id, note_id, form_code, form_version, data, author_id, created_at,"
+                           " updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                           (new_id(), g.user["org_id"], n["patient_id"], n["id"], code, gi_forms.VERSION, json.dumps(data, ensure_ascii=False),
+                            g.user["id"], utcnow(), utcnow()))
+            audit("historia_redactada_asistente", "nota", n["id"], {"formulario": code}, db=db)
+    return jsonify({"texto": text})
 
 
 def note_forms(db, note_id):

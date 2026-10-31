@@ -422,3 +422,23 @@ fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
 .dx-item.is-added { background: var(--ok-soft); border-color: var(--ok); }
 .dx-code { color: var(--muted); font-size: .82rem; white-space: nowrap; }
 .dx-panel[hidden] { display: none; }
+
+/* Asistente de historia (v0.12.0) */
+.hea-assist { border: 1.5px solid var(--accent); border-radius: 10px; padding: .55rem .75rem; margin: .2rem 0 .7rem; background: var(--surface); }
+.hea-assist > summary { cursor: pointer; }
+.hea-motivos { display: flex; flex-wrap: wrap; gap: .35rem; margin: .6rem 0; }
+.hea-group { border-top: 1px solid var(--line); padding-top: .4rem; }
+.hea-row { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; padding: .35rem 0; border-bottom: 1px dashed var(--line); }
+.hea-row.is-alarm { background: var(--danger-soft); border-radius: 8px; padding: .4rem; }
+.hea-lab { flex-basis: 100%; font-size: .82rem; font-weight: 600; color: var(--ink-2); }
+.hea-chip { display: inline-flex; align-items: center; gap: .3rem; border: 1px solid var(--line); border-radius: 999px; padding: .28rem .65rem;
+  font-size: .88rem; cursor: pointer; background: var(--surface); user-select: none; }
+.hea-chip input { margin: 0; }
+.hea-chip:has(input:checked) { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.hea-text { flex: 1 1 260px; }
+.hea-deny { margin: .5rem 0; }
+.hea-actions { margin-top: .6rem; align-items: center; }
+[data-hea-msg].is-error { color: var(--danger); font-weight: 600; }
+.hea-group[hidden], .hea-actions[hidden] { display: none !important; }
+.hea-chip input[type=checkbox], .hea-chip input[type=radio] { width: 1rem; height: 1rem; min-width: 1rem; min-height: 0; flex: none; padding: 0; }
+.hea-chip { max-width: 100%; line-height: 1.25; }

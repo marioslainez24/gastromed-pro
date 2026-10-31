@@ -41,6 +41,7 @@
   </details>
   {% endif %}
 
+  <form id="hea-form" hidden></form>
   <form method="post" action="{{ url_for('notes.save', note_id=n.id) }}" class="note-form" id="note-form" data-autosave="{{ url_for('notes.save', note_id=n.id) }}" data-dirty-guard>
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input type="hidden" name="version" value="{{ n.version }}" data-version>
@@ -65,6 +66,7 @@
           <div class="field bmi"><span>IMC <span class="muted small">(kg/m², OMS)</span></span><output data-bmi>{{ bmi if bmi else '—' }}</output></div>
         </div>
         {% else %}
+        {% if k == hea_target %}{% include "notas/_hea_asistente.html" %}{% endif %}
         <label class="field"><span>{{ text_labels[k] }}{% if k == 'motivo' %} <span class="req" aria-hidden="true">*</span>{% endif %}</span>
           <textarea name="{{ k }}" rows="{{ 6 if k in ('hea','narrativa') else 3 }}" maxlength="20000" data-grow data-phrase-field="{{ k }}">{{ fields.get(k, '') }}</textarea>
         </label>

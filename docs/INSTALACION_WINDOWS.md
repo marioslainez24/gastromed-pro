@@ -65,6 +65,10 @@ En *Hallazgos por segmento* escriba (o dicte) lo que ve en cada segmento. El bot
 **Todo normal** llena los segmentos vacíos y la conclusión. Revise siempre el texto. Para cambiar esas frases a su manera:
 *Endoscopia → Textos de estudio normal*.
 
+## Historia de la enfermedad actual con clics
+En la nota, encima de *Historia de la enfermedad actual*, abra **✍ Asistente de historia**: elija el motivo, marque lo que refiere el paciente y pulse
+**Escribir en la historia**. Solo escribe lo que usted marcó; los «Niega…» salen solo si marca que interrogó los signos de alarma.
+
 ## Frases, plantillas y documentos
 - *Ajustes → Frases y plantillas:* escriba sus frases (por ejemplo «Abdomen normal»). En la nota pulse **Frases** bajo el campo y elija una.
 - Al terminar una nota típica, abajo use **Guardar como plantilla**. En la próxima nota elija la plantilla arriba y pulse **Aplicar**.

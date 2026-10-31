@@ -1,0 +1,43 @@
+{# Asistente para redactar la historia de la enfermedad actual (v0.12.0). Los campos pertenecen al formulario #hea-form (atributo form=),
+   no al de la nota, para que no se mezclen con los campos de la nota. #}
+<details class="hea-assist" data-hea-assist data-url="{{ url_for('gi.hea_compose', note_id=n.id) }}" data-target="{{ hea_target }}" open>
+  <summary><b>✍ Asistente de historia</b> <span class="muted small">— marque con clics y el programa redacta el párrafo</span></summary>
+  <div class="hea-motivos" role="radiogroup" aria-label="Motivo de consulta">
+    {% for code, (title, fields) in GI_FORMS.items() %}
+    <label class="hea-chip"><input type="radio" name="hx-motivo" value="{{ code }}" form="hea-form" data-hea-motivo> {{ title }}</label>
+    {% endfor %}
+  </div>
+  {% for code, (title, fields) in GI_FORMS.items() %}
+  <div class="hea-group" data-hea-group="{{ code }}" hidden>
+    <div class="hea-row">
+      <span class="hea-lab">Tiempo de evolución</span>
+      <input name="hx-{{ code }}-hea_tiempo" form="hea-form" inputmode="decimal" class="w-num" aria-label="Tiempo de evolución (número)">
+      {% for u, lab in [('dias','días'),('semanas','semanas'),('meses','meses'),('anios','años')] %}
+      <label class="hea-chip"><input type="radio" name="hx-{{ code }}-hea_unidad" value="{{ u }}" form="hea-form" {% if u == 'meses' %}checked{% endif %}> {{ lab }}</label>{% endfor %}
+    </div>
+    {% for key, label, kind, options in fields if key != 'duracion' %}
+      <div class="hea-row {{ 'is-alarm' if key == 'signos_alarma' }}">
+        <span class="hea-lab">{{ label }}</span>
+        {% if kind in ('multi', 'select') %}
+          {% for v, l in options %}<label class="hea-chip"><input type="{{ 'checkbox' if kind == 'multi' else 'radio' }}" name="hx-{{ code }}-{{ key }}" value="{{ v }}" form="hea-form" {% if kind == 'select' %}data-toggle-radio{% endif %}> {{ l }}</label>{% endfor %}
+        {% elif kind == 'bristol' %}
+          {% for v, l in BRISTOL %}<label class="hea-chip" title="{{ l }}"><input type="radio" name="hx-{{ code }}-{{ key }}" value="{{ v }}" form="hea-form" data-toggle-radio> Tipo {{ v }}</label>{% endfor %}
+        {% elif kind == 'number' %}
+          <input name="hx-{{ code }}-{{ key }}" form="hea-form" inputmode="decimal" class="w-num">
+        {% else %}
+          <input name="hx-{{ code }}-{{ key }}" form="hea-form" maxlength="1000" class="hea-text">
+        {% endif %}
+      </div>
+    {% endfor %}
+    {% if fields|selectattr(0, 'equalto', 'signos_alarma')|list %}
+    <label class="check small hea-deny"><input type="checkbox" name="hx-{{ code }}-hea_niega" value="1" form="hea-form">
+      Interrogué los signos de alarma: escribir «Niega…» con los que <b>no</b> marqué</label>
+    {% endif %}
+  </div>
+  {% endfor %}
+  <div class="btn-row hea-actions" hidden data-hea-actions>
+    <button type="button" class="btn btn-primary" data-hea-write>Escribir en la historia ↓</button>
+    <button type="button" class="btn btn-quiet btn-sm" data-hea-clear>Limpiar selección</button>
+    <span class="small muted" data-hea-msg aria-live="polite">Se agrega al final de la historia; luego puede corregirlo o dictar más. Las opciones también se guardan como formulario de la nota.</span>
+  </div>
+</details>

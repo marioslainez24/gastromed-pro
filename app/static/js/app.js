@@ -326,6 +326,46 @@
     dxSearch.addEventListener("keydown", function (e) { if (e.key === "Enter") e.preventDefault(); if (e.key === "Escape") dxToggle(false); });
   }
 
+  // ---- Asistente de historia de la enfermedad actual ------------------------
+  var hx = $("[data-hea-assist]");
+  if (hx) {
+    var hxForm = document.getElementById("hea-form"), hxActions = $("[data-hea-actions]", hx), hxMsg = $("[data-hea-msg]", hx);
+    var hxTarget = document.querySelector("textarea[name='" + hx.getAttribute("data-target") + "']");
+    function hxShow(code) {
+      $$("[data-hea-group]", hx).forEach(function (gp) { gp.hidden = gp.getAttribute("data-hea-group") !== code; });
+      hxActions.hidden = !code;
+    }
+    $$("[data-hea-motivo]", hx).forEach(function (r) { r.addEventListener("change", function () { hxShow(r.value); }); });
+    // Un clic sobre una opción ya elegida la desmarca
+    $$("input[data-toggle-radio]", hx).forEach(function (r) {
+      r.addEventListener("mousedown", function () { r.setAttribute("data-was", r.checked ? "1" : ""); });
+      r.addEventListener("click", function () { if (r.getAttribute("data-was") === "1") { r.checked = false; r.setAttribute("data-was", ""); } });
+    });
+    $("[data-hea-clear]", hx).addEventListener("click", function () {
+      var code = (hx.querySelector("[data-hea-motivo]:checked") || {}).value;
+      var gp = code && hx.querySelector("[data-hea-group='" + code + "']");
+      if (!gp) return;
+      $$("input", gp).forEach(function (i) { if (i.type === "checkbox" || (i.type === "radio" && i.name.slice(-11) !== "-hea_unidad")) i.checked = false; else if (i.type !== "radio") i.value = ""; });
+    });
+    $("[data-hea-write]", hx).addEventListener("click", function () {
+      var fd = new FormData(hxForm), tok = csrf();
+      fd.append("csrf_token", tok);
+      hxMsg.textContent = "Redactando…"; hxMsg.classList.remove("is-error");
+      fetch(hx.getAttribute("data-url"), { method: "POST", body: fd, credentials: "same-origin",
+                                           headers: { "X-Requested-With": "fetch", "X-CSRF-Token": tok, Accept: "application/json" } })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) { hxMsg.textContent = res.d.error || res.d.detalle || "No se pudo redactar."; hxMsg.classList.add("is-error"); return; }
+          var v = hxTarget.value.replace(/\s+$/, "");
+          hxTarget.value = (v ? v + "\n\n" : "") + res.d.texto;
+          hxTarget.dispatchEvent(new Event("input", { bubbles: true })); dirty = true;
+          hxTarget.scrollIntoView({ block: "center", behavior: "smooth" });
+          hxMsg.textContent = "Listo: se agregó a la historia. Revíselo y corrija o dicte lo que falte.";
+        })
+        .catch(function () { hxMsg.textContent = "Sin conexión con el programa."; hxMsg.classList.add("is-error"); });
+    });
+  }
+
   // ---- Solicitud de laboratorio: perfiles, buscador y contador ---------------
   var sheet = $("[data-lab-sheet]");
   if (sheet) {

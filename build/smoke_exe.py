@@ -66,6 +66,8 @@ def main(exe):
         assert re.fullmatch(r"[0-9a-f]{32}", pid), r.url
         r = post("/notas/nueva", {"csrf_token": csrf, "patient_id": pid, "kind": "primera", "template": "soap"})
         nid = r.url.split("/")[-1].split("?")[0]
+        hx = post(f"/notas/{nid}/historia", {"csrf_token": csrf, "hx-motivo": "dolor_abdominal", "hx-dolor_abdominal-caracter": "colico"}).read().decode()
+        assert "consulta por dolor abdominal" in hx and "colico" not in hx, "Asistente de historia"
         req = urllib.request.Request(f"{B}/notas/{nid}/guardar", data=b'{"version": 1, "motivo": "Dispepsia"}',
                                      headers={"Content-Type": "application/json", "X-CSRF-Token": csrf})
         assert op.open(req, timeout=30).status == 200
