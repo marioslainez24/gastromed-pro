@@ -16,7 +16,12 @@
 </div>
 <section class="card">
   <h2>Estudios</h2>
+  {% if items|selectattr('grp')|list %}
+  {% set ns = namespace(g=None) %}
+  {% for it in items %}{% if (it.grp or 'Otras pruebas') != ns.g %}{% if ns.g is not none %}</ul>{% endif %}{% set ns.g = it.grp or 'Otras pruebas' %}<h3 class="lab-sec-title">{{ ns.g }}</h3><ul class="lab-ordered{% if ns.g == 'Perfiles' %} one-col{% endif %}">{% endif %}<li>{{ it.description }}</li>{% endfor %}</ul>
+  {% else %}
   <ol>{% for it in items %}<li>{{ it.description }}</li>{% endfor %}</ol>
+  {% endif %}
   {% if o.indication %}<h3>Indicación</h3><p class="prewrap">{{ o.indication }}</p>{% endif %}
 </section>
 {% if results %}

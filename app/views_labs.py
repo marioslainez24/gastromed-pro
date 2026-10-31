@@ -6,6 +6,7 @@ from flask import Blueprint, abort, flash, g, make_response, redirect, render_te
 from markupsafe import Markup
 
 from .charts import trend_svg
+from . import lab_order_catalog as LC
 from .db import get_db, new_id, utcnow, write_tx
 from .security import audit, can, require
 from .util import clinic_settings, fmt_birth, local_today
@@ -87,7 +88,11 @@ def order_new():
         free = [l.strip() for l in (request.form.get("items_text") or "").splitlines() if l.strip()][:30]
         valid = {t["code"]: t["name"] for t in catalog()}
         tests = [t for t in tests if t in valid]
-        if not tests and not free:
+        sel_profiles = [k for k in dict.fromkeys(request.form.getlist("perfil")) if k in LC.PROFILE_KEYS] if otype == "laboratorio" else []
+        chosen = set(request.form.getlist("lab")) if otype == "laboratorio" else set()
+        covered = {k for pk in sel_profiles for k, _ in LC.profile_components(LC.PROFILE_KEYS[pk][1]) if k}
+        lab_keys = [k for k in LC.TESTS if k in chosen and k not in covered]
+        if not tests and not free and not sel_profiles and not lab_keys:
             errors.append("Seleccione al menos un estudio.")
         resp = request.form.get("responsible_id")
         if resp not in {c["id"] for c in clinicians()}:
@@ -109,19 +114,31 @@ def order_new():
                            (oid, g.user["org_id"], p["id"], note_id, otype, (request.form.get("indication") or "").strip()[:1000] or None,
                             prio, resp, expected, g.user["id"], utcnow()))
                 pos = 0
+                for pk in sel_profiles:
+                    pos += 1
+                    name, comps = LC.PROFILE_KEYS[pk]
+                    db.execute("INSERT INTO order_items(id, order_id, position, description, grp) VALUES (?,?,?,?,?)",
+                               (new_id(), oid, pos, f"Perfil {name}: " + ", ".join(comps), "Perfiles"))
+                for k in lab_keys:
+                    pos += 1
+                    sec, name = LC.TESTS[k]
+                    code = LC.RESULT_CODE.get(name)
+                    db.execute("INSERT INTO order_items(id, order_id, position, test_code, description, grp) VALUES (?,?,?,?,?,?)",
+                               (new_id(), oid, pos, code if code in valid else None, name, sec))
                 for t in tests:
                     pos += 1
                     db.execute("INSERT INTO order_items(id, order_id, position, test_code, description) VALUES (?,?,?,?,?)",
                                (new_id(), oid, pos, t, valid[t]))
                 for line in free:
                     pos += 1
-                    db.execute("INSERT INTO order_items(id, order_id, position, description) VALUES (?,?,?,?)", (new_id(), oid, pos, line[:300]))
+                    db.execute("INSERT INTO order_items(id, order_id, position, description, grp) VALUES (?,?,?,?,?)",
+                               (new_id(), oid, pos, line[:300], "Otras pruebas" if otype == "laboratorio" else None))
                 audit("orden_emitida", "orden", oid, {"paciente": p["id"], "tipo": otype, "items": pos}, db=db)
             flash("Orden emitida. Puede imprimirla en PDF.", "ok")
             return redirect(url_for("labs.order_view", order_id=oid))
     default_expected = (local_today() + timedelta(days=7)).isoformat()
     return render_template("labs/orden_nueva.html", p=p, otype=otype, note_id=note_id, catalog=catalog(), clinicians=clinicians(),
-                           errors=errors, ORDER_TYPES=ORDER_TYPES, PRIORITIES=PRIORITIES, default_expected=default_expected,
+                           errors=errors, LC=LC, ORDER_TYPES=ORDER_TYPES, PRIORITIES=PRIORITIES, default_expected=default_expected,
                            form=request.form), 422 if errors else 200
 
 

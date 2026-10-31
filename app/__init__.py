@@ -9,7 +9,7 @@ from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.8.0"
+APP_VERSION = "0.9.0"
 
 
 def _loopback(addr) -> bool:

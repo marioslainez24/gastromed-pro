@@ -367,3 +367,25 @@ details.help summary { cursor: pointer; font-weight: 600; }
 .struct-findings[open] > summary { margin-bottom: .6rem; }
 fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
 .field[hidden], [data-zline-extra][hidden] { display: none; }
+
+/* Solicitud de laboratorio tipo hoja (v0.9.0) */
+.lab-toolbar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; justify-content: space-between; margin-bottom: .4rem; }
+.lab-toolbar h2 { margin: 0; }
+.lab-toolbar input[type=search] { flex: 1 1 260px; max-width: 420px; }
+.lab-sec-title { font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; color: var(--accent-ink); background: var(--accent);
+  padding: .2rem .55rem; border-radius: 6px; margin: .9rem 0 .4rem; }
+.lab-profiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .5rem; }
+.lab-profile { display: grid; gap: .2rem; border: 1.5px solid var(--line); border-radius: 10px; padding: .5rem .6rem; cursor: pointer; }
+.lab-profile:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.lab-pf-head { display: flex; gap: .45rem; align-items: center; }
+.lab-pf-comps { line-height: 1.3; }
+.lab-columns { columns: 3 260px; column-gap: 1.4rem; }
+.lab-sec { break-inside: avoid-column; margin-bottom: .4rem; }
+.lab-sec .lab-sec-title { break-after: avoid; }
+.lab-test { display: flex; gap: .45rem; align-items: flex-start; padding: .12rem 0; font-size: .92rem; line-height: 1.25; }
+.lab-test input { margin-top: .15rem; flex: none; }
+.lab-test.in-profile span::after { content: " · en perfil"; color: var(--ok); font-size: .78rem; font-weight: 600; }
+.lab-test.in-profile { color: var(--ok); }
+[data-lab-item][hidden], [data-lab-sec][hidden] { display: none !important; }
+.lab-ordered { columns: 2 240px; margin: 0 0 .4rem; }
+.lab-ordered.one-col { columns: 1; }

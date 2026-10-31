@@ -8,16 +8,38 @@
   <input type="hidden" name="patient_id" value="{{ p.id }}"><input type="hidden" name="order_type" value="{{ otype }}">
   {% if note_id %}<input type="hidden" name="note_id" value="{{ note_id }}">{% endif %}
   {% if otype == 'laboratorio' %}
-  <section class="card">
-    <h2>Pruebas</h2>
-    <div class="check-grid">
-    {% set ns = namespace(grp='') %}
-    {% for t in catalog %}
-      {% if t.grp != ns.grp %}{% set ns.grp = t.grp %}<h3 class="check-grp">{{ t.grp }}</h3>{% endif %}
-      <label class="check"><input type="checkbox" name="tests" value="{{ t.code }}" {% if t.code in form.getlist('tests') %}checked{% endif %}> {{ t.name }}</label>
+  {% set sel_lab = form.getlist('lab') %}{% set sel_pf = form.getlist('perfil') %}
+  <section class="card lab-sheet" data-lab-sheet>
+    <div class="lab-toolbar">
+      <h2>Solicitud de análisis clínicos</h2>
+      <input type="search" placeholder="Buscar prueba… (ej.: ferritina, TSH, heces)" aria-label="Buscar prueba" data-lab-search>
+      <span class="pill" aria-live="polite">Seleccionadas: <b data-lab-count>0</b></span>
+    </div>
+
+    <h3 class="lab-sec-title">Perfiles</h3>
+    <p class="muted small">Al marcar un perfil se marcan sus pruebas abajo (aparecen en verde «en perfil»).</p>
+    <div class="lab-profiles">
+    {% for name, comps in LC.PROFILES %}{% set pk = LC.slug('perfil ' ~ name) %}
+      <label class="lab-profile" data-lab-item>
+        <span class="lab-pf-head"><input type="checkbox" name="perfil" value="{{ pk }}" data-profile
+          data-components="{{ LC.profile_components(comps)|map(attribute=0)|select|join(' ') }}" {% if pk in sel_pf %}checked{% endif %}>
+          <b>Perfil {{ name }}</b></span>
+        <span class="tiny muted lab-pf-comps">{{ comps|join(' · ') }}</span>
+      </label>
     {% endfor %}
     </div>
-    <label class="field mt">Otras pruebas (una por línea)<textarea name="items_text" rows="2">{{ form.get('items_text', '') }}</textarea></label>
+
+    <div class="lab-columns">
+    {% for sec, names in LC.SECTIONS %}
+      <div class="lab-sec" data-lab-sec>
+        <h3 class="lab-sec-title">{{ sec }}</h3>
+        {% for n in names %}{% set k = LC.slug(n) %}
+        <label class="check lab-test" data-lab-item><input type="checkbox" name="lab" value="{{ k }}" data-test="{{ k }}" {% if k in sel_lab %}checked{% endif %}> <span>{{ n }}</span></label>
+        {% endfor %}
+      </div>
+    {% endfor %}
+    </div>
+    <label class="field mt">Otras pruebas que no están en la lista (una por línea)<textarea name="items_text" rows="2" placeholder="Ej.: Curva de insulina 3 horas">{{ form.get('items_text', '') }}</textarea></label>
   </section>
   {% else %}
   <section class="card">
@@ -31,7 +53,7 @@
       <label class="field">Responsable de revisar el resultado<select name="responsible_id">{% for c in clinicians %}<option value="{{ c.id }}" {% if (form.get('responsible_id') or current_user.id) == c.id %}selected{% endif %}>{{ c.full_name }}</option>{% endfor %}</select></label>
       <label class="field">Resultado esperado para<input type="date" name="expected_by" value="{{ form.get('expected_by') or default_expected }}"></label>
     </div>
-    <label class="field">Indicación clínica / datos relevantes para el estudio<textarea name="indication" rows="3" maxlength="1000">{{ form.get('indication', '') }}</textarea></label>
+    <label class="field">Diagnóstico / observaciones (indicación clínica)<textarea name="indication" rows="3" maxlength="1000">{{ form.get('indication', '') }}</textarea></label>
     {% if otype == 'endoscopia' %}<p class="muted small">El informe estructurado de endoscopia, consentimiento, sedación e imágenes llegan en la Fase 3.</p>{% endif %}
   </section>
   <div class="actions"><button class="btn btn-primary" type="submit">Emitir orden</button> <a class="btn btn-quiet" href="{{ url_for('labs.patient_labs', patient_id=p.id) }}">Cancelar</a></div>

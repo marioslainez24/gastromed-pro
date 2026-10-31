@@ -220,6 +220,35 @@
     });
   });
 
+  // ---- Solicitud de laboratorio: perfiles, buscador y contador ---------------
+  var sheet = $("[data-lab-sheet]");
+  if (sheet) {
+    var tests = $$("[data-test]", sheet), profs = $$("[data-profile]", sheet), count = $("[data-lab-count]", sheet);
+    tests.forEach(function (t) { t.setAttribute("data-user", t.checked ? "1" : ""); t.addEventListener("change", function () { t.setAttribute("data-user", t.checked ? "1" : ""); syncLab(); }); });
+    function syncLab() {
+      var cov = {};
+      profs.forEach(function (p) { if (p.checked) (p.getAttribute("data-components") || "").split(" ").forEach(function (k) { if (k) cov[k] = 1; }); });
+      var n = 0;
+      tests.forEach(function (t) {
+        var lab = t.closest("label");
+        if (cov[t.value]) { t.checked = true; t.disabled = true; lab.classList.add("in-profile"); }
+        else { if (t.disabled) { t.disabled = false; t.checked = !!t.getAttribute("data-user"); } lab.classList.remove("in-profile"); if (t.checked) n++; }
+      });
+      profs.forEach(function (p) { if (p.checked) n++; });
+      count.textContent = n;
+    }
+    profs.forEach(function (p) { p.addEventListener("change", function () { syncLab(); dirty = true; }); });
+    syncLab();
+    var search = $("[data-lab-search]", sheet);
+    function norm(x) { return x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
+    search.addEventListener("input", function () {
+      var q = norm(search.value.trim());
+      $$("[data-lab-item]", sheet).forEach(function (it) { it.hidden = q && norm(it.textContent).indexOf(q) < 0; });
+      $$("[data-lab-sec]", sheet).forEach(function (sec) { sec.hidden = !$$("[data-lab-item]", sec).some(function (i) { return !i.hidden; }); });
+    });
+    search.addEventListener("keydown", function (e) { if (e.key === "Enter") e.preventDefault(); });
+  }
+
   // ---- Endoscopia: botón «Normal» por segmento y «Todo normal» --------------
   function fillNormal(btn, ask) {
     var ta = document.getElementById(btn.getAttribute("data-fill-normal"));

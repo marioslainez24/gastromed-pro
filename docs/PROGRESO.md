@@ -11,6 +11,23 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 9 · 31-oct-2026 · Solicitud de laboratorio como la hoja de papel (v0.9.0)
+
+**Pedido del Dr. Lainez:** que el apartado de laboratorio sea como la hoja de solicitud de análisis clínicos que usa (fotos enviadas),
+con todas sus pruebas, para ir marcando.
+
+**Qué quedó funcionando**
+- Catálogo `app/lab_order_catalog.py` transcrito de la hoja (versión abril 2024): 20 secciones y más de 300 pruebas (hematología, coagulación,
+  química en sangre y orina, orina, heces, hormonas, drogas y fármacos, inmunología, autoinmunes, infecciosas, marcadores tumorales, COVID-19,
+  microbiología, biología molecular) y 24 perfiles (pre-operatorio, hepático, anemias, bioquímico, lipídico, diabético, tiroideos, renales, etc.).
+  Solo nombres de pruebas: sin precios ni datos del laboratorio.
+- Pantalla en columnas con casillas como el papel; buscador; contador de seleccionadas. Al marcar un perfil se marcan sus pruebas («en perfil»)
+  y no se duplican en la orden. Campo para pruebas que no estén en la lista.
+- La orden y el PDF muestran las pruebas agrupadas por sección (perfiles con sus componentes). Migración 0007 (`order_items.grp`).
+- Las pruebas de un solo valor (creatinina, TGO, ferritina, calprotectina, etc.) siguen enlazadas con el registro de resultados.
+
+**Cómo se comprobó**: 108 pruebas automáticas (3 nuevas); navegador real PC y celular sin errores de JavaScript; prueba del ejecutable con orden + PDF.
+
 ## Etapa 8 · 30-oct-2026 · Hallazgos por segmento con texto libre y botón «Normal» (v0.8.0)
 
 **Pedido del Dr. Lainez:** en el informe, describir con sus palabras cada segmento; en EDA: esófago, unión esofagogástrica

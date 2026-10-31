@@ -1,6 +1,6 @@
 # Matriz de requisitos y cobertura — GastroMed Pro
 
-Actualizada: 30 de octubre de 2026 · versión 0.8.0 · ver también `COMPARATIVA.md`
+Actualizada: 30 de octubre de 2026 · versión 0.9.0 · ver también `COMPARATIVA.md`
 
 **Fuentes:** el documento de requisitos del Dr. Mario Lainez. Las páginas de Medilink (softwaremedilink.com y ayuda.softwaremedilink.com) **no fueron accesibles** desde el entorno de desarrollo (bloqueo de red). Por lo tanto **no se afirma haber revisado ninguna función de Medilink**; la comparación queda pendiente hasta que se puedan consultar (o el usuario envíe capturas/textos).
 
@@ -72,6 +72,7 @@ Actualizada: 30 de octubre de 2026 · versión 0.8.0 · ver también `COMPARATIV
 | 8.2 | Acceso desde celular en el Wi-Fi del consultorio | ✅ | HTTPS con certificado propio en el puerto 8443; http desde la red se redirige (`test_lan_http_redirects_to_https`, prueba del .exe) |
 | 8.3 | Respaldo diario automático, verificado, con copia a disco externo y retención | ✅ | `test_instalacion_respaldo_y_diagnostico…`, `test_retencion…`; tarea de Windows 🟡 |
 | 8.4 | Modo demostración separado de los datos reales | ✅ | Base y puerto propios |
+| L.1 | Solicitud de laboratorio tipo hoja: secciones, >300 pruebas, 24 perfiles, buscador, PDF agrupado | ✅ | `test_solicitud_laboratorio.py` + navegador |
 | E.1 | Informe de endoscopia: descripción libre por segmento (EDA: esófago, UEG con línea Z, estómago, duodeno; colonoscopia un apartado) | ✅ | `test_hallazgos_texto.py` |
 | E.2 | Botón «Normal» por segmento y «Todo normal», con textos editables por el médico | ✅ | `test_textos_normales_personalizables_y_restaurar` + navegador |
 

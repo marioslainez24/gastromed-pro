@@ -24,6 +24,7 @@ ST = {
     "body": ParagraphStyle("body", **_base),
     "med": ParagraphStyle("med", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 11}),
     "subr": ParagraphStyle("subr", **{**_base, "fontSize": 9, "leading": 12, "textColor": MUTED, "alignment": 2}),
+    "item9": ParagraphStyle("item9", **{**_base, "fontSize": 9, "leading": 11.5}),
     "small": ParagraphStyle("small", **{**_base, "fontSize": 8, "leading": 10, "textColor": MUTED}),
 }
 
@@ -145,6 +146,13 @@ def prescription_pdf(r, items, p, s, size: str, allergies, assets=None) -> bytes
     return buf.getvalue()
 
 
+def _g(it):
+    try:
+        return it["grp"]
+    except (KeyError, IndexError):
+        return None
+
+
 def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str, assets=None) -> bytes:
     """Solicitud de laboratorio, imagen o endoscopia."""
     buf = io.BytesIO()
@@ -178,8 +186,28 @@ def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str, a
     pt.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eef4f3")), ("LEFTPADDING", (0, 0), (-1, -1), 6),
                             ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]))
     story += [Spacer(1, 3 * mm), pt, Spacer(1, 5 * mm), Paragraph("Estudios solicitados", ST["title"])]
-    for i, it in enumerate(items, 1):
-        story.append(Paragraph(f"{i}. {_e(it['description'])}", ST["body"]))
+    if any(_g(it) for it in items):
+        # Agrupado por sección, como la hoja de solicitud
+        groups = {}
+        for it in items:
+            groups.setdefault(_g(it) or "Otras pruebas", []).append(it["description"])
+        for gname, descs in groups.items():
+            story.append(Paragraph(f"<b>{_e(gname)}</b>", ST["body"]))
+            if gname == "Perfiles":
+                for d_ in descs:
+                    name, _, comps = d_.partition(": ")
+                    story.append(Paragraph(f"• <b>{_e(name)}</b>" + (f" <font size=8>({_e(comps)})</font>" if comps else ""), ST["body"]))
+            else:
+                cells = [Paragraph("• " + _e(d_), ST["item9"]) for d_ in descs]
+                rows = [cells[i:i + 2] + [""] * (2 - len(cells[i:i + 2])) for i in range(0, len(cells), 2)]
+                t = Table(rows, colWidths=[width / 2] * 2)
+                t.setStyle(TableStyle([("LEFTPADDING", (0, 0), (-1, -1), 8), ("TOPPADDING", (0, 0), (-1, -1), 1),
+                                       ("BOTTOMPADDING", (0, 0), (-1, -1), 1), ("VALIGN", (0, 0), (-1, -1), "TOP")]))
+                story.append(t)
+            story.append(Spacer(1, 2 * mm))
+    else:
+        for i, it in enumerate(items, 1):
+            story.append(Paragraph(f"{i}. {_e(it['description'])}", ST["body"]))
     if o["indication"]:
         story += [Spacer(1, 4 * mm), Paragraph("Indicación clínica / datos relevantes", ST["title"]),
                   Paragraph(_e(o["indication"]).replace("\n", "<br/>"), ST["body"])]

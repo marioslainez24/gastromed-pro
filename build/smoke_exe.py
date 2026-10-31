@@ -103,6 +103,14 @@ def main(exe):
         assert get("/endoscopia/textos-normales").status == 200
         pdf = get(f"/procedimientos/{proc_id}/pdf").read()
         assert pdf.startswith(b"%PDF-") and b"/Image" in pdf, "PDF de endoscopia sin imagen"
+        # Solicitud de laboratorio tipo hoja (perfil + prueba suelta) y su PDF
+        form = get(f"/ordenes/nueva?patient_id={pid}&order_type=laboratorio").read().decode()
+        assert "Perfil Pre-operatorio" in form and "Biología molecular" in form, "Hoja de laboratorio incompleta"
+        resp = re.search(r'name="responsible_id"><option value="([0-9a-f]{32})"', form).group(1)
+        r = post("/ordenes/nueva", {"csrf_token": csrf, "patient_id": pid, "order_type": "laboratorio", "perfil": "perfil-hepatico",
+                                    "lab": "calprotectina-fecal", "priority": "rutina", "responsible_id": resp})
+        oid = re.search(r"/ordenes/([0-9a-f]{32})", r.geturl()).group(1)
+        assert get(f"/ordenes/{oid}/pdf").read().startswith(b"%PDF-"), "PDF de la orden de laboratorio"
         for path in ("/ajustes/recordatorios", "/ajustes/horarios", "/agenda/recordatorios"):
             assert get(path).status == 200, path
         # Conexión cifrada para el celular (certificado propio)
