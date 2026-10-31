@@ -12,6 +12,7 @@ from .security import audit, can, require
 from .util import clinic_settings, local_today
 from .views_files import storage_dir, validate as validate_file
 from .views_patients import get_patient_or_404
+from .views_texts import phrases_json
 
 bp = Blueprint("endo", __name__)
 MAX_FINDINGS, MAX_JARS = 40, 30
@@ -92,7 +93,7 @@ def proc_view(proc_id):
     from .views_extras import with_dictation
     normal_sec, normal_concl = D.normal_texts(clinic_settings()["endo_normal_texts"])
     return with_dictation(render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable,
-                           normal_sec=normal_sec, normal_concl=normal_concl, allergies=allergies, meds=meds,
+                           normal_sec=normal_sec, normal_concl=normal_concl, phrases_json=phrases_json(db) if editable else "[]", allergies=allergies, meds=meds,
                            images=_images(db, pr["id"]), specimens=specimens, stents=stents, addenda=addenda, scopes=scopes(),
                            scope=scope, empty_finding=dict.fromkeys(["segment", "type", "desc", "classification", "size_mm", "prague_c",
                                                                      "prague_m", "removed", "jar"]),

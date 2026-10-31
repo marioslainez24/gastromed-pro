@@ -9,6 +9,7 @@ from .db import get_db, new_id, utcnow, write_tx
 from .security import audit, require
 from .views_patients import get_patient_or_404
 from .gi_forms import FORMS as GI_FORMS
+from .views_texts import create_template, phrases_json, templates_for
 
 bp = Blueprint("notes", __name__, url_prefix="/notas")
 
@@ -148,6 +149,8 @@ def view(note_id):
                            gi_forms=note_forms(db, n["id"]), GI_FORMS=GI_FORMS,
                            orders=db.execute("SELECT o.*, (SELECT GROUP_CONCAT(description, ', ') FROM order_items i WHERE i.order_id = o.id)"
                                              " AS items FROM orders o WHERE o.note_id = ? ORDER BY o.created_at", (n["id"],)).fetchall(),
+                           phrases_json=phrases_json(db) if editable else "[]",
+                           note_tpls=json.dumps(templates_for(db, n["template"]), ensure_ascii=False) if editable else "[]",
                            errors={}), editable)
 
 
@@ -187,6 +190,17 @@ def save(note_id):
         return jsonify({"ok": True, "version": new_version["version"], "guardado": new_version["updated_at"], "imc": bmi(fields["vitales"])})
     if request.form.get("then") == "finalizar":
         return redirect(url_for("notes.view", note_id=n["id"], confirmar="1"))
+    if request.form.get("then") == "plantilla":
+        name = (request.form.get("template_name") or "").strip()
+        if not name:
+            flash("Borrador guardado. Para crear la plantilla escriba un nombre.", "error")
+            return redirect(url_for("notes.view", note_id=n["id"]))
+        scope = request.form.get("template_scope") if request.form.get("template_scope") in ("ambas", n["template"]) else n["template"]
+        with write_tx(db):
+            tid = create_template(db, name, scope, {k: v for k, v in fields.items() if k != "vitales"})
+        flash(f"Borrador guardado y plantilla «{name[:80]}» creada." if tid else "Borrador guardado. La nota no tiene texto para crear una plantilla.",
+              "ok" if tid else "error")
+        return redirect(url_for("notes.view", note_id=n["id"]))
     flash("Borrador guardado.", "ok")
     return redirect(url_for("notes.view", note_id=n["id"]))
 

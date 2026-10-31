@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ KINDS[d.kind] }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{{ KINDS[d.kind] }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
+  <p class="muted small">Emitido {{ fmt_dt(d.issued_at) }} por {{ d.author }} · Folio <span class="mono">{{ d.id[:8]|upper }}</span></p></div>
+  <span class="tag big {{ 'tag-danger' if d.status == 'anulado' else 'tag-ok' }}">{{ 'Anulado' if d.status == 'anulado' else 'Emitido' }}</span>
+</div>
+{% if d.status == 'anulado' %}<div class="flash flash-error">Anulado {{ fmt_dt(d.voided_at) }}: {{ d.void_reason }}</div>{% endif %}
+<div class="btn-row">
+  <a class="btn btn-primary" href="{{ url_for('docs.doc_pdf', doc_id=d.id, papel='carta') }}" target="_blank" rel="noopener">PDF carta</a>
+  <a class="btn" href="{{ url_for('docs.doc_pdf', doc_id=d.id, papel='a4') }}" target="_blank" rel="noopener">PDF A4</a>
+  <a class="btn btn-quiet" href="{{ url_for('docs.patient_docs', patient_id=p.id) }}">← Documentos del paciente</a>
+</div>
+<section class="card note-read"><h2>{{ d.title }}</h2><p class="prewrap">{{ d.body }}</p>
+  <p class="muted small">Huella SHA-256 <span class="mono">{{ d.content_sha256[:16] }}…</span></p></section>
+{% if d.status == 'emitido' and can('clinico.editar') and can('notas.finalizar') %}
+<details class="card"><summary>Anular documento</summary>
+  <form method="post" action="{{ url_for('docs.doc_void', doc_id=d.id) }}" class="stack mt">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="field">Motivo<input name="reason" maxlength="300" required></label>
+    <div><button class="btn btn-danger-quiet" type="submit">Anular</button></div></form></details>
+{% endif %}
+{% endblock %}

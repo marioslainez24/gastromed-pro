@@ -1,6 +1,6 @@
 # Matriz de requisitos y cobertura — GastroMed Pro
 
-Actualizada: 30 de octubre de 2026 · versión 0.9.0 · ver también `COMPARATIVA.md`
+Actualizada: 30 de octubre de 2026 · versión 0.10.0 · ver también `COMPARATIVA.md`
 
 **Fuentes:** el documento de requisitos del Dr. Mario Lainez. Las páginas de Medilink (softwaremedilink.com y ayuda.softwaremedilink.com) **no fueron accesibles** desde el entorno de desarrollo (bloqueo de red). Por lo tanto **no se afirma haber revisado ninguna función de Medilink**; la comparación queda pendiente hasta que se puedan consultar (o el usuario envíe capturas/textos).
 
@@ -52,7 +52,7 @@ Actualizada: 30 de octubre de 2026 · versión 0.9.0 · ver también `COMPARATIV
 | 4.5 | Nota finalizada inmutable (aplicación y base de datos) + adendas | ✅ | `test_nota_finalizada_inmutable_y_adenda` |
 | 4.6 | Reutilizar información previa mostrando su fecha y exigiendo revisión | ✅ | Se muestra aparte; copiar inserta la fecha y «revisar» |
 | 4.7 | Diagnósticos codificados con catálogo autorizado | ⬜ | Requiere catálogo CIE con licencia/fuente oficial |
-| 4.8 | Plantillas personalizables | ⬜ | Fase 2 |
+| 4.8 | Plantillas personalizables | ✅ | Plantillas de nota y frases (`test_frases_documentos.py`) |
 | 5.1 | Receta con principio activo, presentación, dosis, unidad, vía, frecuencia, duración, cantidad, indicaciones | ✅ | |
 | 5.2 | PDF carta y A4 con encabezado del Dr. Mario Lainez | ✅ | Dimensiones y texto verificados (pypdf) |
 | 5.3 | Receta inmutable; anulación con motivo y marca ANULADA | 🟡 | Triggers activos; sin prueba automática de anulación aún |
@@ -83,9 +83,9 @@ Actualizada: 30 de octubre de 2026 · versión 0.9.0 · ver también `COMPARATIV
 | C.1 | Confirmar o anular la cita en un clic desde el recordatorio | 5 | 🔌 |
 | C.2 | Colores por tipo de cita en la agenda | 1b | ⬜ |
 | C.3 | Horarios de atención por profesional y recursos (sala, equipo) | 1b | ⬜ |
-| C.4 | Frases predefinidas y categorías de consulta (general, urgencia, interconsulta) | 2 | ⬜ |
+| C.4 | Frases predefinidas (✅ v0.10.0) y categorías de consulta (⬜) | 2 | 🟡 |
 | C.5 | Búsqueda de texto completo dentro del expediente | 2 | ⬜ |
-| C.6 | Documentos clínicos por plantilla (incapacidades, constancias) | 2 | ⬜ |
+| C.6 | Documentos clínicos (incapacidad, constancia, referencia, libre) con PDF, inmutables | 2 | ✅ |
 | C.7 | Presupuesto desde el diagnóstico; estado de pago y cobro desde la agenda | 4 | ⬜ |
 | C.8 | Reportes con comparativas mensuales, productividad, exportar a Excel | 4 | ⬜ |
 | C.9 | Recall / vigilancia endoscópica automática | 3 | ⬜ |

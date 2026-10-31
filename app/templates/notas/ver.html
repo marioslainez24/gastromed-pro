@@ -44,6 +44,13 @@
   <form method="post" action="{{ url_for('notes.save', note_id=n.id) }}" class="note-form" id="note-form" data-autosave="{{ url_for('notes.save', note_id=n.id) }}" data-dirty-guard>
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input type="hidden" name="version" value="{{ n.version }}" data-version>
+    <div id="frases-data" data-frases="{{ phrases_json }}" data-admin="{{ url_for('texts.phrases') }}" hidden></div>
+    <div class="card tpl-bar" data-note-tpls="{{ note_tpls }}">
+      <b>Plantilla:</b>
+      <select aria-label="Plantilla de nota" data-tpl-select><option value="">— Elegir —</option></select>
+      <button type="button" class="btn btn-sm" data-tpl-apply>Aplicar</button>
+      <span class="small muted" data-tpl-msg>Llena solo los campos vacíos. <a href="{{ url_for('texts.phrases') }}#plantillas" target="_blank" rel="noopener">Administrar</a></span>
+    </div>
     {% for title, keys in sections %}
     <fieldset class="card">
       <legend>{{ title }}</legend>
@@ -59,13 +66,21 @@
         </div>
         {% else %}
         <label class="field"><span>{{ text_labels[k] }}{% if k == 'motivo' %} <span class="req" aria-hidden="true">*</span>{% endif %}</span>
-          <textarea name="{{ k }}" rows="{{ 6 if k in ('hea','narrativa') else 3 }}" maxlength="20000" data-grow>{{ fields.get(k, '') }}</textarea>
+          <textarea name="{{ k }}" rows="{{ 6 if k in ('hea','narrativa') else 3 }}" maxlength="20000" data-grow data-phrase-field="{{ k }}">{{ fields.get(k, '') }}</textarea>
         </label>
         {% if k == 'diagnosticos' %}<p class="muted small">Codificación CIE: pendiente de cargar un catálogo autorizado (Fase 2). Por ahora, texto libre.</p>{% endif %}
         {% endif %}
       {% endfor %}
     </fieldset>
     {% endfor %}
+    <details class="card save-tpl"><summary>Guardar esta nota como plantilla</summary>
+      <p class="muted small">Se guardan los textos escritos (no los signos vitales). Útil para consultas que se repiten, por ejemplo «Control de ERGE».</p>
+      <div class="grid2">
+        <label class="field">Nombre de la plantilla<input name="template_name" maxlength="80" placeholder="Ej.: Control de cirrosis"></label>
+        <label class="field">Usar en<select name="template_scope"><option value="{{ n.template }}">Solo notas {{ label('note_template', n.template) }}</option><option value="ambas">Todas las notas</option></select></label>
+      </div>
+      <div><button class="btn btn-sm" type="submit" name="then" value="plantilla">Guardar como plantilla</button></div>
+    </details>
     <div class="sticky-actions">
       <span class="save-state small muted" data-save-state aria-live="polite">Guardado {{ fmt_time(n.updated_at) }}</span>
       <button class="btn" type="submit" name="then" value="guardar">Guardar borrador</button>

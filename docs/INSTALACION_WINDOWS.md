@@ -65,6 +65,11 @@ En *Hallazgos por segmento* escriba (o dicte) lo que ve en cada segmento. El bot
 **Todo normal** llena los segmentos vacíos y la conclusión. Revise siempre el texto. Para cambiar esas frases a su manera:
 *Endoscopia → Textos de estudio normal*.
 
+## Frases, plantillas y documentos
+- *Ajustes → Frases y plantillas:* escriba sus frases (por ejemplo «Abdomen normal»). En la nota pulse **Frases** bajo el campo y elija una.
+- Al terminar una nota típica, abajo use **Guardar como plantilla**. En la próxima nota elija la plantilla arriba y pulse **Aplicar**.
+- Pestaña **Documentos** del paciente: incapacidad, constancia, referencia o documento libre. Revise el texto, emita e imprima para firmar.
+
 ## Límites (léalos)
 - La PC debe estar encendida y el programa abierto.
 - Solo funciona dentro del Wi-Fi del consultorio (fuera de él no se puede entrar, por seguridad).

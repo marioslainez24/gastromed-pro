@@ -111,6 +111,13 @@ def main(exe):
                                     "lab": "calprotectina-fecal", "priority": "rutina", "responsible_id": resp})
         oid = re.search(r"/ordenes/([0-9a-f]{32})", r.geturl()).group(1)
         assert get(f"/ordenes/{oid}/pdf").read().startswith(b"%PDF-"), "PDF de la orden de laboratorio"
+        # Frases, documentos clínicos y su PDF
+        post("/ajustes/frases/ejemplos", {"csrf_token": csrf})
+        assert "Abdomen normal" in get("/ajustes/frases").read().decode(), "Frases de ejemplo"
+        r = post(f"/pacientes/{pid}/documentos/nuevo", {"csrf_token": csrf, "kind": "incapacidad", "days": "2", "step": "emitir",
+                                                        "body": "Constancia de prueba.", "final_title": "CONSTANCIA DE INCAPACIDAD MEDICA"})
+        did = re.search(r"/documentos/([0-9a-f]{32})", r.geturl()).group(1)
+        assert get(f"/documentos/{did}/pdf").read().startswith(b"%PDF-"), "PDF del documento clínico"
         for path in ("/ajustes/recordatorios", "/ajustes/horarios", "/agenda/recordatorios"):
             assert get(path).status == 200, path
         # Conexión cifrada para el celular (certificado propio)

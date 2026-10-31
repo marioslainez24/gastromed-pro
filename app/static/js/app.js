@@ -220,6 +220,76 @@
     });
   });
 
+  // ---- Frases predefinidas: botón «Frases» bajo cada campo ------------------
+  var frData = $("#frases-data");
+  if (frData) {
+    var phrases = []; try { phrases = JSON.parse(frData.getAttribute("data-frases") || "[]"); } catch (e) {}
+    var adminUrl = frData.getAttribute("data-admin");
+    var openMenu = null;
+    function closeMenu() { if (openMenu) { openMenu.remove(); openMenu = null; } }
+    document.addEventListener("click", function (e) { if (openMenu && !openMenu.contains(e.target) && !e.target.matches(".phr-btn")) closeMenu(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+    function insertText(ta, text) {
+      var s = ta.selectionStart, en = ta.selectionEnd, before = ta.value.slice(0, s), after = ta.value.slice(en);
+      if (document.activeElement !== ta && !ta.value.slice(0, s).length && ta.value.length) { before = ta.value; after = ""; s = en = ta.value.length; }
+      var sep = before && !/\s$/.test(before) ? (/[.:]$/.test(before) ? " " : "\n") : "";
+      ta.value = before + sep + text + after;
+      var pos = (before + sep + text).length; ta.focus(); ta.setSelectionRange(pos, pos);
+      ta.dispatchEvent(new Event("input", { bubbles: true })); dirty = true;
+    }
+    $$("textarea[data-phrase-field]").forEach(function (ta) {
+      var f = ta.getAttribute("data-phrase-field");
+      var mine = phrases.filter(function (p) { return p.f === f || p.f === "*"; });
+      var wrap = document.createElement("div"); wrap.className = "phr-wrap";
+      var btn = document.createElement("button"); btn.type = "button"; btn.className = "link-btn small phr-btn";
+      btn.textContent = mine.length ? "Frases (" + mine.length + ") ▾" : "＋ Frases";
+      wrap.appendChild(btn);
+      ta.insertAdjacentElement("afterend", wrap);
+      var lastPos = null;
+      ta.addEventListener("blur", function () { lastPos = [ta.selectionStart, ta.selectionEnd]; });
+      btn.addEventListener("click", function () {
+        if (openMenu) { closeMenu(); return; }
+        if (!mine.length) { window.open(adminUrl, "_blank", "noopener"); return; }
+        var menu = document.createElement("div"); menu.className = "phr-menu"; menu.setAttribute("role", "menu");
+        mine.forEach(function (p) {
+          var b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "menuitem");
+          var t = document.createElement("b"); t.textContent = p.t; var sm = document.createElement("small"); sm.textContent = p.b;
+          b.appendChild(t); b.appendChild(sm);
+          b.addEventListener("click", function () {
+            if (lastPos) ta.setSelectionRange(lastPos[0], lastPos[1]);
+            insertText(ta, p.b); closeMenu();
+          });
+          menu.appendChild(b);
+        });
+        var a = document.createElement("a"); a.href = adminUrl; a.target = "_blank"; a.rel = "noopener"; a.className = "small"; a.textContent = "Administrar frases…";
+        a.style.display = "block"; a.style.padding = ".4rem .55rem"; menu.appendChild(a);
+        wrap.appendChild(menu); openMenu = menu;
+        var first = menu.querySelector("button"); if (first) first.focus();
+      });
+    });
+  }
+
+  // ---- Plantillas de nota: llenan los campos vacíos -------------------------
+  var tplBar = $("[data-note-tpls]");
+  if (tplBar) {
+    var tpls = []; try { tpls = JSON.parse(tplBar.getAttribute("data-note-tpls") || "[]"); } catch (e) {}
+    var tsel = $("[data-tpl-select]", tplBar), tmsg = $("[data-tpl-msg]", tplBar);
+    if (!tpls.length) { tplBar.hidden = true; }
+    tpls.forEach(function (t, i) { var o = document.createElement("option"); o.value = i; o.textContent = t.name; tsel.appendChild(o); });
+    $("[data-tpl-apply]", tplBar).addEventListener("click", function () {
+      var t = tpls[tsel.value]; if (!t) return;
+      var filled = 0, kept = 0;
+      Object.keys(t.fields).forEach(function (k) {
+        var ta = document.querySelector("textarea[name='" + k + "']");
+        if (!ta) return;
+        if (ta.value.trim()) { kept++; return; }
+        ta.value = t.fields[k]; ta.dispatchEvent(new Event("input", { bubbles: true })); filled++;
+      });
+      dirty = true;
+      tmsg.textContent = "Plantilla «" + t.name + "» aplicada: " + filled + " campo(s) llenados" + (kept ? ", " + kept + " ya tenían texto y se conservaron." : ".") + " Revise el texto.";
+    });
+  }
+
   // ---- Solicitud de laboratorio: perfiles, buscador y contador ---------------
   var sheet = $("[data-lab-sheet]");
   if (sheet) {

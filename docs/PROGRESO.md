@@ -11,6 +11,24 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 10 · 31-oct-2026 · Frases, plantillas de nota y documentos clínicos (v0.10.0)
+
+**Qué quedó funcionando**
+- **Frases predefinidas** (*Ajustes → Frases y plantillas*): el médico escribe una frase una vez (nombre, campo y texto) y la inserta con un clic
+  desde el botón «Frases» que aparece bajo cada campo de las notas, de los informes de endoscopia (hallazgos por segmento, conclusión,
+  recomendaciones) y de los documentos. Editar, desactivar, y botón opcional «Agregar frases de ejemplo» (7 frases genéricas que él revisa).
+- **Plantillas de nota**: «Guardar esta nota como plantilla» (solo textos, sin signos vitales; para SOAP, narrativa o ambas). En una nota nueva,
+  «Plantilla → Aplicar» llena solo los campos vacíos. Renombrar, corregir y desactivar en Ajustes.
+- **Documentos clínicos** (pestaña «Documentos» del paciente): constancia de incapacidad (días en número y letras, desde/hasta automático),
+  constancia de atención (horario), referencia/interconsulta y documento libre. El diagnóstico solo se escribe si el médico lo marca (privacidad).
+  Flujo: datos → «Preparar el texto» → revisar/editar → «Emitir». Inmutable (triggers), huella SHA-256, anulación con motivo, PDF carta/A4
+  con logo, firma y marca ANULADO. Migración 0008.
+
+**Cómo se comprobó**: 115 pruebas automáticas (7 nuevas en `test_frases_documentos.py`); navegador real PC y celular sin errores de JavaScript;
+prueba del ejecutable ampliada (frases de ejemplo + incapacidad + PDF), que detectó y corrigió un error cuando la fecha venía vacía.
+
+**Siguiente (pedido):** búsqueda dentro del expediente, CIE-10, clasificaciones adicionales de endoscopia, módulos de hepatología/EII/H. pylori/páncreas.
+
 ## Etapa 9 · 31-oct-2026 · Solicitud de laboratorio como la hoja de papel (v0.9.0)
 
 **Pedido del Dr. Lainez:** que el apartado de laboratorio sea como la hoja de solicitud de análisis clínicos que usa (fotos enviadas),

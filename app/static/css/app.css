@@ -389,3 +389,21 @@ fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
 [data-lab-item][hidden], [data-lab-sec][hidden] { display: none !important; }
 .lab-ordered { columns: 2 240px; margin: 0 0 .4rem; }
 .lab-ordered.one-col { columns: 1; }
+
+/* Frases y plantillas (v0.10.0) */
+.phrase-new > summary { display: inline-flex; list-style: none; margin: .4rem 0; }
+.phrase-new > summary::-webkit-details-marker { display: none; }
+.phrase-list { display: grid; gap: .4rem; margin-top: .6rem; }
+.phrase-item { border: 1px solid var(--line); border-radius: 8px; padding: .45rem .65rem; }
+.phrase-item > summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: .4rem; align-items: baseline; }
+.phrase-item.is-off { opacity: .6; }
+.phrase-preview { flex-basis: 100%; }
+.phr-wrap { position: relative; display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.phr-btn { font-size: .8rem; }
+.phr-menu { position: absolute; z-index: 30; top: 100%; left: 0; min-width: 240px; max-width: min(520px, 90vw); max-height: 320px; overflow: auto;
+  background: var(--surface, #fff); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: .3rem; }
+.phr-menu button { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 6px; padding: .45rem .55rem; cursor: pointer; color: inherit; font: inherit; }
+.phr-menu button:hover, .phr-menu button:focus { background: var(--accent-soft); outline: none; }
+.phr-menu small { display: block; color: var(--muted, #5b6b77); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tpl-bar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.tpl-bar select { max-width: 320px; }

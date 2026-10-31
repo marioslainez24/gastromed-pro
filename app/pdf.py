@@ -412,3 +412,56 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None) -> 
 
     doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
     return buf.getvalue()
+
+
+def document_pdf(d, p, s, size, assets=None) -> bytes:
+    """Documento clínico (incapacidad, constancia, referencia, libre). Texto tal como lo emitió el médico."""
+    buf = io.BytesIO()
+    pagesize = LETTER if size == "carta" else A4
+    doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=22 * mm, rightMargin=22 * mm, topMargin=16 * mm, bottomMargin=22 * mm,
+                            title=d["title"], author=s["doctor_display_name"], creator="GastroMed Pro")
+    width = pagesize[0] - 44 * mm
+    story = [Paragraph(_e(s["doctor_display_name"]), ST["doctor"])]
+    sub = [x for x in [s["specialty"], f"Colegiación: {s['license_number']}" if s["license_number"] else None] if x]
+    if sub:
+        story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
+    contact = [x for x in [s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
+    if contact:
+        story.append(Paragraph(_e(" · ".join(contact)), ST["sub"]))
+    story = _with_logo(story, assets, width)
+    tz = ZoneInfo(s["timezone"])
+    issued = parse_utc(d["issued_at"]).astimezone(tz)
+    head = Table([[Paragraph(_e(d["title"]), ST["title"]), Paragraph(f"Fecha: {issued:%d/%m/%Y}<br/>Folio: {d['id'][:8].upper()}", ST["subr"])]],
+                 colWidths=[width * 0.65, width * 0.35])
+    head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                              ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+    body_style = ParagraphStyle("docbody", **{**_base, "fontSize": 11, "leading": 17, "alignment": 4})
+    story += [Spacer(1, 6 * mm), head, Spacer(1, 10 * mm)]
+    for para in d["body"].split("\n\n"):
+        story.append(Paragraph(_e(para).replace("\n", "<br/>"), body_style))
+        story.append(Spacer(1, 4 * mm))
+    sig = Table([[_sig_img(assets)], [Paragraph(f"<b>{_e(s['doctor_display_name'])}</b>" +
+                                                (f"<br/>Colegiación {_e(s['license_number'])}" if s["license_number"] else "") +
+                                                "<br/>Firma y sello", ST["sub"])]],
+                colWidths=[75 * mm], rowHeights=[20 * mm, None])
+    sig.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("ALIGN", (0, 0), (-1, -1), "CENTER"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+    outer = Table([[sig]], colWidths=[width])
+    outer.setStyle(TableStyle([("ALIGN", (0, 0), (0, 0), "CENTER")]))
+    story += [Spacer(1, 16 * mm), KeepTogether([outer])]
+    voided = d["status"] == "anulado"
+
+    def on_page(canvas, _d):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 7.5)
+        canvas.setFillColor(MUTED)
+        canvas.drawString(22 * mm, 12 * mm, "Generado con GastroMed Pro. Válido solo con firma manuscrita y sello del médico.")
+        if voided:
+            canvas.setFont("Helvetica-Bold", 60)
+            canvas.setFillColor(colors.Color(0.7, 0.1, 0.1, alpha=0.25))
+            canvas.translate(pagesize[0] / 2, pagesize[1] / 2)
+            canvas.rotate(35)
+            canvas.drawCentredString(0, 0, "ANULADO")
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
+    return buf.getvalue()

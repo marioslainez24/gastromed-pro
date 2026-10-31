@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ KINDS[kind] }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ KINDS[kind] }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1><span class="pill mono">{{ p.mrn }}</span></div>
+{% include "labs/_ptabs.html" %}
+{% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form method="post" class="stack" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="kind" value="{{ kind }}">
+  <div id="frases-data" data-frases="{{ phrases_json }}" data-admin="{{ url_for('texts.phrases') }}" hidden></div>
+  <section class="card"><h2>1 · Datos</h2>
+    <div class="grid4">
+      <label class="field">Fecha de la consulta<input type="date" name="seen_on" value="{{ f.get('seen_on') or today }}" max="{{ today }}"></label>
+      {% if kind == 'incapacidad' %}
+      <label class="field">Días de incapacidad<input name="days" inputmode="numeric" class="w-num" value="{{ f.get('days', '') }}" required></label>
+      <label class="field">A partir del<input type="date" name="start_on" value="{{ f.get('start_on') or today }}"></label>
+      {% elif kind == 'constancia' %}
+      <label class="field">Hora de llegada<input type="time" name="time_from" value="{{ f.get('time_from', '') }}"></label>
+      <label class="field">Hora de salida<input type="time" name="time_to" value="{{ f.get('time_to', '') }}"></label>
+      {% elif kind == 'referencia' %}
+      <label class="field" style="grid-column: span 3">Se refiere a (médico / servicio)<input name="refer_to" maxlength="200" value="{{ f.get('refer_to', '') }}" placeholder="Ej.: Dr. … , Cirugía General"></label>
+      {% else %}
+      <label class="field" style="grid-column: span 3">Título del documento<input name="title" maxlength="120" value="{{ f.get('title', '') }}" placeholder="Ej.: Constancia de dieta"></label>
+      {% endif %}
+    </div>
+    {% if kind == 'referencia' %}<label class="field">Motivo de la referencia / resumen clínico<textarea name="reason" rows="4" data-grow>{{ f.get('reason', '') }}</textarea></label>{% endif %}
+    {% if kind != 'libre' %}
+    <div class="grid2">
+      <label class="field">Diagnóstico<input name="diagnosis" maxlength="500" value="{{ f.get('diagnosis', '') }}"></label>
+      {% if kind != 'referencia' %}<label class="check"><input type="checkbox" name="include_dx" value="1" {% if f.get('include_dx') == '1' %}checked{% endif %}>
+        Escribir el diagnóstico en el documento <span class="muted small">(por privacidad, muchos pacientes prefieren que no aparezca)</span></label>{% endif %}
+    </div>{% endif %}
+    <label class="field">{{ 'Texto del documento' if kind == 'libre' else 'Texto adicional (opcional)' }}<textarea name="extra" rows="3" data-grow data-phrase-field="doc:body">{{ f.get('extra', '') }}</textarea></label>
+    <div><button class="btn" type="submit" name="step" value="revisar">Preparar el texto ↓</button></div>
+  </section>
+
+  {% if step %}
+  <section class="card"><h2>2 · Revise y emita</h2>
+    <p class="muted small">Este es el texto que saldrá impreso. Puede corregirlo aquí. Al emitirlo queda guardado sin cambios (solo se puede anular).</p>
+    <label class="field">Título<input name="final_title" maxlength="120" value="{{ title }}"></label>
+    <label class="field">Texto<textarea name="body" rows="10" data-grow>{{ body }}</textarea></label>
+    <div class="btn-row"><button class="btn btn-primary" type="submit" name="step" value="emitir">Emitir documento</button>
+      <button class="btn btn-quiet" type="submit" name="step" value="revisar">Volver a armar el texto con los datos</button></div>
+  </section>
+  {% endif %}
+</form>
+{% endblock %}

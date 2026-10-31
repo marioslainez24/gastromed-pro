@@ -101,6 +101,7 @@
     {% endif %}
   </fieldset>
 
+  <div id="frases-data" data-frases="{{ phrases_json }}" data-admin="{{ url_for('texts.phrases') }}" hidden></div>
   <fieldset class="card" id="hallazgos"><legend>Hallazgos por segmento</legend>
     <div class="row-between normal-bar">
       <p class="muted small">Describa lo que observa en cada segmento. El botón <b>Normal</b> escribe la descripción normal, que usted puede editar (<a href="{{ url_for('endo.normal_texts_edit') }}" target="_blank" rel="noopener">cambiar mis textos normales</a>).</p>
@@ -117,7 +118,7 @@
         <label class="field" data-zline-extra>Impronta diafragmática a (cm)<input name="hiatus_cm" inputmode="decimal" class="w-num" value="{{ '%g' % d.hiatus_cm if d.get('hiatus_cm') is not none else '' }}"></label>
       </div>
       {% endif %}
-      <textarea id="nar-{{ key }}" name="nar-{{ key }}" rows="{{ 5 if D.NARRATIVE[pr.kind]|length == 1 else 3 }}" data-grow>{{ (d.narrative or {}).get(key) or '' }}</textarea>
+      <textarea id="nar-{{ key }}" data-phrase-field="endo:{{ key }}" name="nar-{{ key }}" rows="{{ 5 if D.NARRATIVE[pr.kind]|length == 1 else 3 }}" data-grow>{{ (d.narrative or {}).get(key) or '' }}</textarea>
     </div>
     {% endfor %}
   </fieldset>
@@ -200,8 +201,8 @@
   <fieldset class="card"><legend>Conclusión y seguimiento</legend>
     <div class="row-between"><label for="conclusion" class="narr-label">Conclusión <span class="req" aria-hidden="true">*</span></label>
       <button type="button" class="btn btn-quiet btn-sm" data-fill-normal="conclusion" data-normal="{{ normal_concl[pr.kind] }}">Normal</button></div>
-    <textarea id="conclusion" name="conclusion" rows="3" data-grow>{{ d.conclusion or '' }}</textarea>
-    <label class="field">Recomendaciones<textarea name="recommendations" rows="3" data-grow>{{ d.recommendations or '' }}</textarea></label>
+    <textarea id="conclusion" data-phrase-field="endo:conclusion" name="conclusion" rows="3" data-grow>{{ d.conclusion or '' }}</textarea>
+    <label class="field">Recomendaciones<textarea name="recommendations" data-phrase-field="endo:recommendations" rows="3" data-grow>{{ d.recommendations or '' }}</textarea></label>
     <div class="grid2">
       <label class="field">Seguimiento (texto)<input name="follow_up" maxlength="500" value="{{ d.follow_up or '' }}" placeholder="Ej.: colonoscopia de vigilancia según patología"></label>
       <label class="field">Fecha de control / vigilancia<input type="date" name="surveillance_due" value="{{ pr.surveillance_due or '' }}"></label>

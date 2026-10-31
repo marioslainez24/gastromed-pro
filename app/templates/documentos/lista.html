@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Documentos · {{ p.first_names }} {{ p.last_names }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1><a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1><span class="pill mono">{{ p.mrn }}</span></div>
+{% include "labs/_ptabs.html" %}
+{% if can('clinico.editar') and can('notas.finalizar') %}
+<section class="card"><h2>Nuevo documento</h2>
+  <div class="btn-row">{% for k, v in KINDS.items() %}<a class="btn {{ 'btn-primary' if loop.first }}" href="{{ url_for('docs.doc_new', patient_id=p.id, kind=k) }}">{{ v }}</a>{% endfor %}</div>
+</section>
+{% endif %}
+<section class="card"><h2>Documentos emitidos <span class="count">{{ rows|length }}</span></h2>
+  {% if rows %}<ul class="list">{% for d in rows %}
+    <li class="row-between"><span><a href="{{ url_for('docs.doc_view', doc_id=d.id) }}"><b>{{ KINDS[d.kind] }}</b></a> · {{ fmt_dt(d.issued_at) }} · {{ d.author }}</span>
+      <span class="tag {{ 'tag-danger' if d.status == 'anulado' else 'tag-ok' }}">{{ 'Anulado' if d.status == 'anulado' else 'Emitido' }}</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Aún no hay documentos para este paciente.</p>{% endif %}
+</section>
+{% endblock %}
