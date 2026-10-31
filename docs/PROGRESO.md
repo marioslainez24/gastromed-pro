@@ -16,14 +16,14 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 **Pedido del Dr. Lainez:** un desplegable con los diagnósticos más usados (p. ej., esofagitis grado A de Los Ángeles, gastropatía hipertensiva) con CIE-10.
 **Qué quedó funcionando**
 - Botón «＋ Diagnóstico ▾» junto a la conclusión: buscador y lista por grupo según el estudio (EDA/CPRE/USE: esófago, estómago, duodeno, vía biliar y
-  páncreas; colonoscopia: colon y recto). 94 diagnósticos: Los Ángeles A–D, Barrett (Praga), hernia hiatal, várices por tamaño/signos rojos, úlceras
+  páncreas; colonoscopia: colon y recto). 93 diagnósticos: Los Ángeles A–D, Barrett (Praga), hernia hiatal, várices por tamaño/signos rojos, úlceras
   gástricas y duodenales Forrest Ia–III, gastropatía hipertensiva, GAVE, pólipos, divertículos, hemorroides I–IV, colitis ulcerosa por extensión,
   Crohn, coledocolitiasis, etc. Cada clic agrega una línea; varios a la vez; casilla para incluir o no el código.
 - Códigos CIE-10 de la OMS (5.ª ed.) comprobados uno por uno en classbrowser.nhs.uk (bloques C15-C26, D10-D36, I80-I89, K20-K31, K40-K46, K50-K52,
   K55-K64, K70-K77, K80-K87, K90-K93). Sin código propio → categoría general marcada con * (p. ej., gastropatía hipertensiva K31.8*).
   Sospecha de neoplasia → sin código hasta la histología. Prueba `test_diagnosticos_endoscopia.py` exige que todo código esté en la lista verificada.
 - Pendiente: no se verificó un código para H. pylori ni candidiasis específica (se usa K20 para esofagitis); se pueden agregar como frases.
-**Cómo se comprobó**: 124 pruebas; navegador real PC y celular **actualizando desde la v0.10.2 con perfil persistente** (el código nuevo cargó al primer
+**Cómo se comprobó**: 122 pruebas; navegador real PC y celular **actualizando desde la v0.10.2 con perfil persistente** (el código nuevo cargó al primer
 intento); prueba del ejecutable.
 
 ## Etapa 10.2 · 31-oct-2026 · Corrección grave: el navegador usaba el código de la primera instalación (v0.10.2)
