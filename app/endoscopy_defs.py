@@ -91,3 +91,75 @@ DYSPLASIA = {"no_aplica": "No aplica", "sin_displasia": "Sin displasia", "bajo_g
 
 STENT_KINDS = ["Prótesis biliar plástica", "Prótesis biliar metálica", "Prótesis pancreática", "Prótesis esofágica", "Prótesis duodenal",
                "Prótesis colónica", "Otra"]
+
+# ------------------------------------------------------------------------------------------------ descripción por segmento (v0.8.0)
+# Pedido del Dr. Lainez (30-oct-2026): describir con texto libre lo que se ve en cada segmento y un botón «Normal»
+# que escriba la descripción normal para ahorrar tiempo. Los textos normales son plantillas redactadas para GastroMed Pro;
+# el médico puede cambiarlos en Endoscopia → Textos de estudio normal y siempre revisa el texto antes de finalizar.
+NARRATIVE = {
+    "eda": [("esofago", "Esófago"), ("ueg", "Unión esofagogástrica"), ("estomago", "Estómago"), ("duodeno", "Duodeno")],
+    "colonoscopia": [("colon", "Colonoscopia")],
+    "rectosigmoidoscopia": [("rectosigmoides", "Rectosigmoidoscopia")],
+    "cpre": [("cpre", "Hallazgos de la CPRE")],
+    "use": [("use", "Hallazgos del ultrasonido endoscópico")],
+}
+NARRATIVE_LABELS = {k: lab for secs in NARRATIVE.values() for k, lab in secs}
+
+ZLINE = {"coincide": "Coincide con la línea Z", "no_coincide": "No coincide con la línea Z"}
+
+DEFAULT_NORMAL_TEXTS = {
+    "esofago": "Esófago de calibre y distensibilidad conservados. Mucosa de aspecto normal en todo su trayecto, con patrón vascular "
+               "conservado, sin erosiones, úlceras, várices, estenosis ni lesiones.",
+    "ueg": "Línea Z regular, que coincide con la impronta diafragmática. Sin hernia hiatal ni lesiones de la mucosa. "
+           "En retroflexión, cardias que abraza adecuadamente el endoscopio.",
+    "estomago": "Lago mucoso claro y escaso. Mucosa de fondo, cuerpo, ángulo y antro de aspecto normal, con pliegues de grosor "
+                "y distribución habituales, sin eritema, erosiones, úlceras ni lesiones. Píloro redondo, permeable y simétrico.",
+    "duodeno": "Bulbo y segunda porción duodenal con mucosa de aspecto normal y patrón vellositario conservado, sin úlceras, "
+               "erosiones ni lesiones.",
+    "colon": "Se avanza el colonoscopio hasta el ciego, identificando el orificio apendicular y la válvula ileocecal. "
+             "Mucosa de ciego, colon ascendente, ángulo hepático, colon transverso, ángulo esplénico, colon descendente, "
+             "sigmoides y recto de aspecto normal, con patrón vascular conservado, sin pólipos, divertículos, lesiones ni "
+             "sangrado. Retroflexión en recto sin alteraciones.",
+    "rectosigmoides": "Se avanza el endoscopio hasta el colon descendente distal. Mucosa de colon descendente, sigmoides y recto "
+                      "de aspecto normal, con patrón vascular conservado, sin pólipos, divertículos, lesiones ni sangrado. "
+                      "Retroflexión en recto sin alteraciones.",
+    "cpre": "Papila mayor de aspecto y localización habituales. La colangiografía muestra vía biliar intra y extrahepática de "
+            "calibre normal, sin defectos de llenado ni estenosis, con vaciamiento adecuado del medio de contraste.",
+    "use": "Páncreas de tamaño y ecogenicidad normales en cabeza, proceso uncinado, cuerpo y cola, sin lesiones focales. "
+           "Conducto pancreático principal de calibre normal. Vía biliar extrahepática de calibre normal, sin litos. "
+           "Vesícula sin alteraciones. Sin adenopatías en las regiones evaluadas.",
+}
+DEFAULT_NORMAL_CONCLUSION = {
+    "eda": "Endoscopia digestiva alta dentro de límites normales.",
+    "colonoscopia": "Colonoscopia completa dentro de límites normales.",
+    "rectosigmoidoscopia": "Rectosigmoidoscopia dentro de límites normales.",
+    "cpre": "CPRE sin alteraciones de la vía biliar.",
+    "use": "Ultrasonido endoscópico sin alteraciones en las regiones evaluadas.",
+}
+
+
+def normal_texts(settings_json):
+    """Textos normales vigentes: los del médico (Ajustes) o, si no hay, los predeterminados."""
+    import json as _j
+    try:
+        custom = _j.loads(settings_json) if settings_json else {}
+    except ValueError:
+        custom = {}
+    secs = {k: (custom.get("sec", {}).get(k) or v) for k, v in DEFAULT_NORMAL_TEXTS.items()}
+    concl = {k: (custom.get("concl", {}).get(k) or v) for k, v in DEFAULT_NORMAL_CONCLUSION.items()}
+    return secs, concl
+
+
+def zline_text(d):
+    """Frase de la unión esofagogástrica según lo marcado (no inventa medidas)."""
+    zl = d.get("zline")
+    if zl == "coincide":
+        return "Coincide con la línea Z."
+    if zl == "no_coincide":
+        parts = ["No coincide con la línea Z"]
+        if d.get("zline_cm") is not None:
+            parts.append(f"línea Z a {d['zline_cm']:g} cm de la arcada dentaria")
+        if d.get("hiatus_cm") is not None:
+            parts.append(f"impronta diafragmática a {d['hiatus_cm']:g} cm")
+        return "; ".join(parts) + "."
+    return ""

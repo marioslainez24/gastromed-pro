@@ -94,10 +94,13 @@ def main(exe):
         post(f"/procedimientos/{proc_id}/imagenes/{img_id}", {"csrf_token": csrf, "in_report": "1", "annotations": '[{"x":0.5,"y":0.5,"text":"lesión"}]'})
         post(f"/procedimientos/{proc_id}/guardar", {"csrf_token": csrf, "version": ver, "performed_on": "2026-10-01", "indication_category": "diagnostica",
                                                  "indication": "Dispepsia", "consent_obtained": "1", "sedation_type": "topica", "extent": "segunda_porcion",
-                                                 "conclusion": "Estudio normal."})
+                                                 "conclusion": "Estudio normal.", "zline": "coincide",
+                                                 "nar-esofago": "Normal.", "nar-ueg": "Normal.", "nar-estomago": "Normal.", "nar-duodeno": "Normal."})
         html = get(f"/procedimientos/{proc_id}").read().decode()
         ver = re.search(r'name="version" value="(\d+)"', html).group(1)
         post(f"/procedimientos/{proc_id}/finalizar", {"csrf_token": csrf, "version": ver})
+        assert "Finalizado" in get(f"/procedimientos/{proc_id}").read().decode(), "El informe de endoscopia no se finalizó"
+        assert get("/endoscopia/textos-normales").status == 200
         pdf = get(f"/procedimientos/{proc_id}/pdf").read()
         assert pdf.startswith(b"%PDF-") and b"/Image" in pdf, "PDF de endoscopia sin imagen"
         for path in ("/ajustes/recordatorios", "/ajustes/horarios", "/agenda/recordatorios"):

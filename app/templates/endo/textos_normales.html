@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Textos de estudio normal{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Textos de estudio normal</h1>
+  <a class="btn btn-quiet" href="{{ url_for('endo.index') }}">← Endoscopia</a></div>
+<p class="muted">Esto es lo que escribe el botón <b>Normal</b> en los informes. Cámbielo a su forma de redactar; los informes ya
+  finalizados no cambian. Siempre revise el texto antes de finalizar un informe.</p>
+<form method="post" class="stack" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  {% for kind, secs in D.NARRATIVE.items() %}
+  <fieldset class="card"><legend>{{ D.KINDS[kind] }}</legend>
+    {% for key, lab in secs %}
+    <label class="field">{{ lab }}<textarea name="sec-{{ key }}" rows="3" data-grow>{{ sec[key] }}</textarea></label>
+    {% endfor %}
+    <label class="field">Conclusión normal<textarea name="concl-{{ kind }}" rows="2" data-grow>{{ concl[kind] }}</textarea></label>
+  </fieldset>
+  {% endfor %}
+  <div class="sticky-actions">
+    <button class="btn btn-primary" type="submit">Guardar textos</button>
+    <button class="btn btn-quiet" type="submit" name="action" value="restaurar" formnovalidate>Restaurar los predeterminados</button>
+  </div>
+</form>
+{% endblock %}

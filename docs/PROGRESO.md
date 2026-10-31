@@ -11,6 +11,27 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 8 · 30-oct-2026 · Hallazgos por segmento con texto libre y botón «Normal» (v0.8.0)
+
+**Pedido del Dr. Lainez:** en el informe, describir con sus palabras cada segmento; en EDA: esófago, unión esofagogástrica
+(si coincide o no con la línea Z), estómago y duodeno; en colonoscopia un solo apartado; y un botón que escriba el estudio normal para ahorrar tiempo.
+
+**Qué quedó funcionando**
+- Apartado «Hallazgos por segmento» con un cuadro de texto por segmento: EDA (Esófago, Unión esofagogástrica, Estómago, Duodeno);
+  colonoscopia, rectosigmoidoscopia, CPRE y USE con un solo apartado. El dictado por voz funciona en todos.
+- Unión esofagogástrica: «Coincide / No coincide con la línea Z»; si no coincide, campos opcionales de línea Z e impronta diafragmática (cm de la arcada).
+- Botón **Normal** en cada segmento y en la conclusión (si el campo ya tiene texto, pregunta antes de reemplazar) y botón **Todo normal**
+  (llena solo los campos vacíos y marca «coincide»). El médico revisa y edita.
+- Textos normales editables en *Endoscopia → Textos de estudio normal* (con «Restaurar predeterminados»); los informes finalizados no cambian.
+- La tabla estructurada (clasificaciones, pólipos, frascos) se conserva como «Hallazgos detallados (opcional)», plegada; sigue alimentando patología y calidad.
+- Para finalizar se exige descripción de hallazgos (texto o tabla). Vista de lectura y PDF muestran «Descripción de hallazgos» por segmento.
+- Migración 0006 (`clinic_settings.endo_normal_texts`).
+
+**Cómo se comprobó**: 105 pruebas automáticas (5 nuevas en `test_hallazgos_texto.py`); navegador real PC y celular sin errores de JavaScript
+(captura `evidencia/capturas/v080-hallazgos-eda-pc.png`); prueba de humo del ejecutable ampliada (finaliza EDA con texto por segmento).
+
+**Siguiente (pedido):** frases y plantillas, documentos clínicos (incapacidad, constancia), búsqueda en el expediente, CIE-10, clasificaciones adicionales, módulos de hepatología/EII/H. pylori/páncreas.
+
 ## Etapa 7 · 30-oct-2026 · Recordatorios, dictado y mejoras (v0.7.0)
 
 **Qué quedó funcionando (todo gratuito)**

@@ -60,6 +60,11 @@ Reemplace el `GastroMedPro.exe` viejo por el nuevo (con el programa cerrado). Lo
 *Ajustes → Recordatorios y dictado → Dictado:* lea el aviso, márquelo y active. En las notas aparece **🎤 Dictar** bajo cada campo.
 Use Chrome o Edge, con internet. Diga «punto», «coma», «punto y aparte» o «nueva línea». Revise siempre el texto.
 
+## Informes de endoscopia más rápidos
+En *Hallazgos por segmento* escriba (o dicte) lo que ve en cada segmento. El botón **Normal** escribe la descripción normal de ese segmento;
+**Todo normal** llena los segmentos vacíos y la conclusión. Revise siempre el texto. Para cambiar esas frases a su manera:
+*Endoscopia → Textos de estudio normal*.
+
 ## Límites (léalos)
 - La PC debe estar encendida y el programa abierto.
 - Solo funciona dentro del Wi-Fi del consultorio (fuera de él no se puede entrar, por seguridad).

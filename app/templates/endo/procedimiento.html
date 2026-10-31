@@ -101,7 +101,30 @@
     {% endif %}
   </fieldset>
 
-  <fieldset class="card"><legend>Hallazgos por segmento</legend>
+  <fieldset class="card" id="hallazgos"><legend>Hallazgos por segmento</legend>
+    <div class="row-between normal-bar">
+      <p class="muted small">Describa lo que observa en cada segmento. El botón <b>Normal</b> escribe la descripción normal, que usted puede editar (<a href="{{ url_for('endo.normal_texts_edit') }}" target="_blank" rel="noopener">cambiar mis textos normales</a>).</p>
+      <button type="button" class="btn btn-sm btn-normal" data-fill-all-normal>✓ Todo normal</button>
+    </div>
+    {% for key, lab in D.NARRATIVE[pr.kind] %}
+    <div class="narr-sec">
+      <div class="row-between"><label for="nar-{{ key }}" class="narr-label">{{ lab }}</label>
+        <button type="button" class="btn btn-quiet btn-sm" data-fill-normal="nar-{{ key }}" data-normal="{{ normal_sec[key] }}">Normal</button></div>
+      {% if key == 'ueg' %}
+      <div class="grid4 zline">
+        <label class="field">Línea Z{{ sel('zline', D.ZLINE.items(), d.zline) }}</label>
+        <label class="field" data-zline-extra>Línea Z a (cm de la arcada dentaria)<input name="zline_cm" inputmode="decimal" class="w-num" value="{{ '%g' % d.zline_cm if d.get('zline_cm') is not none else '' }}"></label>
+        <label class="field" data-zline-extra>Impronta diafragmática a (cm)<input name="hiatus_cm" inputmode="decimal" class="w-num" value="{{ '%g' % d.hiatus_cm if d.get('hiatus_cm') is not none else '' }}"></label>
+      </div>
+      {% endif %}
+      <textarea id="nar-{{ key }}" name="nar-{{ key }}" rows="{{ 5 if D.NARRATIVE[pr.kind]|length == 1 else 3 }}" data-grow>{{ (d.narrative or {}).get(key) or '' }}</textarea>
+    </div>
+    {% endfor %}
+  </fieldset>
+
+  <details class="card struct-findings" {% if d.findings and d.findings|length > 0 and d.findings[0].segment %}open{% endif %}>
+  <summary><b>Hallazgos detallados (opcional)</b> <span class="muted small">· clasificaciones, pólipos, tamaño, resección y frasco de biopsia</span></summary>
+  <fieldset class="plain">
     <div id="findings" data-rows="find">
     {% set rows = d.findings or [empty_finding] %}
     {% for f in rows %}{% set i = loop.index0 %}
@@ -129,6 +152,7 @@
     <button type="button" class="btn btn-quiet btn-sm" data-row-add="findings">＋ Agregar hallazgo</button>
     <p class="muted small">Clasificaciones: Los Ángeles, Forrest, París, Praga C/M y tamaño de várices (definiciones verificadas; ver documentación). Otras clasificaciones se habilitarán progresivamente.</p>
   </fieldset>
+  </details>
 
   <fieldset class="card"><legend>Biopsias y frascos</legend>
     <div id="jars" data-rows="jar">
@@ -174,7 +198,9 @@
   </fieldset>
 
   <fieldset class="card"><legend>Conclusión y seguimiento</legend>
-    <label class="field">Conclusión <span class="req" aria-hidden="true">*</span><textarea name="conclusion" rows="3" data-grow>{{ d.conclusion or '' }}</textarea></label>
+    <div class="row-between"><label for="conclusion" class="narr-label">Conclusión <span class="req" aria-hidden="true">*</span></label>
+      <button type="button" class="btn btn-quiet btn-sm" data-fill-normal="conclusion" data-normal="{{ normal_concl[pr.kind] }}">Normal</button></div>
+    <textarea id="conclusion" name="conclusion" rows="3" data-grow>{{ d.conclusion or '' }}</textarea>
     <label class="field">Recomendaciones<textarea name="recommendations" rows="3" data-grow>{{ d.recommendations or '' }}</textarea></label>
     <div class="grid2">
       <label class="field">Seguimiento (texto)<input name="follow_up" maxlength="500" value="{{ d.follow_up or '' }}" placeholder="Ej.: colonoscopia de vigilancia según patología"></label>
@@ -200,7 +226,11 @@
     <p class="small">Extensión: {{ dict(D.EXTENT[pr.kind]).get(pr.extent, '—') }}{% if pr.complete is not none %} · {{ 'Completo' if pr.complete else 'Incompleto' }}{% endif %}
       {% if pr.withdrawal_minutes is not none %} · Retirada {{ '%g' % pr.withdrawal_minutes }} min{% endif %}
       {% if pr.bbps_right is not none %} · Boston {{ pr.bbps_right }}/{{ pr.bbps_transverse }}/{{ pr.bbps_left }} = {{ pr.bbps_right + pr.bbps_transverse + pr.bbps_left }}{% endif %}</p>
-    {% if d.findings %}<h2>Hallazgos</h2><ul>{% for f in d.findings %}<li><b>{{ f.segment }}</b>: {{ f.type or '' }}{% if f.desc %} · {{ f.desc }}{% endif %}
+    {% if d.narrative and d.narrative.values()|select|list or d.zline %}<h2>Descripción de hallazgos</h2>
+      {% for key, lab in D.NARRATIVE[pr.kind] %}{% set txt = (d.narrative or {}).get(key) %}
+      {% if txt or (key == 'ueg' and d.zline) %}<p><b>{{ lab }}:</b>{% if key == 'ueg' and d.zline %} {{ D.zline_text(d) }}{% endif %} <span class="prewrap">{{ txt or '' }}</span></p>{% endif %}
+      {% endfor %}{% endif %}
+    {% if d.findings %}<h2>Hallazgos detallados</h2><ul>{% for f in d.findings %}<li><b>{{ f.segment }}</b>: {{ f.type or '' }}{% if f.desc %} · {{ f.desc }}{% endif %}
       {% if f.classification %} · {{ D.CLASSIFICATIONS[D.CLASS_LOOKUP[f.classification][0]][0] }} {{ D.CLASS_LOOKUP[f.classification][1] }}{% endif %}
       {% if f.prague_c is not none or f.prague_m is not none %} · Praga C{{ '%g' % (f.prague_c or 0) }} M{{ '%g' % (f.prague_m or 0) }}{% endif %}
       {% if f.size_mm %} · {{ '%g' % f.size_mm }} mm{% endif %}{% if f.jar %} · frasco {{ f.jar }}{% endif %}</li>{% endfor %}</ul>{% endif %}

@@ -353,3 +353,17 @@ table .bristol-icon { width: 48px; height: 17px; }
 .card-sub { background: var(--surface-2); border-radius: 8px; padding: .4rem .8rem; }
 details.help { background: var(--surface-2); border-radius: 8px; padding: .5rem .8rem; }
 details.help summary { cursor: pointer; font-weight: 600; }
+
+/* Endoscopia: descripción por segmento (v0.8.0) */
+.normal-bar { gap: .75rem; align-items: center; margin-bottom: .4rem; }
+.normal-bar p { margin: 0; }
+.btn-normal { white-space: nowrap; }
+.narr-sec { display: grid; gap: .35rem; padding: .6rem 0; border-top: 1px solid var(--line); }
+.narr-sec:first-of-type { border-top: 0; }
+.narr-label { font-weight: 600; }
+.narr-sec textarea, #conclusion { width: 100%; }
+.zline { margin: 0; }
+.struct-findings > summary { cursor: pointer; padding: .2rem 0; }
+.struct-findings[open] > summary { margin-bottom: .6rem; }
+fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
+.field[hidden], [data-zline-extra][hidden] { display: none; }

@@ -289,8 +289,19 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None) -> 
         tot = (pr["bbps_right"] or 0) + (pr["bbps_transverse"] or 0) + (pr["bbps_left"] or 0)
         tech.append(f"Preparación (escala de Boston): derecho {pr['bbps_right']}, transverso {pr['bbps_transverse']}, izquierdo {pr['bbps_left']} · total {tot}/9")
     sec("Técnica", "\n".join(x for x in tech if x))
+    nar = d.get("narrative") or {}
+    if any(nar.values()) or d.get("zline"):
+        story.append(Paragraph("Descripción de hallazgos", ST["title"]))
+        for key, lab in D.NARRATIVE[pr["kind"]]:
+            txt = nar.get(key) or ""
+            if key == "ueg" and d.get("zline"):
+                txt = (D.zline_text(d) + " " + txt).strip()
+            if txt:
+                story.append(Paragraph(f"<b>{_e(lab)}:</b> " + _e(txt).replace("\n", "<br/>"), ST["body"]))
+                story.append(Spacer(1, 1.2 * mm))
+        story.append(Spacer(1, 1 * mm))
     if d.get("findings"):
-        story.append(Paragraph("Hallazgos", ST["title"]))
+        story.append(Paragraph("Hallazgos detallados" if any(nar.values()) else "Hallazgos", ST["title"]))
         rows = [[Paragraph("<b>Segmento</b>", ST["small"]), Paragraph("<b>Hallazgo</b>", ST["small"]), Paragraph("<b>Clasificación / tamaño</b>", ST["small"]),
                  Paragraph("<b>Frasco</b>", ST["small"])]]
         for f in d["findings"]:

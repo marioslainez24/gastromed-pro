@@ -220,6 +220,38 @@
     });
   });
 
+  // ---- Endoscopia: botón «Normal» por segmento y «Todo normal» --------------
+  function fillNormal(btn, ask) {
+    var ta = document.getElementById(btn.getAttribute("data-fill-normal"));
+    if (!ta) return false;
+    var txt = btn.getAttribute("data-normal") || "";
+    if (ta.value.trim()) {
+      if (!ask || ta.value.trim() === txt.trim()) return false;
+      if (!window.confirm("Este campo ya tiene texto. ¿Reemplazarlo por la descripción normal?")) return false;
+    }
+    ta.value = txt; ta.dispatchEvent(new Event("input", { bubbles: true })); dirty = true;
+    return true;
+  }
+  var zsel = $("select[name='zline']");
+  function zlineExtras() { $$("[data-zline-extra]").forEach(function (el) { el.hidden = !(zsel && zsel.value === "no_coincide"); }); }
+  if (zsel) { zsel.addEventListener("change", zlineExtras); zlineExtras(); }
+  $$("[data-fill-normal]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      if (fillNormal(b, true) && b.getAttribute("data-fill-normal") === "nar-ueg" && zsel && !zsel.value) { zsel.value = "coincide"; zlineExtras(); }
+    });
+  });
+  $$("[data-fill-all-normal]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var n = 0, kept = 0;
+      $$("[data-fill-normal]").forEach(function (x) {
+        var ta = document.getElementById(x.getAttribute("data-fill-normal"));
+        if (ta && ta.value.trim()) { kept++; } else if (fillNormal(x, false)) { n++; }
+      });
+      if (zsel && !zsel.value) { zsel.value = "coincide"; zlineExtras(); }
+      b.textContent = kept ? "✓ Listo (" + kept + " campo(s) con texto se conservaron)" : "✓ Listo: revise el texto";
+    });
+  });
+
   // ---- Filas repetibles (hallazgos, frascos, prótesis) -----------------------
   $$("[data-row-add]").forEach(function (btn) {
     var box = document.getElementById(btn.getAttribute("data-row-add"));

@@ -184,6 +184,7 @@ def test_protesis_y_vigilancia(env):
     f = {"csrf_token": tok, "version": version(env, proc), "performed_on": "2026-09-01", "indication_category": "terapeutica",
          "indication": "Coledocolitiasis", "consent_obtained": "1", "sedation_type": "profunda", "extent": "canulacion_biliar",
          "conclusion": "Extracción parcial; prótesis plástica.", "surveillance_due": "2026-11-15",
+         "nar-cpre": "Colédoco dilatado con defectos de llenado (ficticio).",
          "stent-0-kind": "Prótesis biliar plástica", "stent-0-desc": "10 Fr × 9 cm", "stent-0-due": "2026-12-01"}
     med.post(f"/procedimientos/{proc}/guardar", data=f)
     med.post(f"/procedimientos/{proc}/finalizar", data={"csrf_token": tok, "version": version(env, proc)})

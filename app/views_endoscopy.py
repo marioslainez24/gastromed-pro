@@ -90,7 +90,9 @@ def proc_view(proc_id):
     scope = db.execute("SELECT * FROM scopes WHERE id = ?", (pr["scope_id"],)).fetchone() if pr["scope_id"] else None
     audit("procedimiento_consultado", "procedimiento", pr["id"])
     from .views_extras import with_dictation
-    return with_dictation(render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, allergies=allergies, meds=meds,
+    normal_sec, normal_concl = D.normal_texts(clinic_settings()["endo_normal_texts"])
+    return with_dictation(render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable,
+                           normal_sec=normal_sec, normal_concl=normal_concl, allergies=allergies, meds=meds,
                            images=_images(db, pr["id"]), specimens=specimens, stents=stents, addenda=addenda, scopes=scopes(),
                            scope=scope, empty_finding=dict.fromkeys(["segment", "type", "desc", "classification", "size_mm", "prague_c",
                                                                      "prague_m", "removed", "jar"]),
@@ -162,7 +164,13 @@ def parse_form(kind, f):
         "complications": comps, "complication_detail": _txt(f, "complication_detail"), "conclusion": _txt(f, "conclusion"),
         "recommendations": _txt(f, "recommendations"), "follow_up": _txt(f, "follow_up", 500),
         "findings": [], "jars": [], "stents": [],
+        "narrative": {k: _txt(f, f"nar-{k}", 6000) for k, _ in D.NARRATIVE[kind]},
     }
+    if kind == "eda":
+        zl = f.get("zline") or None
+        data["zline"] = zl if zl in D.ZLINE else None
+        data["zline_cm"] = _num(f, "zline_cm", 10, 60) if zl == "no_coincide" else None
+        data["hiatus_cm"] = _num(f, "hiatus_cm", 10, 60) if zl == "no_coincide" else None
     segs = set(D.SEGMENTS[kind])
     idx = sorted({int(m.group(1)) for k in f.keys() if (m := re.fullmatch(r"find-(\d{1,2})-segment", k))})
     for i in idx[:MAX_FINDINGS]:
@@ -244,6 +252,8 @@ def proc_finalize(proc_id):
         abort(409, description="El informe ya estaba finalizado o no es su autor.")
     d = json.loads(pr["data"])
     missing = [lab for k, lab in (("indication", "indicación"), ("conclusion", "conclusión")) if not d.get(k)]
+    if not (any((d.get("narrative") or {}).values()) or d.get("findings")):
+        missing.append("descripción de hallazgos")
     if not pr["indication_category"]:
         missing.append("tipo de indicación")
     if not d.get("consent_obtained"):
@@ -670,3 +680,27 @@ def equipment():
     recent = db.execute("SELECT pr.id, pr.kind, pr.performed_on, p.last_names FROM procedures pr JOIN patients p ON p.id = pr.patient_id"
                         " WHERE pr.org_id = ? ORDER BY pr.created_at DESC LIMIT 20", (org,)).fetchall()
     return render_template("endo/equipos.html", eq=eq, log=log, recent=recent, D=D)
+
+
+# ------------------------------------------------------------------------------------------------ textos de estudio normal
+@bp.route("/endoscopia/textos-normales", methods=["GET", "POST"])
+@require("clinico.editar", "notas.finalizar")
+def normal_texts_edit():
+    db = get_db()
+    st = clinic_settings()
+    if request.method == "POST":
+        if request.form.get("action") == "restaurar":
+            value = None
+        else:
+            sec = {k: t for k in D.DEFAULT_NORMAL_TEXTS if (t := _txt(request.form, f"sec-{k}", 6000)) and t != D.DEFAULT_NORMAL_TEXTS[k]}
+            concl = {k: t for k in D.DEFAULT_NORMAL_CONCLUSION
+                     if (t := _txt(request.form, f"concl-{k}", 1000)) and t != D.DEFAULT_NORMAL_CONCLUSION[k]}
+            value = json.dumps({"sec": sec, "concl": concl}, ensure_ascii=False) if (sec or concl) else None
+        with write_tx(db):
+            db.execute("UPDATE clinic_settings SET endo_normal_texts = ?, updated_at = ?, updated_by = ?, version = version + 1 WHERE org_id = ?",
+                       (value, utcnow(), g.user["id"], g.user["org_id"]))
+            audit("textos_normales_actualizados", "ajustes", g.user["org_id"], db=db)
+        flash("Textos predeterminados restaurados." if value is None and request.form.get("action") == "restaurar" else "Textos de estudio normal guardados.", "ok")
+        return redirect(url_for("endo.normal_texts_edit"))
+    sec, concl = D.normal_texts(st["endo_normal_texts"])
+    return render_template("endo/textos_normales.html", D=D, sec=sec, concl=concl)
