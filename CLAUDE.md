@@ -39,7 +39,7 @@ Flask 3 + Jinja2 + SQLite, con WAL, tablas STRICT y triggers de inmutabilidad y 
 
 ## Flujo de trabajo que funcionó
 1. Crear tareas, programar y escribir pruebas pytest para cada función nueva. Ejemplo: un servidor SMTP falso en localhost; nunca simular un éxito.
-2. Correr `python3 -m pytest -q` (100 pruebas en v0.7.0).
+2. Correr `python3 -m pytest -q` (120 pruebas en v0.10.2).
 3. Revisar en el navegador con Playwright y guardar capturas en `evidencia/capturas/`.
 4. Correr la prueba del exe en local: `build/smoke_exe.py` con un script que ejecute `python3 gastromed_exe.py`. Si waitress no está instalado, usar un sustituto con `werkzeug.make_server` en `PYTHONPATH`.
 5. Actualizar `docs/PROGRESO.md` y `docs/MATRIZ.md` (y `INSTALACION_WINDOWS.md` si cambia el uso). Copiarlos al Proyecto con `project_write`.
@@ -64,6 +64,8 @@ Flask 3 + Jinja2 + SQLite, con WAL, tablas STRICT y triggers de inmutabilidad y 
   - `agenda.new` redirige al día, no a la cita.
   - Los pacientes con el mismo DNI dan 409.
   - ReportLab reutiliza imágenes idénticas: usar imágenes distintas en las pruebas.
+- **Caché del navegador:** nunca referenciar `/static/...?v=`; usar `{{ asset('js/archivo.js') }}` (dirección con versión). El service worker
+  pide primero a la red. Probar las actualizaciones con un perfil de navegador persistente que ya tenga la versión anterior.
 - **Pendientes de verificar en el sitio:**
   - Fórmula de Lille (diferencia de bilirrubina) y regla de diálisis en MELD 3.0.
   - Capturadora de video real.

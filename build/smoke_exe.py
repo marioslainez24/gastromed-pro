@@ -112,6 +112,10 @@ def main(exe):
         assert get("/endoscopia/textos-normales").status == 200
         pdf = get(f"/procedimientos/{proc_id}/pdf").read()
         assert pdf.startswith(b"%PDF-") and b"/Image" in pdf, "PDF de endoscopia sin imagen"
+        # Archivos del programa con la versión en la dirección (evita que el navegador use una copia vieja)
+        page = get("/agenda/").read().decode()
+        js = re.search(r'src="(/static/v[\d.]+/js/app\.js)"', page).group(1)
+        assert get(js).read().startswith(b"/*") or len(get(js).read()) > 1000, "app.js versionado no responde"
         # Solicitud de laboratorio tipo hoja (perfil + prueba suelta) y su PDF
         form = get(f"/ordenes/nueva?patient_id={pid}&order_type=laboratorio").read().decode()
         assert "Perfil Pre-operatorio" in form and "Biología molecular" in form, "Hoja de laboratorio incompleta"

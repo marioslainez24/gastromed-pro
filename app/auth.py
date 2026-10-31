@@ -1,4 +1,5 @@
 """Inicio y cierre de sesión."""
+from pathlib import Path
 import hmac
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -151,8 +152,9 @@ def manifest():
 
 @bp.route("/sw.js")
 def service_worker():
-    resp = current_app.send_static_file("js/sw.js")
-    resp.headers["Content-Type"] = "application/javascript"
+    from . import APP_VERSION
+    src = (Path(current_app.static_folder) / "js" / "sw.js").read_text(encoding="utf-8").replace("__GM_VERSION__", APP_VERSION)
+    resp = current_app.response_class(src, mimetype="application/javascript")
     resp.headers["Service-Worker-Allowed"] = "/"
     resp.headers["Cache-Control"] = "no-cache"
     return resp

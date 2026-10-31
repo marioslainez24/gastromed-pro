@@ -408,3 +408,4 @@ fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
 .tpl-bar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .tpl-bar select { max-width: 320px; }
 [data-img-status].is-error { color: var(--danger); font-weight: 600; }
+.dictation-live.is-error { color: var(--danger); font-weight: 600; }

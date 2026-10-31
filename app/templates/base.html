@@ -9,9 +9,9 @@
   <link rel="manifest" href="{{ url_for('auth.manifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icons/icon.svg') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}?v={{ app_version }}">
-  <script src="{{ url_for('static', filename='js/theme.js') }}?v={{ app_version }}"></script>
-  <script src="{{ url_for('static', filename='js/app.js') }}?v={{ app_version }}" defer></script>
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+  <script src="{{ asset('js/theme.js') }}"></script>
+  <script src="{{ asset('js/app.js') }}" defer></script>
 </head>
 <body class="{% block body_class %}{% endblock %}">
 <a class="skip" href="#contenido">Saltar al contenido</a>

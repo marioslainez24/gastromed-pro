@@ -2,5 +2,5 @@
 {% if editable and current_user %}{% set _cs = clinic_cfg() %}{% if _cs and _cs.dictation_enabled %}
 <div id="dictado-cfg" data-lang="{{ _cs.dictation_lang }}" hidden></div>
 <p class="dictation-note muted small" hidden>🎤 Dictado activo: toque el botón del micrófono junto a un campo de texto y hable. Diga «punto», «coma», «punto y aparte» o «nueva línea». Revise siempre el texto antes de guardar.</p>
-<script src="{{ url_for('static', filename='js/dictado.js') }}?v={{ app_version }}" defer></script>
+<script src="{{ asset('js/dictado.js') }}" defer></script>
 {% endif %}{% endif %}

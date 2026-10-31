@@ -9,7 +9,7 @@ from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.10.1"
+APP_VERSION = "0.10.2"
 
 
 def _loopback(addr) -> bool:
@@ -35,6 +35,9 @@ def create_app(config: Config | None = None) -> Flask:
     from .crypto import load_data_key
     app.config["GM_FERNET"] = Fernet(load_data_key(cfg))
     app.config["MAX_CONTENT_LENGTH"] = 21 * 1024 * 1024  # adjuntos hasta 20 MB (+ margen del formulario)
+    # Archivos del programa con la versión en la dirección (/static/v0.10.2/js/app.js). Así, al actualizar el .exe el navegador
+    # pide la copia nueva aunque tenga guardada una vieja (error corregido en v0.10.2). Mismo «endpoint» que /static.
+    app.add_url_rule(f"/static/v{APP_VERSION}/<path:filename>", endpoint="static", view_func=app.view_functions["static"])
 
     from .auth import bp as auth_bp
     from .views_patients import bp as patients_bp
@@ -97,7 +100,7 @@ def create_app(config: Config | None = None) -> Flask:
     def _ctx():
         return {"can": can, "label": util.label, "fmt_dt": util.fmt_dt, "fmt_time": util.fmt_time, "age": util.age,
                 "fmt_birth": util.fmt_birth, "current_user": g.get("user"), "csrf_token": g.get("csrf_token"),
-                "app_version": APP_VERSION, "env": cfg.ENV, "demo_mode": cfg.DEMO, "clinic_cfg": util.clinic_settings}
+                "app_version": APP_VERSION, "asset": lambda f: f"/static/v{APP_VERSION}/{f}", "env": cfg.ENV, "demo_mode": cfg.DEMO, "clinic_cfg": util.clinic_settings}
 
     def _err(code, title, msg):
         def handler(e):

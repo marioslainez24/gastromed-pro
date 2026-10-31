@@ -51,16 +51,25 @@
       }
       live.textContent = interim;
     };
+    var failed = false;
+    rec.onstart = function () { live.textContent = "Escuchando… hable ahora."; };
     rec.onerror = function (ev) {
-      var msg = { "not-allowed": "Permita el uso del micrófono en el navegador.", "no-speech": "No se detectó voz.",
-                  "network": "Sin conexión a internet: el dictado del navegador la necesita.", "audio-capture": "No se encontró micrófono." }[ev.error];
-      if (msg) live.textContent = msg;
+      failed = true;
+      var msg = { "not-allowed": "El navegador bloqueó el micrófono. Toque el candado junto a la dirección → Micrófono → Permitir, y recargue la página.",
+                  "service-not-allowed": "El navegador no permite el dictado en esta página. Use Google Chrome o Microsoft Edge (no Brave ni Firefox).",
+                  "no-speech": "No se escuchó voz. Acérquese al micrófono y vuelva a intentar.",
+                  "network": "El dictado necesita internet (el navegador envía el audio a Google o Microsoft). Revise la conexión.",
+                  "audio-capture": "No se encontró micrófono. Conecte uno o revise que Windows lo tenga activado.",
+                  "language-not-supported": "El idioma elegido no está disponible: cámbielo en Ajustes → Recordatorios y dictado.",
+                  "aborted": "Dictado detenido." }[ev.error] || ("No se pudo dictar (" + ev.error + ").");
+      live.textContent = msg; live.classList.add("is-error");
     };
     rec.onend = function () {
       btn.classList.remove("is-on"); btn.setAttribute("aria-pressed", "false"); btn.title = "Dictar en este campo"; btn.textContent = "🎤 Dictar";
-      setTimeout(function () { live.remove(); }, 2500); active = null; rec = null;
+      setTimeout(function () { live.remove(); }, failed ? 12000 : 2500); active = null; rec = null;
     };
-    ta.focus(); rec.start();
+    ta.focus();
+    try { rec.start(); } catch (e) { live.textContent = "No se pudo iniciar el dictado: " + e.message; live.classList.add("is-error"); }
   }
   document.querySelectorAll("form textarea").forEach(function (ta) {
     if (ta.readOnly || ta.disabled) return;

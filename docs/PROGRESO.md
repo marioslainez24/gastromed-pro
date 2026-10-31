@@ -11,6 +11,21 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 10.2 · 31-oct-2026 · Corrección grave: el navegador usaba el código de la primera instalación (v0.10.2)
+
+**Reporte del Dr. Lainez:** el dictado no funciona y los botones «Normal» de endoscopia (y otros) no hacen nada.
+**Causa (reproducida en navegador real con perfil persistente):** el service worker guardaba `app.js` y `app.css` con un nombre de caché fijo
+(`gm-static-v1`) e ignoraba el `?v=` de la dirección, y `sw.js` nunca cambiaba; por eso el navegador servía PARA SIEMPRE la copia de la primera
+instalación. Todo lo hecho en JavaScript desde entonces (botones Normal, frases, plantillas, hoja de laboratorio, subida una por una) no existía en su
+navegador. Las pruebas no lo detectaban porque usan un navegador limpio.
+**Corrección**
+- Archivos del programa servidos con la versión en la dirección (`/static/v0.10.2/js/app.js`): al actualizar, el navegador recibe el código nuevo en la
+  primera carga aunque tenga la copia vieja (comprobado: versión vieja instalada → actualización → una recarga → código nuevo).
+- `sw.js` lleva la versión (la caché se renueva en cada versión) y pide primero a la PC; la copia guardada solo se usa sin conexión.
+- Dictado: mensajes claros para cada error (micrófono bloqueado, navegador sin soporte, sin internet, sin voz) y aviso «Escuchando…».
+- Pruebas nuevas `test_cache_navegador.py`; la prueba del .exe verifica el archivo versionado.
+**Lección:** las pruebas de navegador deben incluir una actualización con un perfil que ya tenía la versión anterior.
+
 ## Etapa 10.1 · 31-oct-2026 · Corrección: imágenes de endoscopia que no se subían (v0.10.1)
 
 **Problema reportado por el Dr. Lainez:** las imágenes de endoscopia nunca se subían.
