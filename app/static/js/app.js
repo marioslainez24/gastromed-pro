@@ -386,6 +386,53 @@
   // ---- Subir archivo al elegirlo -------------------------------------------
   $$("[data-autosubmit-file]").forEach(function (inp) { inp.addEventListener("change", function () { if (inp.files.length) inp.form.submit(); }); });
 
+  // ---- Endoscopia: subir imágenes una por una (evita el límite de tamaño por envío y no pierde el informe)
+  $$("[data-img-upload]").forEach(function (inp) {
+    var form = inp.form, status = $("[data-img-status]");
+    function say(msg, err) { if (status) { status.textContent = msg; status.classList.toggle("is-error", !!err); status.classList.remove("muted"); } }
+    inp.addEventListener("change", function () {
+      var files = Array.prototype.slice.call(inp.files || []);
+      if (!files.length) return;
+      var csrfTok = $("input[name=csrf_token]", form).value, patient = $("input[name=confirm_patient]", form).value;
+      var ok = 0, errors = [];
+      var proc = $("#proc-form");
+      // 1) Guardar primero lo escrito en el informe para no perderlo al recargar
+      var saveFirst = (proc && dirty) ? fetch(proc.action, { method: "POST", body: (function () { var fd = new FormData(proc); fd.set("then", "guardar"); return fd; })(),
+                                                             credentials: "same-origin" }).then(function (r) { if (!r.ok) throw new Error("No se pudo guardar el informe (error " + r.status + ")."); dirty = false; })
+                                         : Promise.resolve();
+      say("Guardando el informe…");
+      saveFirst.then(function () {
+        // 2) Subir cada imagen por separado
+        return files.reduce(function (chain, f, i) {
+          return chain.then(function () {
+            say("Subiendo imagen " + (i + 1) + " de " + files.length + "…");
+            var fd = new FormData();
+            fd.append("csrf_token", csrfTok); fd.append("confirm_patient", patient); fd.append("imagen", f, f.name);
+            return fetch(form.action, { method: "POST", body: fd, credentials: "same-origin",
+                                        headers: { "X-Requested-With": "fetch", "X-CSRF-Token": csrfTok } })
+              .then(function (r) {
+                if (r.status === 413) { errors.push(f.name + ": supera el tamaño permitido (20 MB)."); return; }
+                return r.json().then(function (d) {
+                  if (d.agregadas) ok += d.agregadas;
+                  (d.errores || []).forEach(function (e) { errors.push(e); });
+                }, function () { errors.push(f.name + ": error " + r.status + " del servidor."); });
+              })
+              .catch(function () { errors.push(f.name + ": sin conexión con el programa."); });
+          });
+        }, Promise.resolve());
+      }).then(function () {
+        if (errors.length) {
+          say(ok + " de " + files.length + " imagen(es) subidas. No se subieron: " + errors.join(" · "), true);
+          if (ok) { var b = document.createElement("button"); b.type = "button"; b.className = "btn btn-sm"; b.textContent = "Ver las imágenes subidas";
+                    b.addEventListener("click", function () { dirty = false; location.hash = "imagenes"; location.reload(); }); status.appendChild(document.createTextNode(" ")); status.appendChild(b); }
+        } else {
+          say(ok + " imagen(es) subidas. Actualizando…"); dirty = false; location.hash = "imagenes"; location.reload();
+        }
+      }).catch(function (e) { say(e.message, true); });
+      inp.value = "";
+    });
+  });
+
   // ---- Anotaciones sobre imágenes (marcas numeradas; el original no se modifica)
   $$("[data-img-card]").forEach(function (card) {
     var area = $("[data-annot-area]", card), svg = $("[data-annot-svg]", card), input = $("[data-annot-input]", card);

@@ -407,3 +407,4 @@ fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
 .phr-menu small { display: block; color: var(--muted, #5b6b77); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tpl-bar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .tpl-bar select { max-width: 320px; }
+[data-img-status].is-error { color: var(--danger); font-weight: 600; }

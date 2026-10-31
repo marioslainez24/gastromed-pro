@@ -11,6 +11,23 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 10.1 · 31-oct-2026 · Corrección: imágenes de endoscopia que no se subían (v0.10.1)
+
+**Problema reportado por el Dr. Lainez:** las imágenes de endoscopia nunca se subían.
+**Causas encontradas (reproducidas en navegador real):**
+1. Varias fotos a la vez se enviaban en un solo envío; al pasar de 21 MB el servidor rechazaba todo («Contenido demasiado grande»). 8 fotos de 3 MB bastaban.
+2. Los formatos BMP y TIFF (frecuentes en torres de endoscopia y capturadoras) se rechazaban.
+3. La subida recargaba la página y se perdía lo escrito en el informe sin guardar.
+
+**Corrección**
+- Las imágenes se suben **una por una** con progreso («Subiendo imagen 3 de 8…») y resumen de las que fallen con su motivo.
+- BMP, TIFF, WebP y GIF se **convierten a JPG** de alta calidad (Pillow; plugins añadidos al .exe). HEIC del iPhone: mensaje con la solución gratuita
+  (Ajustes → Cámara → Formatos → «Más compatible»).
+- Antes de subir, el informe **se guarda solo** si había cambios.
+
+**Cómo se comprobó**: 118 pruebas automáticas (3 nuevas en `test_imagenes_formatos.py`); navegador real: 8 JPG de 3 MB + BMP + TIFF a la vez → 10 imágenes y el texto
+del informe conservado; prueba del ejecutable con conversión de BMP dentro del .exe.
+
 ## Etapa 10 · 31-oct-2026 · Frases, plantillas de nota y documentos clínicos (v0.10.0)
 
 **Qué quedó funcionando**

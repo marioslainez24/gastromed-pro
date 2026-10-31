@@ -38,7 +38,7 @@
 {% endif %}
 
 {% if editable %}
-<form method="post" action="{{ url_for('endo.proc_save', proc_id=pr.id) }}" class="stack proc-form" data-dirty-guard>
+<form method="post" action="{{ url_for('endo.proc_save', proc_id=pr.id) }}" class="stack proc-form" id="proc-form" data-dirty-guard>
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ pr.version }}">
 
   <fieldset class="card"><legend>Indicación y consentimiento</legend>
@@ -249,9 +249,10 @@
     {% if editable %}
     <form method="post" action="{{ url_for('endo.image_add', proc_id=pr.id) }}" enctype="multipart/form-data" class="inline-upload">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="confirm_patient" value="{{ p.id }}">
-      <label class="btn btn-sm">Importar imágenes (JPG/PNG)<input type="file" name="imagen" accept="image/jpeg,image/png" multiple data-autosubmit-file hidden></label>
+      <label class="btn btn-sm btn-primary">Subir imágenes<input type="file" name="imagen" accept="image/*,.jpg,.jpeg,.png,.bmp,.tif,.tiff,.webp" multiple data-img-upload hidden></label>
     </form>{% endif %}
   </div>
+  {% if editable %}<p class="small muted" data-img-status aria-live="polite">Puede elegir varias a la vez (JPG, PNG, BMP, TIFF o WebP). Se suben una por una y el informe se guarda antes.</p>{% endif %}
   {% if images %}
   <div class="img-grid">
   {% for im in images %}

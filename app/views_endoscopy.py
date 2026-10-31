@@ -68,6 +68,43 @@ def proc_new(patient_id):
     return render_template("endo/nuevo.html", p=p, appt=appt, KINDS=D.KINDS)
 
 
+# ------------------------------------------------------------------------------------------------ imágenes: formatos aceptados
+CONVERTIBLE = {"BMP", "TIFF", "WEBP", "GIF"}     # formatos habituales de torres de endoscopia y capturadoras; se convierten a JPG
+MAX_PIXELS = 60_000_000                          # protección contra imágenes gigantes o malformadas
+
+
+def normalize_image(data: bytes):
+    """Devuelve (bytes, mime, ext, error). JPG y PNG se guardan tal cual; BMP, TIFF, WebP y GIF se convierten a JPG de alta calidad."""
+    if not data:
+        return data, None, None, "el archivo está vacío."
+    if len(data) > 20 * 1024 * 1024:
+        return data, None, None, "supera 20 MB."
+    mime, ext, err = validate_file(data)
+    if mime in ("image/jpeg", "image/png"):
+        return data, mime, ext, None
+    if mime == "image/heic":
+        return data, None, None, ("es una foto HEIC del iPhone, que el programa no puede leer. En el iPhone: Ajustes → Cámara → Formatos → "
+                                  "«Más compatible», o envíe la foto como JPG.")
+    if mime == "application/pdf":
+        return data, None, None, "es un PDF; súbalo en «Archivos» del expediente. Aquí van imágenes."
+    try:
+        import io
+        from PIL import Image
+        Image.MAX_IMAGE_PIXELS = MAX_PIXELS
+        with Image.open(io.BytesIO(data)) as im:
+            if im.format not in CONVERTIBLE:
+                raise ValueError(im.format)
+            if im.width * im.height > MAX_PIXELS:
+                raise ValueError("demasiado grande")
+            im.seek(0)
+            rgb = im.convert("RGB")
+            out = io.BytesIO()
+            rgb.save(out, "JPEG", quality=92, optimize=True)
+        return out.getvalue(), "image/jpeg", "jpg", None
+    except Exception:
+        return data, None, None, "formato de imagen no reconocido. Se aceptan JPG, PNG, BMP, TIFF y WebP."
+
+
 # ------------------------------------------------------------------------------------------------ ver / editar
 def _images(db, proc_id):
     return db.execute("SELECT i.*, f.mime FROM procedure_images i JOIN files f ON f.id = i.file_id WHERE i.procedure_id = ?"
@@ -326,9 +363,9 @@ def image_add(proc_id):
     pos = db.execute("SELECT COALESCE(MAX(position), 0) FROM procedure_images WHERE procedure_id = ?", (pr["id"],)).fetchone()[0]
     for up in ups[:20]:
         data = up.read(20 * 1024 * 1024 + 1)
-        mime, ext, err = validate_file(data)
-        if err or mime not in ("image/jpeg", "image/png"):
-            errors.append(f"{up.filename or 'imagen'}: {err or 'solo se aceptan JPG o PNG para el informe'}")
+        data, mime, ext, err = normalize_image(data)
+        if err:
+            errors.append(f"{up.filename or 'imagen'}: {err}")
             continue
         fid, iid = new_id(), new_id()
         import secrets as _s

@@ -88,6 +88,15 @@ def main(exe):
         req = urllib.request.Request(f"{B}/procedimientos/{proc_id}/imagenes", data=body, headers={"Content-Type": f"multipart/form-data; boundary={bnd}",
                                                                                               "X-Requested-With": "fetch"})
         assert op.open(req, timeout=60).status == 200
+        # BMP de una torre de endoscopia (2x2 píxeles): debe convertirse a JPG dentro del .exe
+        bmp = bytes.fromhex("424d46000000000000003600000028000000020000000200000001001800000000001000000000000000000000000000"
+                            "00000000000000ff0000ff00000000ff00ffffff0000")
+        body = (f"--{bnd}\r\nContent-Disposition: form-data; name=\"csrf_token\"\r\n\r\n{csrf}\r\n"
+                f"--{bnd}\r\nContent-Disposition: form-data; name=\"confirm_patient\"\r\n\r\n{pid}\r\n"
+                f"--{bnd}\r\nContent-Disposition: form-data; name=\"imagen\"; filename=\"torre.bmp\"\r\nContent-Type: image/bmp\r\n\r\n").encode() + bmp + f"\r\n--{bnd}--\r\n".encode()
+        req = urllib.request.Request(f"{B}/procedimientos/{proc_id}/imagenes", data=body, headers={"Content-Type": f"multipart/form-data; boundary={bnd}",
+                                                                                              "X-Requested-With": "fetch"})
+        assert op.open(req, timeout=60).status == 200, "BMP de la torre no se convirtió"
         html = get(f"/procedimientos/{proc_id}").read().decode()
         img_id = re.search(r'/procedimientos/' + proc_id + r'/imagenes/([0-9a-f]{32})', html).group(1)
         ver = re.search(r'name="version" value="(\d+)"', html).group(1)
