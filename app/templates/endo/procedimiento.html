@@ -200,7 +200,18 @@
 
   <fieldset class="card"><legend>Conclusión y seguimiento</legend>
     <div class="row-between"><label for="conclusion" class="narr-label">Conclusión <span class="req" aria-hidden="true">*</span></label>
-      <button type="button" class="btn btn-quiet btn-sm" data-fill-normal="conclusion" data-normal="{{ normal_concl[pr.kind] }}">Normal</button></div>
+      <span class="btn-row"><button type="button" class="btn btn-sm btn-primary" data-dx-open="conclusion" aria-expanded="false">＋ Diagnóstico ▾</button>
+      <button type="button" class="btn btn-quiet btn-sm" data-fill-normal="conclusion" data-normal="{{ normal_concl[pr.kind] }}">Normal</button></span></div>
+    <div class="dx-panel card" data-dx-panel data-dx="{{ dx_json }}" data-source="{{ dx_source }}" hidden>
+      <div class="dx-tools">
+        <input type="search" placeholder="Buscar diagnóstico… (ej.: Los Ángeles, Forrest, várices, pólipo)" aria-label="Buscar diagnóstico" data-dx-search>
+        <label class="check small"><input type="checkbox" data-dx-code checked> Agregar código CIE-10</label>
+        <button type="button" class="btn btn-sm btn-quiet" data-dx-close>Cerrar</button>
+      </div>
+      <div class="dx-list" data-dx-list role="listbox" aria-label="Diagnósticos frecuentes"></div>
+      <p class="tiny muted">Cada clic agrega una línea a la conclusión; puede elegir varios. Códigos: {{ dx_source }}. * = sin código propio,
+        se indica la categoría general. Los diagnósticos de cáncer llevan código cuando llega la patología. Revise siempre el texto.</p>
+    </div>
     <textarea id="conclusion" data-phrase-field="endo:conclusion" name="conclusion" rows="3" data-grow>{{ d.conclusion or '' }}</textarea>
     <label class="field">Recomendaciones<textarea name="recommendations" data-phrase-field="endo:recommendations" rows="3" data-grow>{{ d.recommendations or '' }}</textarea></label>
     <div class="grid2">

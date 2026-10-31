@@ -290,6 +290,42 @@
     });
   }
 
+  // ---- Endoscopia: desplegable de diagnósticos frecuentes para la conclusión -
+  var dxPanel = $("[data-dx-panel]");
+  if (dxPanel) {
+    var dxs = []; try { dxs = JSON.parse(dxPanel.getAttribute("data-dx") || "[]"); } catch (e) {}
+    var dxOpen = $("[data-dx-open]"), dxList = $("[data-dx-list]", dxPanel), dxSearch = $("[data-dx-search]", dxPanel), dxCode = $("[data-dx-code]", dxPanel);
+    var dxTa = document.getElementById(dxOpen.getAttribute("data-dx-open"));
+    try { var pref = localStorage.getItem("gm-dx-code"); if (pref !== null) dxCode.checked = pref === "1"; } catch (e) {}
+    dxCode.addEventListener("change", function () { try { localStorage.setItem("gm-dx-code", dxCode.checked ? "1" : "0"); } catch (e) {} });
+    function dxNorm(x) { return x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
+    function dxRender() {
+      var q = dxNorm(dxSearch.value.trim()), grp = null;
+      dxList.textContent = "";
+      dxs.forEach(function (d) {
+        if (q && dxNorm(d.t + " " + d.g + " " + (d.c || "")).indexOf(q) < 0) return;
+        if (d.g !== grp) { grp = d.g; var h = document.createElement("h4"); h.className = "dx-grp"; h.textContent = grp; dxList.appendChild(h); }
+        var b = document.createElement("button"); b.type = "button"; b.className = "dx-item"; b.setAttribute("role", "option");
+        var t = document.createElement("span"); t.textContent = d.t; b.appendChild(t);
+        if (d.c) { var c = document.createElement("span"); c.className = "dx-code mono"; c.textContent = d.c + (d.a ? "*" : ""); b.appendChild(c); }
+        b.addEventListener("click", function () {
+          var line = d.t + (dxCode.checked && d.c ? " (CIE-10 " + d.c + (d.a ? "*" : "") + ")" : "");
+          var v = dxTa.value.replace(/\s+$/, "");
+          dxTa.value = (v ? v + "\n" : "") + line;
+          dxTa.dispatchEvent(new Event("input", { bubbles: true })); dirty = true;
+          b.classList.add("is-added"); setTimeout(function () { b.classList.remove("is-added"); }, 900);
+        });
+        dxList.appendChild(b);
+      });
+      if (!dxList.children.length) { var p = document.createElement("p"); p.className = "small muted"; p.textContent = "Sin resultados. Escriba el diagnóstico directamente en la conclusión o guárdelo como frase."; dxList.appendChild(p); }
+    }
+    function dxToggle(show) { dxPanel.hidden = !show; dxOpen.setAttribute("aria-expanded", show ? "true" : "false"); if (show) { dxRender(); dxSearch.focus(); } }
+    dxOpen.addEventListener("click", function () { dxToggle(dxPanel.hidden); });
+    $("[data-dx-close]", dxPanel).addEventListener("click", function () { dxToggle(false); });
+    dxSearch.addEventListener("input", dxRender);
+    dxSearch.addEventListener("keydown", function (e) { if (e.key === "Enter") e.preventDefault(); if (e.key === "Escape") dxToggle(false); });
+  }
+
   // ---- Solicitud de laboratorio: perfiles, buscador y contador ---------------
   var sheet = $("[data-lab-sheet]");
   if (sheet) {

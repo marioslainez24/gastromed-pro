@@ -7,6 +7,7 @@ from datetime import date
 from flask import Blueprint, abort, current_app, flash, g, jsonify, make_response, redirect, render_template, request, url_for
 
 from . import endoscopy_defs as D
+from . import endo_diagnoses as DX
 from .db import get_db, new_id, utcnow, write_tx
 from .security import audit, can, require
 from .util import clinic_settings, local_today
@@ -130,7 +131,8 @@ def proc_view(proc_id):
     from .views_extras import with_dictation
     normal_sec, normal_concl = D.normal_texts(clinic_settings()["endo_normal_texts"])
     return with_dictation(render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable,
-                           normal_sec=normal_sec, normal_concl=normal_concl, phrases_json=phrases_json(db) if editable else "[]", allergies=allergies, meds=meds,
+                           normal_sec=normal_sec, normal_concl=normal_concl, phrases_json=phrases_json(db) if editable else "[]",
+                           dx_json=json.dumps(DX.for_kind(pr["kind"]), ensure_ascii=False), dx_source=DX.ICD_SOURCE, allergies=allergies, meds=meds,
                            images=_images(db, pr["id"]), specimens=specimens, stents=stents, addenda=addenda, scopes=scopes(),
                            scope=scope, empty_finding=dict.fromkeys(["segment", "type", "desc", "classification", "size_mm", "prague_c",
                                                                      "prague_m", "removed", "jar"]),
