@@ -135,6 +135,14 @@ def main(exe):
                                                         "body": "Constancia de prueba.", "final_title": "CONSTANCIA DE INCAPACIDAD MEDICA"})
         did = re.search(r"/documentos/([0-9a-f]{32})", r.geturl()).group(1)
         assert get(f"/documentos/{did}/pdf").read().startswith(b"%PDF-"), "PDF del documento clínico"
+        # v0.15: solicitud de colonoscopia con estudios marcados y otro resultado de laboratorio escrito a mano
+        r = post("/ordenes/nueva", {"csrf_token": csrf, "patient_id": pid, "order_type": "colonoscopia", "study": "Colonoscopia diagnóstica",
+                                    "priority": "rutina", "responsible_id": resp})
+        coid = re.search(r"/ordenes/([0-9a-f]{32})", r.geturl()).group(1)
+        assert get(f"/ordenes/{coid}/pdf").read().startswith(b"%PDF-"), "Solicitud de colonoscopia"
+        r = post(f"/pacientes/{pid}/laboratorio/registrar", {"csrf_token": csrf, "taken_on": "2026-10-01", "otro-0-name": "Elastasa fecal",
+                                                             "otro-0-value": "450"})
+        assert "Elastasa fecal" in get(f"/pacientes/{pid}/laboratorio").read().decode(), "Otros resultados"
         # v0.14: imprimir todo (pypdf dentro del .exe), etiquetas, hojas, recomendaciones y resumen del paciente
         allpdf = get(f"/notas/{nid}/imprimir-todo").read()
         assert allpdf.startswith(b"%PDF-"), "Imprimir todo"

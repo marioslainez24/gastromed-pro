@@ -26,7 +26,7 @@ def test_todas_las_pantallas_cargan(env):
         r = med.get(u)
         assert r.status_code == (404 if u == "/no-existe" else 200), u
     html = med.get(f"/notas/{n2}").get_data(as_text=True)
-    assert "Información de la nota anterior" in html and "Dispepsia funcional" in html  # se muestra con fecha, no se copia sola
+    assert "Nota anterior (" in html and "Dispepsia funcional" in html  # se muestra con fecha, no se copia sola
     assert "Dispepsia funcional" not in re.search(r'<textarea name="diagnosticos".*?</textarea>', html, re.S).group(0)
     ev = med.get(f"/agenda/cita/{aid}").get_data(as_text=True)
     assert "reprogramó" in ev and "Pidió cambio" in ev

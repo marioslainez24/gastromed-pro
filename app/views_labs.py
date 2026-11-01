@@ -7,6 +7,7 @@ from markupsafe import Markup
 
 from .charts import trend_svg
 from . import lab_order_catalog as LC
+from . import study_catalog as SC
 from .db import get_db, new_id, utcnow, write_tx
 from .security import audit, can, require
 from .util import clinic_settings, fmt_birth, local_today
@@ -79,9 +80,10 @@ def order_new():
     note_id = src.get("note_id") or None
     if note_id and not db.execute("SELECT 1 FROM clinical_notes WHERE id = ? AND patient_id = ?", (note_id, p["id"])).fetchone():
         abort(404)
-    otype = src.get("order_type") or "laboratorio"
-    if otype not in ORDER_TYPES:
+    otype = src.get("order_type") or "laboratorio"     # laboratorio | imagen | endoscopia | colonoscopia (pantalla)
+    if otype != "laboratorio" and otype not in SC.KINDS:
         abort(400)
+    db_type, study_label = ("laboratorio", None) if otype == "laboratorio" else SC.KINDS[otype][:2]
     errors = []
     if request.method == "POST":
         tests = request.form.getlist("tests") if otype == "laboratorio" else []
@@ -92,7 +94,11 @@ def order_new():
         chosen = set(request.form.getlist("lab")) if otype == "laboratorio" else set()
         covered = {k for pk in sel_profiles for k, _ in LC.profile_components(LC.PROFILE_KEYS[pk][1]) if k}
         lab_keys = [k for k in LC.TESTS if k in chosen and k not in covered]
-        if not tests and not free and not sel_profiles and not lab_keys:
+        studies = []
+        if otype != "laboratorio":
+            known = SC.lookup(otype)
+            studies = [x for x in dict.fromkeys(request.form.getlist("study")) if x in known]
+        if not tests and not free and not sel_profiles and not lab_keys and not studies:
             errors.append("Seleccione al menos un estudio.")
         resp = request.form.get("responsible_id")
         if resp not in {c["id"] for c in clinicians()}:
@@ -110,10 +116,14 @@ def order_new():
             oid = new_id()
             with write_tx(db):
                 db.execute("INSERT INTO orders(id, org_id, patient_id, note_id, order_type, indication, priority, responsible_id, expected_by,"
-                           " author_id, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                           (oid, g.user["org_id"], p["id"], note_id, otype, (request.form.get("indication") or "").strip()[:1000] or None,
-                            prio, resp, expected, g.user["id"], utcnow()))
+                           " author_id, created_at, study_label) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                           (oid, g.user["org_id"], p["id"], note_id, db_type, (request.form.get("indication") or "").strip()[:1000] or None,
+                            prio, resp, expected, g.user["id"], utcnow(), study_label))
                 pos = 0
+                for st in studies:
+                    pos += 1
+                    db.execute("INSERT INTO order_items(id, order_id, position, description, grp) VALUES (?,?,?,?,?)",
+                               (new_id(), oid, pos, st, known[st]))
                 for pk in sel_profiles:
                     pos += 1
                     name, comps = LC.PROFILE_KEYS[pk]
@@ -132,13 +142,13 @@ def order_new():
                 for line in free:
                     pos += 1
                     db.execute("INSERT INTO order_items(id, order_id, position, description, grp) VALUES (?,?,?,?,?)",
-                               (new_id(), oid, pos, line[:300], "Otras pruebas" if otype == "laboratorio" else None))
+                               (new_id(), oid, pos, line[:300], "Otras pruebas" if otype == "laboratorio" else ("Otros" if studies else None)))
                 audit("orden_emitida", "orden", oid, {"paciente": p["id"], "tipo": otype, "items": pos}, db=db)
             flash("Orden emitida. Puede imprimirla en PDF.", "ok")
             return redirect(url_for("labs.order_view", order_id=oid))
     default_expected = (local_today() + timedelta(days=7)).isoformat()
     return render_template("labs/orden_nueva.html", p=p, otype=otype, note_id=note_id, catalog=catalog(), clinicians=clinicians(),
-                           errors=errors, LC=LC, ORDER_TYPES=ORDER_TYPES, PRIORITIES=PRIORITIES, default_expected=default_expected,
+                           errors=errors, LC=LC, SC=SC, ORDER_TYPES=ORDER_TYPES, page_title=study_label or ORDER_TYPES[db_type], PRIORITIES=PRIORITIES, default_expected=default_expected,
                            form=request.form), 422 if errors else 200
 
 
@@ -191,7 +201,7 @@ def order_pdf(order_id):
     if size not in ("carta", "a4"):
         abort(400)
     from .views_extras import load_assets
-    data = make(o, items, p, s, size, ORDER_TYPES[o["order_type"]], PRIORITIES[o["priority"]], load_assets(g.user["org_id"]))
+    data = make(o, items, p, s, size, o["study_label"] or ORDER_TYPES[o["order_type"]], PRIORITIES[o["priority"]], load_assets(g.user["org_id"]))
     audit("orden_pdf", "orden", o["id"])
     resp = make_response(data)
     resp.headers["Content-Type"] = "application/pdf"
@@ -293,11 +303,53 @@ def results_new(patient_id):
                 errors.append(f"{t['name']}: el límite inferior es mayor que el superior.")
             unit = (request.form.get(f"u_{code}") or t["unit"] or "").strip()[:30] or None
             rows.append((code, vnum, vtext, unit, lo, hi))
+        # Otros resultados que no están en la lista: se guardan y la prueba queda en el catálogo para la próxima vez
+        new_tests = {}
+        idx = sorted({int(m.group(1)) for k in request.form.keys() if (m := re.fullmatch(r"otro-(\d{1,2})-name", k))})
+        for i in idx[:30]:
+            name = re.sub(r"\s+", " ", (request.form.get(f"otro-{i}-name") or "").strip())[:120]
+            raw = (request.form.get(f"otro-{i}-value") or "").strip()
+            if not name and not raw:
+                continue
+            if not name or not raw:
+                errors.append(f"Otro resultado {i + 1}: escriba el nombre de la prueba y el resultado.")
+                continue
+            try:
+                vnum, vtext = float(raw.replace(",", ".")), None
+            except ValueError:
+                vnum, vtext = None, raw[:100]
+
+            def orng(k):
+                x = (request.form.get(f"otro-{i}-{k}") or "").strip().replace(",", ".")
+                if not x:
+                    return None
+                try:
+                    return float(x)
+                except ValueError:
+                    errors.append(f"{name}: rango no válido.")
+                    return None
+            lo, hi = orng("lo"), orng("hi")
+            if lo is not None and hi is not None and lo > hi:
+                errors.append(f"{name}: el límite inferior es mayor que el superior.")
+            unit = (request.form.get(f"otro-{i}-unit") or "").strip()[:30] or None
+            key = name.casefold()
+            code = next((t["code"] for t in tests if t["name"].casefold() == key), None) or new_tests.get(key, (None,))[0]
+            if not code:
+                base = "x_" + (re.sub(r"[^a-z0-9]+", "_", key.encode("ascii", "ignore").decode()).strip("_")[:40] or "prueba")
+                code, n = base, 2
+                while db.execute("SELECT 1 FROM lab_tests WHERE code = ?", (code,)).fetchone() or code in {v[0] for v in new_tests.values()}:
+                    code, n = f"{base}_{n}", n + 1
+                new_tests[key] = (code, name, unit, "numerico" if vnum is not None else "cualitativo")
+            rows.append((code, vnum, vtext, unit, lo, hi))
         if not rows and not errors:
             errors.append("Escriba al menos un resultado.")
         if not errors:
             lab = (request.form.get("laboratory") or "").strip()[:160] or None
             with write_tx(db):
+                for code, name, unit, kind in new_tests.values():
+                    db.execute("INSERT INTO lab_tests(code, name, unit, kind, grp, position) VALUES (?,?,?,?,?,?)",
+                               (code, name, unit, kind, "Otros (agregados por usted)", 900))
+                    audit("prueba_laboratorio_agregada", "laboratorio", code, {"nombre": name}, db=db)
                 for code, vnum, vtext, unit, lo, hi in rows:
                     rid = new_id()
                     db.execute("INSERT INTO lab_results(id, org_id, patient_id, order_id, file_id, test_code, value_num, value_text, unit,"

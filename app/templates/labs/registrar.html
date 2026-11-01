@@ -44,6 +44,24 @@
     {% if selected %}<p><button type="button" class="btn btn-quiet btn-sm" data-show-all-labs>Mostrar todas las pruebas del catálogo</button></p>{% endif %}
     <p class="muted small">Los rangos sugeridos son los últimos que se registraron en esta clínica para esa prueba: verifique que coincidan con el informe actual.</p>
   </section>
+  <section class="card">
+    <h2>Otros resultados <span class="muted small">(pruebas que no aparecen en la lista)</span></h2>
+    <p class="muted small">Escriba el nombre de la prueba tal como viene en el informe. Al guardar, la prueba queda en su lista para la próxima vez
+      (grupo «Otros (agregados por usted)») y se puede ver su gráfica de evolución.</p>
+    <div id="otros" data-rows="otro">
+    {% for i in range(1) %}
+      <div class="row-card otro-row" data-row>
+        <label class="field">Prueba<input name="otro-{{ i }}-name" maxlength="120" placeholder="Ej.: Elastasa fecal" value="{{ form.get('otro-%d-name' % i, '') }}"></label>
+        <label class="field">Resultado<input name="otro-{{ i }}-value" maxlength="100" value="{{ form.get('otro-%d-value' % i, '') }}"></label>
+        <label class="field">Unidad<input name="otro-{{ i }}-unit" maxlength="30" class="w-unit" value="{{ form.get('otro-%d-unit' % i, '') }}"></label>
+        <label class="field">Ref. mín.<input name="otro-{{ i }}-lo" inputmode="decimal" class="w-num" value="{{ form.get('otro-%d-lo' % i, '') }}"></label>
+        <label class="field">Ref. máx.<input name="otro-{{ i }}-hi" inputmode="decimal" class="w-num" value="{{ form.get('otro-%d-hi' % i, '') }}"></label>
+        <button type="button" class="link-btn small" data-row-remove>Quitar</button>
+      </div>
+    {% endfor %}
+    </div>
+    <button type="button" class="btn btn-quiet btn-sm" data-row-add="otros">＋ Agregar otro resultado</button>
+  </section>
   <div class="actions"><button class="btn btn-primary" type="submit">Guardar resultados</button> <a class="btn btn-quiet" href="{{ url_for('labs.patient_labs', patient_id=p.id) }}">Cancelar</a></div>
 </form>
 {% endblock %}

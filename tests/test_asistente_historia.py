@@ -51,7 +51,7 @@ def test_asistente_en_la_nota_redacta_y_guarda_formulario(env):
     nid = r.headers["Location"].rsplit("/", 1)[-1]
     html = med.get(f"/notas/{nid}").get_data(as_text=True)
     assert "Asistente de historia" in html and 'form="hea-form"' in html and 'id="hea-form"' in html
-    assert 'name="signos_alarma"' in html          # el campo de la nota sigue intacto
+    assert 'name="plan"' in html and 'name="diferenciales"' not in html   # campos de la nota (v0.15: un solo plan)
     r = med.post(f"/notas/{nid}/historia", data={"csrf_token": tok, "hx-motivo": "estrenimiento", "hx-estrenimiento-frecuencia": "2",
                                                  "hx-estrenimiento-sintomas": ["esfuerzo", "incompleta"], "hx-diarrea-frecuencia": "9"},
                  headers={"X-Requested-With": "fetch"})

@@ -25,24 +25,66 @@ TEXT_FIELDS = {
     "motivo": "Motivo de consulta", "hea": "Historia de la enfermedad actual", "revision_sistemas": "Revisión por sistemas",
     "narrativa": "Nota narrativa", "exploracion_general": "Exploración física general",
     "exploracion_abdominal": "Exploración abdominal", "impresion": "Impresión diagnóstica",
-    "diferenciales": "Diagnósticos diferenciales", "diagnosticos": "Diagnósticos (texto libre)",
-    "plan_diagnostico": "Plan diagnóstico", "plan_terapeutico": "Plan terapéutico", "educacion": "Educación al paciente",
-    "signos_alarma": "Signos de alarma explicados", "seguimiento": "Seguimiento y referencia",
+    "diagnosticos": "Diagnósticos (texto libre)", "plan": "Plan",
+    # Campos anteriores a v0.15 (pedido del médico: quitar diferenciales y dejar un solo plan). Se siguen mostrando y
+    # guardando SOLO si la nota ya tenía texto en ellos, para no perder información de notas antiguas.
+    "diferenciales": "Diagnósticos diferenciales", "plan_diagnostico": "Plan diagnóstico", "plan_terapeutico": "Plan terapéutico",
+    "educacion": "Educación al paciente", "signos_alarma": "Signos de alarma explicados", "seguimiento": "Seguimiento y referencia",
 }
+LEGACY_FIELDS = ("diferenciales", "plan_diagnostico", "plan_terapeutico", "educacion", "signos_alarma", "seguimiento")
+ACTIVE_FIELDS = {k: v for k, v in TEXT_FIELDS.items() if k not in LEGACY_FIELDS}
 
 TEMPLATES = {
     "soap": [
         ("S · Subjetivo", ["motivo", "hea", "revision_sistemas"]),
         ("O · Objetivo", ["__vitales__", "exploracion_general", "exploracion_abdominal"]),
-        ("A · Análisis", ["impresion", "diferenciales", "diagnosticos"]),
-        ("P · Plan", ["plan_diagnostico", "plan_terapeutico", "educacion", "signos_alarma", "seguimiento"]),
+        ("A · Análisis", ["impresion", "diagnosticos", "diferenciales"]),
+        ("P · Plan", ["plan", "plan_diagnostico", "plan_terapeutico", "educacion", "signos_alarma", "seguimiento"]),
     ],
     "narrativa": [
         ("Consulta", ["motivo", "narrativa"]),
         ("Signos vitales", ["__vitales__"]),
-        ("Diagnóstico y plan", ["impresion", "diagnosticos", "plan_terapeutico", "signos_alarma", "seguimiento"]),
+        ("Diagnóstico y plan", ["impresion", "diagnosticos", "plan", "plan_terapeutico", "signos_alarma", "seguimiento"]),
     ],
 }
+
+
+def sections_for(template, fields):
+    """Secciones visibles: los campos actuales y, de los anteriores, solo los que ya tienen texto."""
+    return [(title, [k for k in keys if k not in LEGACY_FIELDS or (fields.get(k) or "").strip()]) for title, keys in TEMPLATES[template]]
+
+
+def prior_items(prior_fields, template, fields):
+    """Textos de la nota anterior y a qué campo de la nota actual se copiarían."""
+    visible = {k for _, keys in sections_for(template, fields) for k in keys}
+    out = []
+    order = ["hea", "narrativa", "revision_sistemas", "exploracion_general", "exploracion_abdominal", "impresion", "diagnosticos", "plan"]
+    for k in order + list(LEGACY_FIELDS):
+        txt = (prior_fields.get(k) or "").strip()
+        if not txt:
+            continue
+        if k in visible:
+            target = k
+        elif k in LEGACY_FIELDS and k != "diferenciales":
+            target = "plan" if "plan" in visible else None
+        elif k == "diferenciales":
+            target = "diagnosticos" if "diagnosticos" in visible else None
+        elif template == "narrativa" and k in ("hea", "exploracion_general", "exploracion_abdominal"):
+            target = "narrativa"
+        elif template == "soap" and k == "narrativa":
+            target = "hea"
+        else:
+            target = None
+        out.append({"key": k, "label": TEXT_FIELDS[k], "text": txt, "target": target})
+    return out
+
+
+def legacy_plan_text(fields):
+    """Texto de plan de notas anteriores a v0.15 (para el resumen y para copiar a la nota nueva)."""
+    parts = [fields.get(k, "").strip() for k in ("plan_diagnostico", "plan_terapeutico", "educacion", "signos_alarma", "seguimiento")]
+    return "\n".join(p for p in parts if p)
+
+
 MAX_TEXT = 20000
 
 
@@ -157,8 +199,9 @@ def view(note_id):
     audit("nota_consultada", "nota", n["id"])
     from .views_extras import with_dictation
     return with_dictation(render_template("notas/ver.html", n=n, p=p, fields=fields, addenda=addenda, allergies=allergies, editable=editable,
-                           sections=TEMPLATES[n["template"]], text_labels=TEXT_FIELDS, vitals=VITALS, bmi=bmi(fields.get("vitales", {})),
-                           prior=prior, prior_fields=json.loads(prior["fields"]) if prior else None, prescriptions=prescriptions,
+                           sections=sections_for(n["template"], fields), text_labels=TEXT_FIELDS, vitals=VITALS, bmi=bmi(fields.get("vitales", {})),
+                           prior=prior, prior_items=prior_items(json.loads(prior["fields"]), n["template"], fields) if prior else [],
+                           prescriptions=prescriptions,
                            gi_forms=note_forms(db, n["id"]), GI_FORMS=GI_FORMS,
                            orders=db.execute("SELECT o.*, (SELECT GROUP_CONCAT(description, ', ') FROM order_items i WHERE i.order_id = o.id)"
                                              " AS items FROM orders o WHERE o.note_id = ? ORDER BY o.created_at", (n["id"],)).fetchall(),
@@ -316,7 +359,7 @@ def print_all(note_id):
     for oid in order_ids:
         o = _get_order(oid)
         items = db.execute("SELECT * FROM order_items WHERE order_id = ? ORDER BY position", (oid,)).fetchall()
-        parts.append(P.order_pdf(o, items, p, s, size, ORDER_TYPES[o["order_type"]], PRIORITIES[o["priority"]], assets))
+        parts.append(P.order_pdf(o, items, p, s, size, o["study_label"] or ORDER_TYPES[o["order_type"]], PRIORITIES[o["priority"]], assets))
     for did in doc_ids:
         d = db.execute("SELECT * FROM clinical_documents WHERE id = ?", (did,)).fetchone()
         parts.append(P.document_pdf(d, p, s, size, assets))

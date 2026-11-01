@@ -29,13 +29,15 @@
   </section>
   {% endif %}
 
-  {% if prior %}
-  <details class="card prior">
-    <summary>Información de la nota anterior ({{ fmt_dt(prior.finalized_at, false) }}) — revisar antes de reutilizar</summary>
-    <p class="muted small">Estos datos corresponden a la consulta del {{ fmt_dt(prior.finalized_at, false) }}. No se incorporan automáticamente: copie solo lo que haya verificado hoy.</p>
-    {% for key in ['diagnosticos','impresion','plan_terapeutico','seguimiento'] if prior_fields.get(key) %}
-      <div class="prior-item"><b>{{ text_labels[key] }}:</b> <span data-prior-text>{{ prior_fields[key] }}</span>
-        {% if key in (sections|map(attribute=1)|sum(start=[])) %}<button type="button" class="link-btn small" data-copy-prior="{{ key }}" data-prior-date="{{ fmt_dt(prior.finalized_at, false) }}">Copiar al borrador</button>{% endif %}
+  {% if prior and prior_items %}
+  <details class="card prior" open>
+    <summary><b>Nota anterior ({{ fmt_dt(prior.finalized_at, false) }})</b> <span class="muted small">— copie lo que siga vigente</span></summary>
+    <div class="row-between prior-top"><p class="muted small">Cada texto se copia con la marca «[Tomado de la nota del … — revisar]» para que lo actualice.</p>
+      <button type="button" class="btn btn-sm btn-primary" data-copy-prior-all>Copiar todo a esta nota</button></div>
+    {% for it in prior_items %}
+      <div class="prior-item"><div class="row-between"><b>{{ it.label }}</b>
+        {% if it.target %}<button type="button" class="btn btn-sm" data-copy-prior="{{ it.target }}" data-prior-date="{{ fmt_dt(prior.finalized_at, false) }}">Copiar{% if it.target != it.key %} a «{{ text_labels[it.target] }}»{% endif %}</button>{% endif %}</div>
+        <p class="prewrap small" data-prior-text>{{ it.text }}</p>
       </div>
     {% endfor %}
   </details>
@@ -147,6 +149,7 @@
     <a class="btn btn-sm" href="{{ url_for('labs.order_new', patient_id=p.id, note_id=n.id, order_type='laboratorio') }}">Orden de laboratorio</a>
     <a class="btn btn-sm" href="{{ url_for('labs.order_new', patient_id=p.id, note_id=n.id, order_type='imagen') }}">Orden de imagen</a>
     <a class="btn btn-sm" href="{{ url_for('labs.order_new', patient_id=p.id, note_id=n.id, order_type='endoscopia') }}">Solicitud de endoscopia</a>
+    <a class="btn btn-sm" href="{{ url_for('labs.order_new', patient_id=p.id, note_id=n.id, order_type='colonoscopia') }}">Solicitud de colonoscopia</a>
     {% endif %}
     <a class="btn btn-sm" href="{{ url_for('gi.calc_index', patient_id=p.id, note_id=n.id) }}">Calculadoras</a>
   </div>

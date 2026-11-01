@@ -12,6 +12,7 @@
   <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='laboratorio') }}">Orden de laboratorio</a>
   <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='imagen') }}">Orden de imagen</a>
   <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='endoscopia') }}">Solicitud de endoscopia</a>
+    <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='colonoscopia') }}">Solicitud de colonoscopia</a>
   {% endif %}
 </div>
 
@@ -58,7 +59,7 @@
   <h2>Órdenes</h2>
   {% if orders %}
   <ul class="list">{% for o in orders %}
-    <li><a class="strong" href="{{ url_for('labs.order_view', order_id=o.id) }}">{{ ORDER_TYPES[o.order_type] }}</a> · {{ fmt_dt(o.created_at, false) }}
+    <li><a class="strong" href="{{ url_for('labs.order_view', order_id=o.id) }}">{{ o.study_label or ORDER_TYPES[o.order_type] }}</a> · {{ fmt_dt(o.created_at, false) }}
       · <span class="tag {{ 'tag-ok' if o.status in ('resultado_recibido','cerrada') else ('tag-danger' if o.status == 'anulada' else 'tag-warn') }}">{{ ORDER_STATUS[o.status] }}</span>
       <div class="small muted">{{ o.items }}</div></li>
   {% endfor %}</ul>

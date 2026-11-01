@@ -2,7 +2,7 @@
 {% block title %}Orden{% endblock %}
 {% block content %}
 <div class="page-head">
-  <div><h1>{{ ORDER_TYPES[o.order_type] }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
+  <div><h1>{{ o.study_label or ORDER_TYPES[o.order_type] }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
   <p class="muted small">Emitida {{ fmt_dt(o.created_at) }} por {{ o.author }} · Folio <span class="mono">{{ o.id[:8]|upper }}</span> · Prioridad {{ PRIORITIES[o.priority] }}
    · Responsable: {{ o.responsible }}{% if o.expected_by %} · Esperado: {{ fmt_birth(o.expected_by) }}{% endif %}</p></div>
   <span class="tag big {{ 'tag-ok' if o.status in ('resultado_recibido','cerrada') else ('tag-danger' if o.status == 'anulada' else 'tag-warn') }}">{{ ORDER_STATUS[o.status] }}</span>

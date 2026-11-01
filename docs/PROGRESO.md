@@ -11,6 +11,25 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 15 · 31-oct-2026 · Nota anterior útil, plan único, otros resultados y solicitudes con estudios para marcar (v0.15.0 · rama `desarrollo`, SIN publicar)
+
+**Pedido del Dr. Lainez** (tras probar la v0.14.0):
+1. El panel «Información de la nota anterior» no hacía nada → **corregido**: solo mostraba diagnósticos/plan y, si la nota anterior no los tenía,
+   quedaba vacío. Ahora muestra todo lo que tenía (historia, exploración, impresión, diagnósticos, plan), con «Copiar» por campo y
+   «Copiar todo a esta nota»; cada texto lleva «[Tomado de la nota del … — revisar]». Los campos antiguos de plan se copian al «Plan» nuevo.
+2. **Quitar «Diagnósticos diferenciales» y dejar un solo «Plan»**: la nota tiene ahora un único campo «Plan». Los campos anteriores
+   (diferenciales, plan diagnóstico/terapéutico, educación, signos de alarma, seguimiento) solo aparecen en notas que ya tenían texto en ellos,
+   para no perder información. Frases y plantillas antiguas se reasignan a «Plan»/«Diagnósticos» (migración 0012).
+3. **Otros resultados de laboratorio**: cuadro en «Registrar resultados» para escribir pruebas que no están en la lista (nombre, resultado, unidad,
+   rangos). Al guardar, la prueba queda en el catálogo («Otros (agregados por usted)») sin duplicarse; numérica o cualitativa según el valor.
+4. **Solicitudes de imagen, endoscopia y la nueva de colonoscopia** con lista para marcar (`app/study_catalog.py`): ultrasonido (incl. Doppler del eje
+   esplenoportal, elastografía), TAC (incl. trifásica de hígado, páncreas, entero-TAC), resonancia (CPRM…), radiología con contraste, medicina nuclear;
+   endoscopia alta diagnóstica/terapéutica, CPRE, USE, cápsula, pH-metría, manometría; colonoscopia diagnóstica/tamizaje/vigilancia/polipectomía,
+   rectosigmoidoscopia, anoscopia, ligadura de hemorroides, manometría anorrectal. Buscador, contador y «Otros». La colonoscopia se guarda como
+   orden de endoscopia con título propio (`orders.study_label`); el PDF dice «SOLICITUD DE COLONOSCOPIA».
+**Cómo se comprobó**: 147 pruebas (4 nuevas en `test_v015.py`); navegador real PC y celular actualizando desde v0.14.0 con perfil persistente;
+prueba del ejecutable ampliada.
+
 ## Etapa 14.1 · 31-oct-2026 · Copia de los respaldos en Google Drive con botón en Ajustes (v0.14.0 · rama `desarrollo`, SIN publicar)
 
 **Pedido del Dr. Lainez:** copia de respaldo cifrada en Google Drive, gratis, que él active con un botón en Ajustes.

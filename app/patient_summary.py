@@ -2,6 +2,7 @@
 import json
 
 from . import endoscopy_defs as D
+from .views_notes import legacy_plan_text
 from .db import utcnow
 
 
@@ -19,7 +20,7 @@ def summary(db, p, approved=None):
         f = json.loads(n["fields"])
         dx = (f.get("diagnosticos") or f.get("impresion") or "").strip()
         out["last_note"] = {"id": n["id"], "at": n["finalized_at"], "dx": [x for x in dx.splitlines() if x.strip()][:4],
-                            "plan": (f.get("plan_terapeutico") or "").strip()[:240]}
+                            "plan": ((f.get("plan") or "").strip() or legacy_plan_text(f))[:240]}
     # Último estudio endoscópico finalizado de cada tipo
     procs = []
     for r in db.execute("SELECT id, kind, performed_on, data, surveillance_due FROM procedures WHERE patient_id = ? AND status = 'finalizado'"

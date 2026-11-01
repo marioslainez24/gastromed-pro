@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Nueva orden{% endblock %}
 {% block content %}
-<div class="page-head"><h1>{{ ORDER_TYPES[otype] }} · {{ p.first_names }} {{ p.last_names }}</h1><span class="pill mono">{{ p.mrn }}</span></div>
+<div class="page-head"><h1>{{ page_title }} · {{ p.first_names }} {{ p.last_names }}</h1><span class="pill mono">{{ p.mrn }}</span></div>
 {% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
 <form method="post" class="stack" data-dirty-guard>
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -42,9 +42,22 @@
     <label class="field mt">Otras pruebas que no están en la lista (una por línea)<textarea name="items_text" rows="2" placeholder="Ej.: Curva de insulina 3 horas">{{ form.get('items_text', '') }}</textarea></label>
   </section>
   {% else %}
-  <section class="card">
-    <label class="field">{{ 'Estudios de imagen' if otype == 'imagen' else 'Procedimiento endoscópico' }} (uno por línea)
-      <textarea name="items_text" rows="4" required placeholder="{{ 'Ej.: Ultrasonido abdominal superior' if otype == 'imagen' else 'Ej.: Endoscopia digestiva alta con toma de biopsias' }}">{{ form.get('items_text', '') }}</textarea></label>
+  {% set sel_st = form.getlist('study') %}
+  <section class="card lab-sheet" data-lab-sheet>
+    <div class="lab-toolbar">
+      <h2>{{ 'Estudios de imagen' if otype == 'imagen' else 'Estudios' }}</h2>
+      <input type="search" placeholder="Buscar estudio… (ej.: Doppler, trifásica, CPRE)" aria-label="Buscar estudio" data-lab-search>
+      <span class="pill" aria-live="polite">Seleccionados: <b data-lab-count>0</b></span>
+    </div>
+    <div class="lab-columns">
+    {% for grp, names in SC.KINDS[otype][2] %}
+      <div class="lab-sec" data-lab-sec>
+        <h3 class="lab-sec-title">{{ grp }}</h3>
+        {% for n in names %}<label class="check lab-test" data-lab-item><input type="checkbox" name="study" value="{{ n }}" data-test="{{ loop.index }}-{{ grp }}" {% if n in sel_st %}checked{% endif %}> <span>{{ n }}</span></label>{% endfor %}
+      </div>
+    {% endfor %}
+    </div>
+    <label class="field mt">Otros (uno por línea)<textarea name="items_text" rows="2" placeholder="{{ SC.KINDS[otype][3] }}">{{ form.get('items_text', '') }}</textarea></label>
   </section>
   {% endif %}
   <section class="card">
@@ -54,7 +67,6 @@
       <label class="field">Resultado esperado para<input type="date" name="expected_by" value="{{ form.get('expected_by') or default_expected }}"></label>
     </div>
     <label class="field">Diagnóstico / observaciones (indicación clínica)<textarea name="indication" rows="3" maxlength="1000">{{ form.get('indication', '') }}</textarea></label>
-    {% if otype == 'endoscopia' %}<p class="muted small">El informe estructurado de endoscopia, consentimiento, sedación e imágenes llegan en la Fase 3.</p>{% endif %}
   </section>
   <div class="actions"><button class="btn btn-primary" type="submit">Emitir orden</button> <a class="btn btn-quiet" href="{{ url_for('labs.patient_labs', patient_id=p.id) }}">Cancelar</a></div>
 </form>

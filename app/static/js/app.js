@@ -177,15 +177,20 @@
       });
     });
     // Copiar información de la nota previa con su fecha, para revisión explícita.
-    $$("[data-copy-prior]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        var key = b.getAttribute("data-copy-prior");
-        var ta = $('textarea[name="' + key + '"]', noteForm);
-        var txt = $("[data-prior-text]", b.parentNode).textContent;
-        if (!ta) return;
-        ta.value = (ta.value ? ta.value + "\n" : "") + "[Tomado de la nota del " + b.getAttribute("data-prior-date") + " — revisar] " + txt;
-        ta.dispatchEvent(new Event("input", { bubbles: true })); ta.focus(); grow(ta);
-      });
+    function copyPrior(b, focus) {
+      var key = b.getAttribute("data-copy-prior");
+      var ta = $('textarea[name="' + key + '"]', noteForm);
+      var txt = $("[data-prior-text]", b.closest(".prior-item")).textContent;
+      if (!ta || b.disabled) return;
+      ta.value = (ta.value.trim() ? ta.value.replace(/\s+$/, "") + "\n" : "") + "[Tomado de la nota del " + b.getAttribute("data-prior-date") + " — revisar] " + txt;
+      ta.dispatchEvent(new Event("input", { bubbles: true })); grow(ta); if (focus) ta.focus();
+      b.disabled = true; b.textContent = "✓ Copiado";
+    }
+    $$("[data-copy-prior]").forEach(function (b) { b.addEventListener("click", function () { copyPrior(b, true); }); });
+    var cpAll = $("[data-copy-prior-all]");
+    if (cpAll) cpAll.addEventListener("click", function () {
+      $$("[data-copy-prior]").forEach(function (b) { copyPrior(b, false); });
+      cpAll.disabled = true; cpAll.textContent = "✓ Todo copiado: revise y actualice";
     });
   }
 

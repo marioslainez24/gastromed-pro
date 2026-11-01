@@ -18,9 +18,9 @@ MAX_BODY = 6000
 
 
 def field_choices():
-    from .views_notes import TEXT_FIELDS
+    from .views_notes import ACTIVE_FIELDS
     out = [("*", "Cualquier campo")]
-    out += [(k, f"Nota · {v}") for k, v in TEXT_FIELDS.items()]
+    out += [(k, f"Nota · {v}") for k, v in ACTIVE_FIELDS.items()]
     seen = set()
     for secs in D.NARRATIVE.values():
         for k, lab in secs:
@@ -39,13 +39,13 @@ EXAMPLE_PHRASES = [
      "peristalsis presente, sin signos de irritación peritoneal."),
     ("exploracion_general", "Exploración general normal",
      "Paciente consciente, orientado, hidratado, con mucosas de coloración normal, sin ictericia. Cardiopulmonar sin alteraciones."),
-    ("signos_alarma", "Signos de alarma digestivos",
+    ("plan", "Signos de alarma digestivos",
      "Se explican signos de alarma: vómito con sangre o en «pozo de café», heces negras o con sangre, dolor abdominal intenso, "
      "fiebre, coloración amarilla de piel u ojos, o vómitos persistentes. Si se presentan, acudir de inmediato a emergencia."),
-    ("educacion", "Medidas antirreflujo",
+    ("plan", "Medidas antirreflujo",
      "Se indican medidas generales: cenar al menos 3 horas antes de acostarse, elevar la cabecera de la cama, evitar comidas "
      "abundantes, grasas, alcohol y tabaco, y control del peso."),
-    ("seguimiento", "Control con resultados", "Control en consulta con resultados de los estudios solicitados."),
+    ("plan", "Control con resultados", "Control en consulta con resultados de los estudios solicitados."),
     ("endo:recommendations", "Esperar patología", "Pendiente resultado de patología; se comentará en la consulta de control."),
     ("endo:recommendations", "Dieta tras sedación",
      "Iniciar dieta líquida y luego blanda según tolerancia. No conducir ni firmar documentos el resto del día por la sedación."),
@@ -67,7 +67,19 @@ def phrases_json(db=None):
 def templates_for(db, template):
     rows = db.execute("SELECT id, name, template, fields FROM note_templates WHERE org_id = ? AND active = 1"
                       " AND template IN (?, 'ambas') ORDER BY name", (g.user["org_id"], template)).fetchall()
-    return [{"id": r["id"], "name": r["name"], "fields": json.loads(r["fields"])} for r in rows]
+    from .views_notes import LEGACY_FIELDS
+    out = []
+    for r in rows:
+        f = json.loads(r["fields"])
+        # Plantillas guardadas antes de v0.15: los campos de plan anteriores se juntan en «Plan» y los diferenciales en «Diagnósticos»
+        legacy = [f.pop(k) for k in LEGACY_FIELDS if k != "diferenciales" and f.get(k)]
+        if legacy:
+            f["plan"] = "\n".join(([f["plan"]] if f.get("plan") else []) + legacy)
+        if f.get("diferenciales"):
+            d = f.pop("diferenciales")
+            f["diagnosticos"] = (f["diagnosticos"] + "\n" + d) if f.get("diagnosticos") else d
+        out.append({"id": r["id"], "name": r["name"], "fields": f})
+    return out
 
 
 def _id_ok(x):
