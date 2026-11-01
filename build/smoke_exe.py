@@ -68,6 +68,8 @@ def main(exe):
         nid = r.url.split("/")[-1].split("?")[0]
         hx = post(f"/notas/{nid}/historia", {"csrf_token": csrf, "hx-motivo": "dolor_abdominal", "hx-dolor_abdominal-caracter": "colico"}).read().decode()
         assert "consulta por dolor abdominal" in hx and "colico" not in hx, "Asistente de historia"
+        ex = post(f"/notas/{nid}/exploracion", {"csrf_token": csrf, "abdomen-normal": "1"}).read().decode()
+        assert "Abdomen plano" in ex, "Exploración con clics"
         req = urllib.request.Request(f"{B}/notas/{nid}/guardar", data=b'{"version": 1, "motivo": "Dispepsia"}',
                                      headers={"Content-Type": "application/json", "X-CSRF-Token": csrf})
         assert op.open(req, timeout=30).status == 200

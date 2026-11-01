@@ -82,8 +82,30 @@ def phrases():
     rows = db.execute("SELECT * FROM phrases WHERE org_id = ? ORDER BY active DESC, field, position, title", (g.user["org_id"],)).fetchall()
     tpls = db.execute("SELECT * FROM note_templates WHERE org_id = ? ORDER BY active DESC, name", (g.user["org_id"],)).fetchall()
     from .views_notes import TEXT_FIELDS
+    from . import exam
+    from .util import clinic_settings
     return render_template("ajustes/frases.html", rows=rows, choices=field_choices(), labels=dict(field_choices()),
-                           tpls=[dict(t, fields=json.loads(t["fields"])) for t in tpls], text_labels=TEXT_FIELDS)
+                           tpls=[dict(t, fields=json.loads(t["fields"])) for t in tpls], text_labels=TEXT_FIELDS,
+                           exam_normals=exam.normal_texts(clinic_settings()["exam_normal_texts"]), EXAM_SYSTEMS=exam.SYSTEMS)
+
+
+@bp.route("/exploracion-normal", methods=["POST"])
+@require("clinico.editar", "notas.finalizar")
+def exam_normals():
+    from . import exam
+    if request.form.get("action") == "restaurar":
+        value = None
+    else:
+        custom = {k: t for k in exam.DEFAULT_NORMAL
+                  if (t := (request.form.get(f"normal-{k}") or "").replace("\r\n", "\n").strip()[:3000]) and t != exam.DEFAULT_NORMAL[k]}
+        value = json.dumps(custom, ensure_ascii=False) if custom else None
+    db = get_db()
+    with write_tx(db):
+        db.execute("UPDATE clinic_settings SET exam_normal_texts = ?, updated_at = ?, updated_by = ?, version = version + 1 WHERE org_id = ?",
+                   (value, utcnow(), g.user["id"], g.user["org_id"]))
+        audit("exploracion_normal_actualizada", "ajustes", g.user["org_id"], db=db)
+    flash("Textos predeterminados restaurados." if request.form.get("action") == "restaurar" else "Textos de exploración normal guardados.", "ok")
+    return redirect(url_for("texts.phrases") + "#exploracion")
 
 
 def _read_phrase_form():

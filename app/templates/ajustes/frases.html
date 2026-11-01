@@ -45,6 +45,19 @@
   {% endif %}
 </section>
 
+<section class="card" id="exploracion">
+  <h2>Exploración física normal</h2>
+  <p class="muted small">Esto es lo que escribe el botón <b>Normal</b> de cada sistema en la exploración con clics. Escríbalo a su manera.</p>
+  <form method="post" action="{{ url_for('texts.exam_normals') }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    {% for k, (label, _t, _r, _f) in EXAM_SYSTEMS.items() %}
+    <label class="field">{{ label }}<textarea name="normal-{{ k }}" rows="2" data-grow maxlength="3000">{{ exam_normals[k] }}</textarea></label>
+    {% endfor %}
+    <div class="btn-row"><button class="btn btn-sm btn-primary" type="submit">Guardar textos</button>
+      <button class="btn btn-sm btn-quiet" type="submit" name="action" value="restaurar" formnovalidate>Restaurar los predeterminados</button></div>
+  </form>
+</section>
+
 <section class="card" id="plantillas">
   <h2>Plantillas de nota <span class="count">{{ tpls|selectattr('active')|list|length }}</span></h2>
   <p class="muted small">Una plantilla llena de una vez varios campos de la nota (solo los que estén vacíos). Para crear una: escriba una nota como

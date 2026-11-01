@@ -11,6 +11,24 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 13 · 31-oct-2026 · Exploración física con clics y diagnósticos de consulta con CIE-10 (v0.13.0 · rama `desarrollo`, SIN publicar)
+
+**Instrucción del Dr. Lainez:** hacer estas mejoras pero NO construir el .exe hasta que él diga «ya». Por eso el trabajo está en la rama
+`desarrollo` (la construcción automática solo corre en `main`). Al recibir «ya»: fusionar `desarrollo` en `main` y empujar.
+**Qué quedó funcionando (probado, sin publicar)**
+- 🩺 «Exploración física con clics» encima de *Exploración física general* (SOAP) o en la nota narrativa: «Normal» por sistema (general,
+  cardiopulmonar, abdomen, tacto rectal), «✓ Todo normal y escribir» (no incluye tacto rectal) y hallazgos por clic: palidez, ictericia, estigmas,
+  edema, asterixis; corazón/pulmón; abdomen (inspección, dolor por cuadrante, Murphy, McBurney, rebote, defensa, Rovsing, hepato/esplenomegalia,
+  borde hepático en cm, masa, ascitis, peristalsis); tacto rectal (hemorroides, fisura, tono, masa, guante con sangre/melena).
+  Redacta SOLO lo marcado (`app/exam.py`); «Resto sin alteraciones» solo si se marca. General y cardiopulmonar → exploración general; abdomen y
+  tacto rectal → exploración abdominal. Textos normales editables en Ajustes → Frases y plantillas (migración 0009).
+- «＋ Diagnóstico ▾» en *Diagnósticos* de la nota: 96 diagnósticos de consulta (síntomas, esófago-estómago, intestino, ano-recto, sangrado, hígado,
+  vía biliar-páncreas, oncología con histología, antecedentes). CIE-10 OMS 5.ª ed. verificado en classbrowser.nhs.uk (A00-A09, B15-B19, B95-B98,
+  R10-R19, R70-R79, Z80-Z99 además de los bloques K y C). H. pylori = B98.0 (complementario). Sin código verificable (anemia ferropénica,
+  intolerancia a la lactosa, pérdida de peso): se escribe sin código.
+**Cómo se comprobó**: 131 pruebas (5 nuevas en `test_exploracion_diagnosticos.py`); navegador real PC y celular actualizando desde v0.12.0 con perfil
+persistente; prueba del ejecutable en local.
+
 ## Etapa 12 · 31-oct-2026 · Asistente para redactar la historia de la enfermedad actual (v0.12.0)
 
 **Pedido del Dr. Lainez:** lo que más tiempo le toma en la consulta es escribir la historia de la enfermedad actual.

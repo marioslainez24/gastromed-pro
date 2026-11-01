@@ -37,9 +37,13 @@ Flask 3 + Jinja2 + SQLite, con WAL, tablas STRICT y triggers de inmutabilidad y 
   - Hilos de fondo: respaldo cada 24 h (verificado restaurando) y recordatorios por correo cada 10 min.
   - La configuración inicial solo se permite desde localhost.
 
+## Publicación (instrucción del 31-oct-2026)
+El usuario pidió NO construir el .exe hasta que diga «ya». Trabajar en la rama `desarrollo` (empujarla para no perder el trabajo; no dispara la
+construcción). Cuando diga «ya»: `git checkout main && git merge --ff-only desarrollo && git push`, esperar la CI y avisarle.
+
 ## Flujo de trabajo que funcionó
 1. Crear tareas, programar y escribir pruebas pytest para cada función nueva. Ejemplo: un servidor SMTP falso en localhost; nunca simular un éxito.
-2. Correr `python3 -m pytest -q` (120 pruebas en v0.10.2).
+2. Correr `python3 -m pytest -q` (131 pruebas en v0.13.0).
 3. Revisar en el navegador con Playwright y guardar capturas en `evidencia/capturas/`.
 4. Correr la prueba del exe en local: `build/smoke_exe.py` con un script que ejecute `python3 gastromed_exe.py`. Si waitress no está instalado, usar un sustituto con `werkzeug.make_server` en `PYTHONPATH`.
 5. Actualizar `docs/PROGRESO.md` y `docs/MATRIZ.md` (y `INSTALACION_WINDOWS.md` si cambia el uso). Copiarlos al Proyecto con `project_write`.

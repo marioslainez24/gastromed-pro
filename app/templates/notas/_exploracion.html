@@ -1,0 +1,32 @@
+{# Exploración física con clics (v0.13.0). Campos en el formulario #exam-form (atributo form=), aparte del de la nota. #}
+<details class="hea-assist exam-assist" data-exam-assist data-url="{{ url_for('gi.exam_compose', note_id=n.id) }}" open>
+  <summary><b>🩺 Exploración física con clics</b> <span class="muted small">— «Normal» por sistema o marque los hallazgos</span></summary>
+  <div class="btn-row exam-top">
+    <button type="button" class="btn btn-primary btn-sm" data-exam-allnormal>✓ Todo normal y escribir</button>
+    <span class="small muted">Marca normal el aspecto general, cardiopulmonar y abdomen (no el tacto rectal). <a href="{{ url_for('texts.phrases') }}#exploracion" target="_blank" rel="noopener">Cambiar mis textos normales</a></span>
+  </div>
+  {% for sysk, (label, target, resto, fields) in EXAM_SYSTEMS.items() %}
+  <div class="exam-sys" data-exam-sys="{{ sysk }}">
+    <div class="exam-head"><b>{{ label }}</b>
+      <label class="hea-chip exam-normal"><input type="checkbox" name="{{ sysk }}-normal" value="1" form="exam-form" data-exam-normal> Normal</label>
+      <button type="button" class="link-btn small" data-exam-more aria-expanded="false">Hallazgos ▾</button>
+    </div>
+    <div class="exam-findings" data-exam-findings hidden>
+      {% for key, flabel, kind, options, tpl in fields %}
+      <div class="hea-row"><span class="hea-lab">{{ flabel }}</span>
+        {% if kind in ('multi','select') %}
+          {% for v, l in options %}<label class="hea-chip"><input type="{{ 'checkbox' if kind == 'multi' else 'radio' }}" name="{{ sysk }}-{{ key }}" value="{{ v }}" form="exam-form" data-exam-finding {% if kind == 'select' %}data-toggle-radio{% endif %}> {{ l|replace('.', '') }}</label>{% endfor %}
+        {% elif kind == 'number' %}<input name="{{ sysk }}-{{ key }}" form="exam-form" inputmode="decimal" class="w-num" data-exam-finding>
+        {% else %}<input name="{{ sysk }}-{{ key }}" form="exam-form" maxlength="300" class="hea-text" data-exam-finding>{% endif %}
+      </div>
+      {% endfor %}
+      <label class="check small"><input type="checkbox" name="{{ sysk }}-resto" value="1" form="exam-form"> Resto de la exploración {{ resto }} sin alteraciones</label>
+    </div>
+  </div>
+  {% endfor %}
+  <div class="btn-row hea-actions">
+    <button type="button" class="btn btn-primary" data-exam-write>Escribir en la exploración ↓</button>
+    <button type="button" class="btn btn-quiet btn-sm" data-exam-clear>Limpiar</button>
+    <span class="small muted" data-exam-msg aria-live="polite">Se agrega al final de {{ 'la nota' if n.template == 'narrativa' else 'la exploración general y la abdominal' }}; luego puede corregirlo.</span>
+  </div>
+</details>

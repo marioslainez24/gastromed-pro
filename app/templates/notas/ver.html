@@ -41,7 +41,7 @@
   </details>
   {% endif %}
 
-  <form id="hea-form" hidden></form>
+  <form id="hea-form" hidden></form><form id="exam-form" hidden></form>
   <form method="post" action="{{ url_for('notes.save', note_id=n.id) }}" class="note-form" id="note-form" data-autosave="{{ url_for('notes.save', note_id=n.id) }}" data-dirty-guard>
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <input type="hidden" name="version" value="{{ n.version }}" data-version>
@@ -67,10 +67,24 @@
         </div>
         {% else %}
         {% if k == hea_target %}{% include "notas/_hea_asistente.html" %}{% endif %}
+        {% if k == exam_target %}{% include "notas/_exploracion.html" %}{% endif %}
+        {% if k == 'diagnosticos' %}
+        <div class="row-between dx-bar"><span class="small muted">Diagnósticos frecuentes con CIE-10</span>
+          <button type="button" class="btn btn-sm btn-primary" data-dx-open="f-diagnosticos" aria-expanded="false">＋ Diagnóstico ▾</button></div>
+        <div class="dx-panel card" data-dx-panel data-dx="{{ dx_json }}" hidden>
+          <div class="dx-tools">
+            <input type="search" placeholder="Buscar diagnóstico… (ej.: reflujo, cirrosis, hemorroides, pylori)" aria-label="Buscar diagnóstico" data-dx-search>
+            <label class="check small"><input type="checkbox" data-dx-code checked> Agregar código CIE-10</label>
+            <button type="button" class="btn btn-sm btn-quiet" data-dx-close>Cerrar</button>
+          </div>
+          <div class="dx-list" data-dx-list role="listbox" aria-label="Diagnósticos frecuentes"></div>
+          <p class="tiny muted">Cada clic agrega una línea; puede elegir varios. Códigos: {{ dx_source }}. * = sin código propio, se indica la categoría
+            general. Los diagnósticos sin código no se pudieron verificar en la fuente oficial. Revise siempre el texto.</p>
+        </div>
+        {% endif %}
         <label class="field"><span>{{ text_labels[k] }}{% if k == 'motivo' %} <span class="req" aria-hidden="true">*</span>{% endif %}</span>
-          <textarea name="{{ k }}" rows="{{ 6 if k in ('hea','narrativa') else 3 }}" maxlength="20000" data-grow data-phrase-field="{{ k }}">{{ fields.get(k, '') }}</textarea>
+          <textarea name="{{ k }}" id="f-{{ k }}" rows="{{ 6 if k in ('hea','narrativa') else 3 }}" maxlength="20000" data-grow data-phrase-field="{{ k }}">{{ fields.get(k, '') }}</textarea>
         </label>
-        {% if k == 'diagnosticos' %}<p class="muted small">Codificación CIE: pendiente de cargar un catálogo autorizado (Fase 2). Por ahora, texto libre.</p>{% endif %}
         {% endif %}
       {% endfor %}
     </fieldset>

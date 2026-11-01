@@ -442,3 +442,12 @@ fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
 .hea-group[hidden], .hea-actions[hidden] { display: none !important; }
 .hea-chip input[type=checkbox], .hea-chip input[type=radio] { width: 1rem; height: 1rem; min-width: 1rem; min-height: 0; flex: none; padding: 0; }
 .hea-chip { max-width: 100%; line-height: 1.25; }
+
+/* Exploración física con clics (v0.13.0) */
+.exam-top { align-items: center; margin: .5rem 0; }
+.exam-sys { border-top: 1px solid var(--line); padding: .45rem 0; }
+.exam-head { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.exam-head b { min-width: 140px; }
+.exam-findings { padding: .2rem 0 .3rem .4rem; border-left: 3px solid var(--accent-soft); margin-top: .3rem; }
+.exam-findings[hidden] { display: none; }
+.dx-bar { margin: .2rem 0; align-items: center; }

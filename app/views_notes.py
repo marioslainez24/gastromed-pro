@@ -9,6 +9,7 @@ from .db import get_db, new_id, utcnow, write_tx
 from .security import audit, require
 from .views_patients import get_patient_or_404
 from .gi_forms import BRISTOL as GI_BRISTOL, FORMS as GI_FORMS
+from . import consult_diagnoses as CDX, exam as EXAM
 from .views_texts import create_template, phrases_json, templates_for
 
 bp = Blueprint("notes", __name__, url_prefix="/notas")
@@ -151,6 +152,8 @@ def view(note_id):
                                              " AS items FROM orders o WHERE o.note_id = ? ORDER BY o.created_at", (n["id"],)).fetchall(),
                            phrases_json=phrases_json(db) if editable else "[]", BRISTOL=GI_BRISTOL,
                            hea_target="hea" if n["template"] == "soap" else "narrativa",
+                           exam_target="exploracion_general" if n["template"] == "soap" else "narrativa", EXAM_SYSTEMS=EXAM.SYSTEMS,
+                           dx_json=json.dumps(CDX.as_list(), ensure_ascii=False), dx_source=CDX.ICD_SOURCE,
                            note_tpls=json.dumps(templates_for(db, n["template"]), ensure_ascii=False) if editable else "[]",
                            errors={}), editable)
 

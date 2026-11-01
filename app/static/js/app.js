@@ -366,6 +366,55 @@
     });
   }
 
+  // ---- Exploración física con clics -----------------------------------------
+  var ex = $("[data-exam-assist]");
+  if (ex) {
+    var exForm = document.getElementById("exam-form"), exMsg = $("[data-exam-msg]", ex);
+    $$("[data-exam-sys]", ex).forEach(function (sys) {
+      var more = $("[data-exam-more]", sys), box = $("[data-exam-findings]", sys), nor = $("[data-exam-normal]", sys);
+      more.addEventListener("click", function () { box.hidden = !box.hidden; more.setAttribute("aria-expanded", box.hidden ? "false" : "true"); });
+      // Al marcar un hallazgo se quita «Normal» (y se ofrece «Resto sin alteraciones»)
+      $$("[data-exam-finding]", sys).forEach(function (f) {
+        f.addEventListener("change", function () { if ((f.checked || (f.value && f.type !== "checkbox" && f.type !== "radio")) && nor.checked) nor.checked = false; });
+      });
+    });
+    function exWrite() {
+      var fd = new FormData(exForm), tok = csrf();
+      fd.append("csrf_token", tok);
+      exMsg.textContent = "Redactando…"; exMsg.classList.remove("is-error");
+      return fetch(ex.getAttribute("data-url"), { method: "POST", body: fd, credentials: "same-origin",
+                                                  headers: { "X-Requested-With": "fetch", "X-CSRF-Token": tok, Accept: "application/json" } })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) { exMsg.textContent = res.d.error || res.d.detalle || "No se pudo redactar."; exMsg.classList.add("is-error"); return; }
+          var first = null;
+          Object.keys(res.d.campos).forEach(function (k) {
+            var ta = document.querySelector("textarea[name='" + k + "']"); if (!ta) return;
+            var v = ta.value.replace(/\s+$/, "");
+            ta.value = (v ? v + (k === "narrativa" ? "\n\n" : "\n") : "") + res.d.campos[k];
+            ta.dispatchEvent(new Event("input", { bubbles: true })); if (!first) first = ta;
+          });
+          dirty = true;
+          if (first) first.scrollIntoView({ block: "center", behavior: "smooth" });
+          exMsg.textContent = "Listo: se agregó a la exploración. Revíselo y corrija lo que haga falta.";
+        })
+        .catch(function () { exMsg.textContent = "Sin conexión con el programa."; exMsg.classList.add("is-error"); });
+    }
+    $("[data-exam-write]", ex).addEventListener("click", exWrite);
+    $("[data-exam-allnormal]", ex).addEventListener("click", function () {
+      ["general", "cardiopulmonar", "abdomen"].forEach(function (k) {
+        var sys = ex.querySelector("[data-exam-sys='" + k + "']"); if (!sys) return;
+        if (!$$("[data-exam-finding]", sys).some(function (f) { return f.checked || ((f.type === "text" || f.inputMode) && f.type !== "checkbox" && f.type !== "radio" && f.value); }))
+          $("[data-exam-normal]", sys).checked = true;
+      });
+      exWrite();
+    });
+    $("[data-exam-clear]", ex).addEventListener("click", function () {
+      $$("input", ex).forEach(function (i) { if (i.type === "checkbox" || i.type === "radio") i.checked = false; else i.value = ""; });
+      exMsg.textContent = "";
+    });
+  }
+
   // ---- Solicitud de laboratorio: perfiles, buscador y contador ---------------
   var sheet = $("[data-lab-sheet]");
   if (sheet) {

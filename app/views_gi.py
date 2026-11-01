@@ -100,6 +100,22 @@ def hea_compose(note_id):
     return jsonify({"texto": text})
 
 
+@bp.route("/notas/<note_id>/exploracion", methods=["POST"])
+@require("clinico.editar")
+def exam_compose(note_id):
+    """Redacta la exploración física con lo marcado (Normal por sistema o hallazgos)."""
+    from . import exam
+    from .util import clinic_settings
+    n = _get_note(note_id)
+    if n["status"] != "borrador" or n["author_id"] != g.user["id"]:
+        abort(409, description="Solo el autor puede usar la exploración con clics mientras la nota está en borrador.")
+    fields = exam.compose(request.form, n["template"], exam.normal_texts(clinic_settings()["exam_normal_texts"]))
+    if not fields:
+        return jsonify({"error": "Marque «Normal» o algún hallazgo en al menos un sistema."}), 422
+    audit("exploracion_redactada", "nota", n["id"])
+    return jsonify({"campos": fields})
+
+
 def note_forms(db, note_id):
     rows = db.execute("SELECT * FROM clinical_forms WHERE note_id = ? ORDER BY created_at", (note_id,)).fetchall()
     return [{"code": r["form_code"], "title": gi_forms.FORMS.get(r["form_code"], (r["form_code"],))[0],
