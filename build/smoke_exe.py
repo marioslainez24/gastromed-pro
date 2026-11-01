@@ -73,7 +73,7 @@ def main(exe):
         req = urllib.request.Request(f"{B}/notas/{nid}/guardar", data=b'{"version": 1, "motivo": "Dispepsia"}',
                                      headers={"Content-Type": "application/json", "X-CSRF-Token": csrf})
         assert op.open(req, timeout=30).status == 200
-        r = post("/recetas/nueva", {"csrf_token": csrf, "patient_id": pid, "ack_allergies": "1",
+        r = post("/recetas/nueva", {"csrf_token": csrf, "patient_id": pid, "note_id": nid, "ack_allergies": "1",
                                     "item-0-active_ingredient": "Omeprazol", "item-0-dose": "20", "item-0-dose_unit": "mg",
                                     "item-0-route": "oral", "item-0-frequency": "cada 24 h", "item-0-duration": "8 semanas",
                                     "item-0-quantity": "56 cápsulas"})
@@ -135,6 +135,13 @@ def main(exe):
                                                         "body": "Constancia de prueba.", "final_title": "CONSTANCIA DE INCAPACIDAD MEDICA"})
         did = re.search(r"/documentos/([0-9a-f]{32})", r.geturl()).group(1)
         assert get(f"/documentos/{did}/pdf").read().startswith(b"%PDF-"), "PDF del documento clínico"
+        # v0.14: imprimir todo (pypdf dentro del .exe), etiquetas, hojas, recomendaciones y resumen del paciente
+        allpdf = get(f"/notas/{nid}/imprimir-todo").read()
+        assert allpdf.startswith(b"%PDF-"), "Imprimir todo"
+        assert get(f"/procedimientos/{proc_id}/etiquetas").read().startswith(b"%PDF-"), "Etiquetas de frascos"
+        for path in ("/endoscopia/hojas", "/endoscopia/recomendaciones"):
+            assert get(path).status == 200, path
+        assert "Resumen" in get(f"/pacientes/{pid}").read().decode(), "Resumen del paciente"
         for path in ("/ajustes/recordatorios", "/ajustes/horarios", "/agenda/recordatorios"):
             assert get(path).status == 200, path
         # Conexión cifrada para el celular (certificado propio)

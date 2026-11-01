@@ -60,7 +60,7 @@
         <div class="vitals">
           {% for key, lab, unit, lo, hi in vitals %}
           <label class="field"><span>{{ lab }} <span class="muted small">({{ unit }})</span></span>
-            <input type="text" inputmode="decimal" name="v_{{ key }}" value="{{ fields.get('vitales', {}).get(key, '') }}" data-range="{{ lo }}-{{ hi }}" autocomplete="off">
+            <input type="text" inputmode="decimal" name="v_{{ key }}" value="{% set _vv = fields.get('vitales', {}).get(key) %}{{ ('%g' % _vv) if _vv is number else (_vv or '') }}" data-range="{{ lo }}-{{ hi }}" autocomplete="off">
           </label>
           {% endfor %}
           <div class="field bmi"><span>IMC <span class="muted small">(kg/m², OMS)</span></span><output data-bmi>{{ bmi if bmi else '—' }}</output></div>

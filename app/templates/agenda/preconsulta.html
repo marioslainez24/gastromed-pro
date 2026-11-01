@@ -9,7 +9,7 @@
   <div class="vitals">
     {% for key, lab, unit, lo, hi in vitals %}
     <label class="field"><span>{{ lab }} <span class="muted small">({{ unit }})</span></span>
-      <input type="text" inputmode="decimal" name="v_{{ key }}" value="{{ data.vitales.get(key, '') }}" data-range="{{ lo }}-{{ hi }}" autocomplete="off"></label>
+      <input type="text" inputmode="decimal" name="v_{{ key }}" value="{% set _vv = data.vitales.get(key) %}{{ ('%g' % _vv) if _vv is number else (_vv or '') }}" data-range="{{ lo }}-{{ hi }}" autocomplete="off"></label>
     {% endfor %}
   </div>
   <label class="field">Motivo de consulta (en palabras del paciente)<textarea name="motivo" rows="2" maxlength="2000" data-grow>{{ data.motivo or '' }}</textarea></label>

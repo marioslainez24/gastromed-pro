@@ -11,6 +11,33 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 14 · 31-oct-2026 · Diez mejoras para endoscopia y consulta (v0.14.0 · rama `desarrollo`, SIN publicar)
+
+**Pedido del Dr. Lainez:** ideas 5 a 14 de la lista. Sigue vigente: no construir el .exe hasta que diga «ya».
+**Qué quedó funcionando (probado, sin publicar)**
+- **Hallazgos de endoscopia con clics** (`app/endo_findings.py`): «＋ Hallazgo con clics» en cada segmento (esófago, UEG, estómago, duodeno, colon y
+  rectosigmoides): esofagitis LA, Barrett (Praga), várices, cándida, eosinofílica, úlcera, estenosis, cáusticos (Zargar), hernia hiatal, Mallory-Weiss,
+  eritema/erosiones/atrofia por localización, gastropatía hipertensiva, várices gástricas (Sarin), GAVE, úlceras Forrest, pólipos, lesiones,
+  pólipo de colon (tamaño, localización, París, NICE, resección), divertículos, hemorroides, inflamación (signos, distribución, extensión), etc.
+  Redacta solo lo marcado y SUGIERE el diagnóstico con CIE-10 para la conclusión (el médico decide con un clic). Si el segmento tenía el texto
+  normal, lo reemplaza y lo avisa.
+- **Recomendaciones por diagnóstico** (Endoscopia → Recomendaciones): las escribe el médico; aparecen como sugerencia según la conclusión.
+- **Hojas de preparación y consentimiento** por tipo de estudio (Endoscopia → Hojas): borrador sin productos, dosis ni riesgos; solo se imprimen
+  después de que el médico las revisa y guarda. Se llenan con paciente, identidad, fecha y hora de la cita. Enlaces en la cita y en Procedimientos.
+  Recepción puede imprimir la preparación, no el consentimiento.
+- **Etiquetas de frascos** en PDF (2×6 por hoja): nombre, expediente, nacimiento, estudio, fecha, frasco, sitio, fragmentos.
+- **Clasificaciones** Sarin, Zargar, NICE y Kudo, verificadas (fuentes en `endoscopy_defs.py`), en la tabla de hallazgos y en el catálogo.
+- **Sala de espera**: espera en minutos, «✓ Preconsulta», botón «Atender →» que abre la nota directamente (sin elegir tipo; usa la última plantilla
+  del médico); lista «En consulta»; al finalizar la nota la cita pasa sola a «atendida».
+- **Preconsulta de enfermería** (permiso nuevo `preconsulta.registrar`, migración 0010): signos vitales y motivo que pasan a la nota.
+- **Imprimir todo** en la nota: recetas, órdenes y documentos del día en un PDF (pypdf incluido en el .exe).
+- **Resumen del paciente** arriba del expediente: problemas, medicamentos, última consulta, último estudio por tipo, patología pendiente, control,
+  últimos laboratorios con tendencia, pendientes, próxima cita.
+- **Cálculos rápidos** (`app/quick_calcs.py`) en el resumen: Child-Pugh, MELD-Na, MELD 3.0, FIB-4, APRI, Maddrey con los últimos laboratorios y su
+  fecha; resultado PRELIMINAR solo si todo viene del expediente (nunca supone ascitis, encefalopatía ni diálisis); aviso si los datos tienen >3 meses.
+**Cómo se comprobó**: 141 pruebas (10 nuevas en `test_lote_v013.py`); navegador real PC y celular actualizando desde v0.12.0 con perfil persistente;
+prueba del ejecutable ampliada (imprimir todo, etiquetas, hojas, recomendaciones, resumen).
+
 ## Etapa 13 · 31-oct-2026 · Exploración física con clics y diagnósticos de consulta con CIE-10 (v0.13.0 · rama `desarrollo`, SIN publicar)
 
 **Instrucción del Dr. Lainez:** hacer estas mejoras pero NO construir el .exe hasta que él diga «ya». Por eso el trabajo está en la rama

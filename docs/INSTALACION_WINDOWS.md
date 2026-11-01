@@ -65,6 +65,14 @@ En *Hallazgos por segmento* escriba (o dicte) lo que ve en cada segmento. El bot
 **Todo normal** llena los segmentos vacíos y la conclusión. Revise siempre el texto. Para cambiar esas frases a su manera:
 *Endoscopia → Textos de estudio normal*.
 
+## Novedades de la versión 0.14
+- **Agenda:** cuando el paciente llega, «Registrar llegada»; enfermería pulsa «Signos vitales» en la sala de espera; usted pulsa **Atender →** y la nota
+  se abre con esos datos. Al finalizar la nota, la cita queda «atendida».
+- **Endoscopia:** «＋ Hallazgo con clics» en cada segmento; las sugerencias de diagnóstico aparecen en verde junto a la conclusión.
+  Configure sus **Recomendaciones por diagnóstico** y sus **Hojas de preparación y consentimiento** en la pantalla de Endoscopia.
+- **Nota:** «🖨 Imprimir todo» junta receta, órdenes y constancias del día.
+- **Expediente:** el **Resumen** arriba muestra lo esencial y los cálculos con los últimos laboratorios.
+
 ## Historia de la enfermedad actual con clics
 En la nota, encima de *Historia de la enfermedad actual*, abra **✍ Asistente de historia**: elija el motivo, marque lo que refiere el paciente y pulse
 **Escribir en la historia**. Solo escribe lo que usted marcó; los «Niega…» salen solo si marca que interrogó los signos de alarma.

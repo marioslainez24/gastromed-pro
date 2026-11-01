@@ -1,6 +1,6 @@
 # Matriz de requisitos y cobertura — GastroMed Pro
 
-Actualizada: 30 de octubre de 2026 · versión 0.13.0 (rama desarrollo) · ver también `COMPARATIVA.md`
+Actualizada: 30 de octubre de 2026 · versión 0.14.0 (rama desarrollo) · ver también `COMPARATIVA.md`
 
 **Fuentes:** el documento de requisitos del Dr. Mario Lainez. Las páginas de Medilink (softwaremedilink.com y ayuda.softwaremedilink.com) **no fueron accesibles** desde el entorno de desarrollo (bloqueo de red). Por lo tanto **no se afirma haber revisado ninguna función de Medilink**; la comparación queda pendiente hasta que se puedan consultar (o el usuario envíe capturas/textos).
 
@@ -73,6 +73,14 @@ Actualizada: 30 de octubre de 2026 · versión 0.13.0 (rama desarrollo) · ver t
 | 8.3 | Respaldo diario automático, verificado, con copia a disco externo y retención | ✅ | `test_instalacion_respaldo_y_diagnostico…`, `test_retencion…`; tarea de Windows 🟡 |
 | 8.4 | Modo demostración separado de los datos reales | ✅ | Base y puerto propios |
 | L.1 | Solicitud de laboratorio tipo hoja: secciones, >300 pruebas, 24 perfiles, buscador, PDF agrupado | ✅ | `test_solicitud_laboratorio.py` + navegador |
+| E.4 | Hallazgos de endoscopia con clics y sugerencia de diagnóstico | ✅ (sin publicar) | `test_lote_v013.py` + navegador |
+| E.5 | Recomendaciones por diagnóstico (texto del médico, sugeridas) | ✅ (sin publicar) | `test_lote_v013.py` + navegador |
+| E.6 | Hojas de preparación y consentimiento con datos de la cita | ✅ (sin publicar) | `test_lote_v013.py` |
+| E.7 | Etiquetas de frascos de biopsia | ✅ (sin publicar) | `test_lote_v013.py` |
+| E.8 | Clasificaciones Sarin, Zargar, NICE, Kudo (verificadas) | ✅ (sin publicar) | `test_lote_v013.py` |
+| A.1 | Sala de espera con «Atender», preconsulta de enfermería, cita atendida al finalizar | ✅ (sin publicar) | `test_lote_v013.py` + navegador |
+| C.7 | Imprimir todo (receta, órdenes, documentos) en un PDF | ✅ (sin publicar) | `test_lote_v013.py` + prueba del .exe |
+| C.8 | Resumen del paciente y cálculos rápidos con los últimos laboratorios | ✅ (sin publicar) | `test_lote_v013.py` + navegador |
 | N.2 | Exploración física con clics (Normal por sistema, hallazgos, textos editables) | ✅ (sin publicar) | `test_exploracion_diagnosticos.py` + navegador |
 | N.3 | Diagnósticos de consulta con CIE-10 verificado en la nota | ✅ (sin publicar) | `test_exploracion_diagnosticos.py` |
 | N.1 | Asistente para redactar la historia de la enfermedad actual con clics (sin inventar; negativos solo si el médico lo indica) | ✅ | `test_asistente_historia.py` + navegador |
