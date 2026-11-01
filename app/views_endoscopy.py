@@ -442,6 +442,25 @@ def capture(proc_id):
 
 
 # ------------------------------------------------------------------------------------------------ PDF
+@bp.route("/procedimientos/<proc_id>/etiquetas")
+@require("clinico.ver")
+def jar_labels(proc_id):
+    from .pdf import jar_labels_pdf
+    pr = _get_proc(proc_id)
+    db = get_db()
+    p = db.execute("SELECT * FROM patients WHERE id = ?", (pr["patient_id"],)).fetchone()
+    s = clinic_settings()
+    size = request.args.get("papel") or s["paper_size"]
+    if size not in ("carta", "a4"):
+        abort(400)
+    data = jar_labels_pdf(pr, json.loads(pr["data"]), p, s, size, D.KINDS[pr["kind"]])
+    audit("etiquetas_frascos_generadas", "procedimiento", pr["id"])
+    resp = make_response(data)
+    resp.headers["Content-Type"] = "application/pdf"
+    resp.headers["Content-Disposition"] = f'inline; filename="etiquetas-{pr["id"][:8]}.pdf"'
+    return resp
+
+
 @bp.route("/procedimientos/<proc_id>/pdf")
 @require("clinico.ver")
 def proc_pdf(proc_id):

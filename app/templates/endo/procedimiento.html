@@ -24,6 +24,7 @@
   <a class="btn" href="{{ url_for('endo.proc_pdf', proc_id=pr.id, papel='carta') }}" target="_blank" rel="noopener">PDF carta{{ ' (borrador)' if pr.status != 'finalizado' }}</a>
   <a class="btn" href="{{ url_for('endo.proc_pdf', proc_id=pr.id, papel='a4') }}" target="_blank" rel="noopener">PDF A4</a>
   {% if editable %}<a class="btn btn-primary" href="{{ url_for('endo.capture', proc_id=pr.id) }}">Capturar imágenes del video</a>{% endif %}
+  {% if d.jars %}<a class="btn" href="{{ url_for('endo.jar_labels', proc_id=pr.id) }}" target="_blank" rel="noopener">🏷 Etiquetas de frascos ({{ d.jars|length }})</a>{% endif %}
 </div>
 
 {% if editable and request.args.get('confirmar') %}
@@ -151,7 +152,7 @@
     {% endfor %}
     </div>
     <button type="button" class="btn btn-quiet btn-sm" data-row-add="findings">＋ Agregar hallazgo</button>
-    <p class="muted small">Clasificaciones: Los Ángeles, Forrest, París, Praga C/M y tamaño de várices (definiciones verificadas; ver documentación). Otras clasificaciones se habilitarán progresivamente.</p>
+    <p class="muted small">Clasificaciones: Los Ángeles, Forrest, París, Praga C/M, tamaño de várices, Sarin, Zargar, NICE y Kudo (definiciones verificadas; ver documentación).</p>
   </fieldset>
   </details>
 

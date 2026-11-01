@@ -42,6 +42,7 @@ DIAGNOSES = [
     ("Esófago", UPPER, "Divertículo esofágico", "K22.5", False),
     ("Esófago", UPPER, "Hallazgos compatibles con acalasia", "K22.0", False),
     ("Esófago", UPPER, "Lesión esofágica de aspecto neoplásico, pendiente de histología", None, False),
+    ("Esófago", UPPER, "Lesión esofágica por cáusticos, grado __ de Zargar", None, False),
     # ---------------------------------------------------------------- estómago
     ("Estómago", UPPER, "Gastropatía eritematosa", "K29.7", False),
     ("Estómago", UPPER, "Gastropatía eritematosa de antro", "K29.7", False),
@@ -51,6 +52,10 @@ DIAGNOSES = [
     ("Estómago", UPPER, "Gastropatía hipertensiva portal leve", "K31.8", True),
     ("Estómago", UPPER, "Gastropatía hipertensiva portal severa", "K31.8", True),
     ("Estómago", UPPER, "Várices gástricas", "I86.4", False),
+    ("Estómago", UPPER, "Várices gástricas GOV1 (Sarin)", "I86.4", False),
+    ("Estómago", UPPER, "Várices gástricas GOV2 (Sarin)", "I86.4", False),
+    ("Estómago", UPPER, "Várices gástricas IGV1 (Sarin)", "I86.4", False),
+    ("Estómago", UPPER, "Várices gástricas IGV2 (Sarin)", "I86.4", False),
     ("Estómago", UPPER, "Ectasia vascular antral (GAVE)", "K31.8", True),
     ("Estómago", UPPER, "Úlcera gástrica Forrest Ia (sangrado en chorro)", "K25.4", False),
     ("Estómago", UPPER, "Úlcera gástrica Forrest Ib (sangrado en capa)", "K25.4", False),
@@ -83,6 +88,9 @@ DIAGNOSES = [
     # ---------------------------------------------------------------- colon, recto y ano
     ("Colon y recto", LOWER, "Pólipo de colon", "K63.5", False),
     ("Colon y recto", LOWER, "Pólipos de colon múltiples", "K63.5", False),
+    ("Colon y recto", LOWER, "Pólipo de colon NICE 1 (aspecto hiperplásico o serrado)", "K63.5", False),
+    ("Colon y recto", LOWER, "Pólipo de colon NICE 2 (aspecto adenomatoso)", "K63.5", False),
+    ("Colon y recto", LOWER, "Lesión de colon NICE 3 (sospecha de invasión submucosa profunda), pendiente de histología", None, False),
     ("Colon y recto", LOWER, "Pólipo de recto", "K62.1", False),
     ("Colon y recto", LOWER, "Enfermedad diverticular de colon sigmoides", "K57.3", False),
     ("Colon y recto", LOWER, "Enfermedad diverticular de colon (pancolónica)", "K57.3", False),

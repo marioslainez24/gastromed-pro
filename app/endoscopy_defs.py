@@ -7,6 +7,12 @@ Clasificaciones verificadas el 30-oct-2026 contra:
 - Lai EJ et al. Gastrointest Endosc 2009;69:620-5 (escala de Boston) y Calderwood AH et al. Gastrointest Endosc 2014 (definición de
   preparación adecuada: ≥2 en cada segmento).
 Las descripciones están redactadas en español para GastroMed Pro.
+
+Agregadas el 31-oct-2026 (v0.13.0), verificadas contra:
+- NICE: Hewett DG et al. Gastroenterology 2012;143:599-607 (PMID 22609383); tabla reproducida en Utsumi T et al. Clin Endosc 2015;48:491-7.
+- Kudo (patrón de criptas): Arq Gastroenterol 2019 (tipos I, II, IIIS, IIIL, IV y V) e Iwamoto K et al. Int J Colorectal Dis 2007;22:1409 (Vn).
+- Zargar (lesión por cáusticos): Singh AK, Birda CL, Kochhar R. World J Gastrointest Endosc 2026;18(3):114327, tabla 1.
+- Sarin (várices gástricas): Butt Z et al. J Pak Med Assoc 2016;66(11):1462.
 """
 
 KINDS = {
@@ -68,6 +74,30 @@ CLASSIFICATIONS = {
         ("P-0-IIb", "0-IIb", "Plana"), ("P-0-IIc", "0-IIc", "Ligeramente deprimida"), ("P-0-III", "0-III", "Excavada (úlcera)")]),
     "varices": ("Várices esofágicas (tamaño)", [
         ("V-peq", "Pequeñas", "Menores de 5 mm"), ("V-gra", "Grandes", "Mayores de 5 mm")]),
+    "sarin": ("Várices gástricas: Sarin", [
+        ("S-GOV1", "GOV1", "Continuación de várices esofágicas 2–5 cm por debajo de la unión esofagogástrica, por la curvatura menor"),
+        ("S-GOV2", "GOV2", "Continuación de várices esofágicas hacia el cardias y el fondo gástrico"),
+        ("S-IGV1", "IGV1", "Várices aisladas en el fondo gástrico, sin várices esofágicas"),
+        ("S-IGV2", "IGV2", "Várices aisladas en otra parte del estómago (fuera del fondo)")]),
+    "zargar": ("Lesión por cáusticos: Zargar", [
+        ("Z-0", "0", "Mucosa normal"), ("Z-1", "1", "Edema y eritema de la mucosa"),
+        ("Z-2a", "2a", "Úlceras superficiales y localizadas, friabilidad, sangrado y ampollas"),
+        ("Z-2b", "2b", "Úlceras profundas (aisladas o circunferenciales), además de lo descrito en 2a"),
+        ("Z-3a", "3a", "Áreas pequeñas y dispersas de necrosis"), ("Z-3b", "3b", "Necrosis extensa")]),
+    "nice": ("Pólipo colorrectal con NBI: NICE", [
+        ("N-1", "Tipo 1", "Color igual o más claro que el fondo; sin vasos o vasos finos aislados; puntos uniformes o sin patrón. "
+                          "Más probable: hiperplásico o serrado sésil"),
+        ("N-2", "Tipo 2", "Más marrón que el fondo; vasos marrones rodeando estructuras blancas; estructuras blancas ovales, tubulares o "
+                          "ramificadas. Más probable: adenoma"),
+        ("N-3", "Tipo 3", "Marrón a marrón oscuro, a veces con áreas blanquecinas; vasos interrumpidos o ausentes; patrón amorfo o ausente. "
+                          "Más probable: cáncer con invasión submucosa profunda")]),
+    "kudo": ("Patrón de criptas: Kudo", [
+        ("K-I", "I", "Criptas redondas (mucosa normal)"), ("K-II", "II", "Criptas estrelladas o papilares (no neoplásico: hiperplásico o inflamatorio)"),
+        ("K-IIIs", "IIIs", "Criptas redondas o tubulares pequeñas, menores que las normales (neoplásico)"),
+        ("K-IIIL", "IIIL", "Criptas tubulares o redondas grandes, mayores que las normales (neoplásico)"),
+        ("K-IV", "IV", "Criptas ramificadas o en circunvoluciones (neoplásico)"),
+        ("K-V", "V", "Patrón irregular o sin estructura (neoplásico, sospecha de carcinoma)"),
+        ("K-Vn", "Vn", "Sin estructura: sugiere invasión submucosa")]),
 }
 CLASS_LOOKUP = {code: (group, short, desc) for group, (_, opts) in CLASSIFICATIONS.items() for code, short, desc in opts}
 

@@ -465,3 +465,56 @@ def document_pdf(d, p, s, size, assets=None) -> bytes:
 
     doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
     return buf.getvalue()
+
+
+def jar_labels_pdf(pr, d, p, s, size, kind_label) -> bytes:
+    """Etiquetas para frascos de biopsia: una por frasco, en hoja carta/A4 para recortar (2 columnas × 6 filas)."""
+    from reportlab.pdfgen import canvas as rl_canvas
+    buf = io.BytesIO()
+    pagesize = LETTER if size == "carta" else A4
+    c = rl_canvas.Canvas(buf, pagesize=pagesize)
+    c.setTitle("Etiquetas de frascos")
+    c.setAuthor(s["doctor_display_name"])
+    margin, cols, rows = 10 * mm, 2, 6
+    w = (pagesize[0] - 2 * margin) / cols
+    h = (pagesize[1] - 2 * margin) / rows
+    jars = d.get("jars") or []
+    for i, j in enumerate(jars):
+        if i and i % (cols * rows) == 0:
+            c.showPage()
+        k = i % (cols * rows)
+        x = margin + (k % cols) * w
+        y = pagesize[1] - margin - (k // cols + 1) * h
+        c.setDash(2, 2)
+        c.setStrokeColor(MUTED)
+        c.rect(x + 1.5 * mm, y + 1.5 * mm, w - 3 * mm, h - 3 * mm)
+        c.setDash()
+        tx, ty = x + 5 * mm, y + h - 9 * mm
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 13)
+        c.drawString(tx, ty, f"FRASCO {j['jar']}")
+        c.setFont("Helvetica", 8)
+        c.drawRightString(x + w - 5 * mm, ty, f"Folio {pr['id'][:8].upper()}")
+        c.setFont("Helvetica-Bold", 10.5)
+        name = f"{p['last_names']}, {p['first_names']}"
+        c.drawString(tx, ty - 5.5 * mm, name[:46])
+        c.setFont("Helvetica", 9)
+        c.drawString(tx, ty - 10 * mm, f"Exp. {p['mrn']}" + (f"   Nac. {fmt_birth(p['birth_date'])}" if p["birth_date"] else ""))
+        c.drawString(tx, ty - 14.5 * mm, f"{kind_label} · {fmt_birth(pr['performed_on'])}"[:60])
+        c.setFont("Helvetica-Bold", 9.5)
+        from reportlab.lib.utils import simpleSplit
+        for li, line in enumerate(simpleSplit(f"Sitio: {j['site']}", "Helvetica-Bold", 9.5, w - 10 * mm)[:2]):
+            c.drawString(tx, ty - (19.5 + 4 * li) * mm, line)
+        c.setFont("Helvetica", 8.5)
+        extra = " · ".join(x for x in [f"{j['pieces']} fragmento(s)" if j.get("pieces") else None,
+                                       (j.get("desc") or "")[:60] or None] if x)
+        if extra:
+            c.drawString(tx, y + 6 * mm, extra[:70])
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica", 7)
+        c.drawRightString(x + w - 5 * mm, y + 6 * mm, s["doctor_display_name"][:40])
+    if not jars:
+        c.setFont("Helvetica", 11)
+        c.drawString(20 * mm, pagesize[1] - 30 * mm, "El informe no tiene frascos registrados.")
+    c.save()
+    return buf.getvalue()
