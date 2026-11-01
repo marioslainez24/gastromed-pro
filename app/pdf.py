@@ -533,9 +533,16 @@ def sheet_pdf(title, body, s, size, assets=None) -> bytes:
         story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
     story = _with_logo(story, assets, width)
     story += [Spacer(1, 5 * mm), Paragraph(_e(title), ST["title"]), Spacer(1, 4 * mm)]
-    style = ParagraphStyle("sheet", **{**_base, "fontSize": 10.5, "leading": 15})
+    style = ParagraphStyle("sheet", **{**_base, "fontSize": 10, "leading": 13.2})
     for block in body.split("\n\n"):
-        story.append(Paragraph(_e(block).replace("\n", "<br/>"), style))
-        story.append(Spacer(1, 3 * mm))
+        lines = block.split("\n")
+        first = lines[0].strip()
+        if first and any(c.isalpha() for c in first) and first == first.upper() and len(first) <= 80:   # título de sección
+            lines[0] = f"<b>{_e(first)}</b>"
+            html = "<br/>".join([lines[0]] + [_e(x) for x in lines[1:]])
+        else:
+            html = _e(block).replace("\n", "<br/>")
+        story.append(Paragraph(html, style))
+        story.append(Spacer(1, 2.2 * mm))
     doc.build(story)
     return buf.getvalue()

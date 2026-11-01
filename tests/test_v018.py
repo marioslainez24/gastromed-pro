@@ -82,3 +82,26 @@ def test_nota_finalizada_no_se_descarta(env):
     assert med.post(f"/notas/{nid}/descartar", data={"csrf_token": tok}).status_code == 409
     with pytest.raises(sqlite3.DatabaseError):
         env["db"].execute("UPDATE clinical_notes SET discarded_at = '2026-11-01' WHERE id = ?", (nid,))
+
+
+def test_hojas_de_preparacion_colonoscopia_y_eda(env):
+    import io
+    from pypdf import PdfReader
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    html = med.get("/endoscopia/hojas?tipo=colonoscopia").get_data(as_text=True)
+    assert "Debe comprar 4 sobres de Fortrans." in html and "Texto tomado de su hoja de Word" in html and "Borrador sin revisar" in html
+    eda = med.get("/endoscopia/hojas?tipo=eda").get_data(as_text=True)
+    assert "PREPARACIÓN PARA ENDOSCOPÍA DIGESTIVA ALTA" in eda and "ayuno completo de al menos 8 horas" in eda
+    pid = create_patient(med)
+    assert med.get(f"/pacientes/{pid}/hoja/prep/colonoscopia").status_code == 409        # sin aprobar no se imprime
+    # aprobar SOLO la preparación de colonoscopía tal cual: el consentimiento sigue sin aprobar
+    from app.proc_sheets import PREP_COLONOSCOPIA, DRAFT_CONSENT
+    r = med.post("/endoscopia/hojas", data={"csrf_token": tok, "tipo": "colonoscopia", "solo": "prep",
+                                            "prep": PREP_COLONOSCOPIA, "consent": DRAFT_CONSENT})
+    assert r.status_code == 302
+    pdf = med.get(f"/pacientes/{pid}/hoja/prep/colonoscopia")
+    assert pdf.status_code == 200
+    text = "".join(pg.extract_text() for pg in PdfReader(io.BytesIO(pdf.data)).pages)
+    assert "Fortrans" in text and "Gelatina sin color rojo" in text and "{telefono}" not in text
+    assert med.get(f"/pacientes/{pid}/hoja/consent/colonoscopia").status_code == 409

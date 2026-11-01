@@ -11,7 +11,7 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
-## Etapa 18 · 1-nov-2026 · Descartar borradores de endoscopia y de notas (v0.18.0 · rama `desarrollo`, SIN publicar)
+## Etapa 18 · 1-nov-2026 · Descartar borradores y hojas de preparación de colonoscopía y EDA (v0.18.0 · rama `desarrollo`, SIN publicar)
 
 **Pedido del Dr. Lainez:** una opción para quitar los informes que quedaron en «Borrador», y ponerla donde convenga en el programa.
 - **Informes de endoscopia:** botón **«✕ Descartar»** en la pestaña Procedimientos del paciente y en la lista de Endoscopia, y
@@ -23,7 +23,12 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
   No se borra: migraciones 0013 (procedures) y 0014 (clinical_notes) agregan `discarded_at`/`discarded_by`; se oculta de listas, resumen,
   agenda («Atender» crea una nota nueva) y cartas; queda en la auditoría y ya no se puede modificar (triggers).
 - El resumen del paciente separa «N nota(s) de consulta en borrador» e «N informe(s) de endoscopia en borrador», con enlace a cada lista.
-**Cómo se comprobó**: 178 pruebas (`test_v018.py`); navegador real PC y celular actualizando desde v0.17.0 (incluye que al descartar una
+- **Hojas de preparación** (Endoscopia → Hojas de preparación y consentimiento): la de **colonoscopía** viene ya escrita con el texto de la
+  hoja de Word del Dr. Lainez (Fortrans, 4 sobres, dieta líquida, último litro a las 5 a. m.), y la de **endoscopía digestiva alta** con una
+  propuesta en el mismo formato (ayuno de 8 horas, acompañante, diabéticos, anticoagulantes, prótesis dental; sin productos ni dosis).
+  Siguen como «Borrador sin revisar» hasta que el médico pulse aprobar; ahora cada hoja tiene su propio botón «Guardar y aprobar solo…»
+  para no aprobar el consentimiento sin querer. En el PDF los títulos en MAYÚSCULAS salen en negrita y la hoja cabe en una página.
+**Cómo se comprobó**: 179 pruebas (`test_v018.py`); navegador real PC y celular actualizando desde v0.17.0 (incluye que al descartar una
 nota con cambios no aparece el aviso de «cambios sin guardar»); prueba del ejecutable.
 
 ## Etapa 17 · 1-nov-2026 · Sin dictado ni diario; calculadoras de otras especialidades (v0.17.0 · PUBLICADA)

@@ -854,7 +854,8 @@ def sheets_edit():
         abort(400)
     if request.method == "POST":
         cur = sheets.get(kind, {})
-        for doc in SHEET_DOCS:
+        only = request.form.get("solo")
+        for doc in ([only] if only in SHEET_DOCS else SHEET_DOCS):
             t = (request.form.get(doc) or "").replace("\r\n", "\n").strip()[:12000]
             if request.form.get(f"{doc}-reset") == "1":
                 cur.pop(doc, None)
@@ -866,10 +867,11 @@ def sheets_edit():
             db.execute("UPDATE clinic_settings SET proc_sheets = ?, updated_at = ?, updated_by = ?, version = version + 1 WHERE org_id = ?",
                        (json.dumps(sheets, ensure_ascii=False), utcnow(), g.user["id"], g.user["org_id"]))
             audit("hojas_procedimiento_guardadas", "ajustes", g.user["org_id"], {"tipo": kind}, db=db)
-        flash(f"Hojas de {D.KINDS[kind].lower()} guardadas y aprobadas para imprimir.", "ok")
+        what = (SHEET_DOCS[only] if only in SHEET_DOCS else "Hojas") + f" de {D.KINDS[kind].lower()}"
+        flash(f"{what}: guardada(s) y aprobada(s) para imprimir.", "ok")
         return redirect(url_for("endo.sheets_edit", tipo=kind))
     texts = {doc: PS.text_for(sheets, kind, doc) for doc in SHEET_DOCS}
-    return render_template("endo/hojas.html", kind=kind, KINDS=D.KINDS, texts=texts, DOCS=SHEET_DOCS, PH=PS.PLACEHOLDERS,
+    return render_template("endo/hojas.html", kind=kind, KINDS=D.KINDS, texts=texts, DOCS=SHEET_DOCS, PH=PS.PLACEHOLDERS, draft_note=PS.DRAFT_NOTE.get(kind),
                            status={k: {d: bool((sheets.get(k) or {}).get(d)) for d in SHEET_DOCS} for k in D.KINDS})
 
 
