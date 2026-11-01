@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Preconsulta{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Preconsulta · {{ p.first_names }} {{ p.last_names }}</h1>
+  <p class="muted small">{{ p.mrn }} · cita {{ fmt_time(a.starts_at) }} · el médico encontrará estos datos ya escritos en la nota</p></div></div>
+{% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors.values() %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form method="post" class="card stack" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="back" value="{{ request.args.get('back', '') }}">
+  <div class="vitals">
+    {% for key, lab, unit, lo, hi in vitals %}
+    <label class="field"><span>{{ lab }} <span class="muted small">({{ unit }})</span></span>
+      <input type="text" inputmode="decimal" name="v_{{ key }}" value="{{ data.vitales.get(key, '') }}" data-range="{{ lo }}-{{ hi }}" autocomplete="off"></label>
+    {% endfor %}
+  </div>
+  <label class="field">Motivo de consulta (en palabras del paciente)<textarea name="motivo" rows="2" maxlength="2000" data-grow>{{ data.motivo or '' }}</textarea></label>
+  <div class="btn-row"><button class="btn btn-primary" type="submit">Guardar preconsulta</button>
+    <a class="btn btn-quiet" href="{{ url_for('agenda.view', appt_id=a.id) }}">Cancelar</a></div>
+</form>
+{% endblock %}

@@ -129,3 +129,54 @@ def test_hojas_preparacion_y_consentimiento(env):
     assert rec.get(f"/pacientes/{pid}/hoja/prep/colonoscopia").status_code == 200
     assert rec.get(f"/pacientes/{pid}/hoja/consent/colonoscopia").status_code == 403
     assert med.get(f"/pacientes/{pid}/hoja/otra/colonoscopia").status_code == 404
+
+
+def _appt(env, c, tok, pid, when="2026-11-03T09:00"):
+    r = c.post("/agenda/nueva", data={"csrf_token": tok, "patient_id": pid, "practitioner_id": env["users"]["propietario"],
+                                      "appt_type": "seguimiento", "starts_local": when, "duration": "30"})
+    assert r.status_code == 302, r.get_data(as_text=True)[:400]
+    return env["db"].execute("SELECT id FROM appointments WHERE patient_id = ? ORDER BY rowid DESC LIMIT 1", (pid,)).fetchone()["id"]
+
+
+def test_sala_de_espera_preconsulta_atender_y_atendida(env):
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    aid = _appt(env, med, tok, pid)
+    v = lambda: env["db"].execute("SELECT version FROM appointments WHERE id = ?", (aid,)).fetchone()["version"]
+    med.post(f"/agenda/cita/{aid}/estado", data={"csrf_token": tok, "status": "presente", "version": v()})
+    day = med.get("/agenda/?fecha=2026-11-03").get_data(as_text=True)
+    assert "Sala de espera" in day and "Atender →" in day and "Signos vitales" in day
+    # enfermería registra la preconsulta
+    enf = login(env["app"], "enfermeria")
+    etok = csrf(enf)
+    r = enf.post(f"/agenda/cita/{aid}/preconsulta", data={"csrf_token": etok, "v_pa_sistolica": "120", "v_pa_diastolica": "80",
+                                                          "v_peso_kg": "70", "motivo": "Ardor en el estómago (ficticio)"})
+    assert r.status_code == 302
+    bad = enf.post(f"/agenda/cita/{aid}/preconsulta", data={"csrf_token": etok, "v_fc": "999"})
+    assert bad.status_code == 422
+    assert "✓ Preconsulta" in med.get("/agenda/?fecha=2026-11-03").get_data(as_text=True)
+    assert login(env["app"], "recepcion").get(f"/agenda/cita/{aid}/preconsulta").status_code == 403
+    # Atender: crea la nota directamente con signos vitales y motivo
+    r = med.post(f"/agenda/cita/{aid}/estado", data={"csrf_token": tok, "status": "en_consulta", "version": v()})
+    r = med.get(r.headers["Location"])
+    assert r.status_code == 302 and "/notas/" in r.headers["Location"] and "nueva" not in r.headers["Location"]
+    nid = r.headers["Location"].rsplit("/", 1)[-1]
+    f = json.loads(env["db"].execute("SELECT fields FROM clinical_notes WHERE id = ?", (nid,)).fetchone()["fields"])
+    assert f["vitales"]["pa_sistolica"] == 120 and f["vitales"]["peso_kg"] == 70 and f["motivo"] == "Ardor en el estómago (ficticio)"
+    # al finalizar la nota la cita pasa a atendida
+    nv = env["db"].execute("SELECT version FROM clinical_notes WHERE id = ?", (nid,)).fetchone()["version"]
+    med.post(f"/notas/{nid}/finalizar", data={"csrf_token": tok, "version": nv})
+    assert env["db"].execute("SELECT status FROM clinical_notes WHERE id = ?", (nid,)).fetchone()["status"] == "finalizada"
+    assert env["db"].execute("SELECT status FROM appointments WHERE id = ?", (aid,)).fetchone()["status"] == "atendida"
+
+
+def test_hoja_con_fecha_y_hora_de_la_cita(env):
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    aid = _appt(env, med, tok, pid, "2026-11-10T07:30")
+    med.post("/endoscopia/hojas", data={"csrf_token": tok, "tipo": "eda", "prep": "Cita: {fecha_cita} a las {hora_cita}.", "consent": "x {paciente}"})
+    t = pdf_text(med.get(f"/pacientes/{pid}/hoja/prep/eda?cita={aid}").data)
+    assert "10 de noviembre de 2026" in t and "7:30 a. m." in t, t
+    assert "Hojas para el paciente" in med.get(f"/agenda/cita/{aid}").get_data(as_text=True)

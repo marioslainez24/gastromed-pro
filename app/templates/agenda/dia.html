@@ -29,7 +29,7 @@
             <form method="post" action="{{ url_for('agenda.change_status', appt_id=a.id) }}" class="inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ a.version }}">
               <input type="hidden" name="status" value="{{ quick }}"><input type="hidden" name="back" value="{{ request.full_path }}">
-              <button class="btn btn-sm" type="submit">{{ {'confirmada': 'Confirmar', 'presente': 'Registrar llegada', 'en_consulta': 'Iniciar consulta'}[quick] }}</button>
+              <button class="btn btn-sm" type="submit">{{ {'confirmada': 'Confirmar', 'presente': 'Registrar llegada', 'en_consulta': 'Atender →'}[quick] }}</button>
             </form>
             {% endif %}
           {% endif %}
@@ -41,11 +41,25 @@
     <div class="empty"><p>No hay citas para este día.</p>{% if can('agenda.editar') %}<a class="btn btn-primary" href="{{ url_for('agenda.new', fecha=d.isoformat()) }}">Agendar cita</a>{% endif %}</div>
     {% endif %}
   </section>
-  <aside class="col-side card">
+  <aside class="col-side card waiting-room">
     <h2>Sala de espera <span class="count">{{ waiting|length }}</span></h2>
     {% if waiting %}
-    <ul class="list">{% for a in waiting %}<li><a href="{{ url_for('agenda.view', appt_id=a.id) }}">{{ a.first_names }} {{ a.last_names }}</a> <span class="muted small">llegó {{ fmt_time(a.arrived_at) }} · cita {{ fmt_time(a.starts_at) }}</span></li>{% endfor %}</ul>
+    <ul class="list">{% for a in waiting %}{% set mins = ((parse_utc(now_utc) - parse_utc(a.arrived_at)).total_seconds() // 60)|int if a.arrived_at else None %}
+      <li class="wr-item"><div><a class="strong" href="{{ url_for('agenda.view', appt_id=a.id) }}">{{ a.first_names }} {{ a.last_names }}</a>
+        <span class="muted small">cita {{ fmt_time(a.starts_at) }}{% if mins is not none %} · espera <b>{{ mins }} min</b>{% endif %}</span>
+        {% if a.id in intake_ids %}<span class="tag tag-ok">✓ Preconsulta</span>{% endif %}</div>
+        <div class="btn-row">
+          {% if can('preconsulta.registrar') and a.id not in intake_ids %}<a class="btn btn-sm" href="{{ url_for('agenda.intake', appt_id=a.id, back=request.full_path) }}">Signos vitales</a>{% endif %}
+          {% if can('clinico.editar') and can('agenda.editar') %}
+          <form method="post" action="{{ url_for('agenda.change_status', appt_id=a.id) }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ a.version }}">
+            <input type="hidden" name="status" value="en_consulta"><button class="btn btn-sm btn-primary" type="submit">Atender →</button></form>
+          {% endif %}
+        </div></li>{% endfor %}</ul>
     {% else %}<p class="muted small">Nadie en espera.</p>{% endif %}
+    {% if in_consult %}<h3>En consulta</h3>
+    <ul class="list">{% for a in in_consult %}<li><a href="{{ url_for('agenda.view', appt_id=a.id) }}">{{ a.first_names }} {{ a.last_names }}</a>
+      {% if can('clinico.editar') %} · <a class="small" href="{{ url_for('notes.new', patient_id=a.patient_id, appointment_id=a.id, auto=1) }}">abrir nota</a>{% endif %}</li>{% endfor %}</ul>{% endif %}
   </aside>
 </div>
 {% endblock %}

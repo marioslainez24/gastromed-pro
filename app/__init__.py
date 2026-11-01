@@ -107,7 +107,7 @@ def create_app(config: Config | None = None) -> Flask:
     @app.context_processor
     def _ctx():
         return {"can": can, "label": util.label, "fmt_dt": util.fmt_dt, "fmt_time": util.fmt_time, "age": util.age,
-                "fmt_birth": util.fmt_birth, "current_user": g.get("user"), "csrf_token": g.get("csrf_token"),
+                "fmt_birth": util.fmt_birth, "parse_utc": util.parse_utc, "current_user": g.get("user"), "csrf_token": g.get("csrf_token"),
                 "approved_sheets": _approved_sheets, "ENDO_KINDS": _endo_kinds(), "app_version": APP_VERSION, "asset": lambda f: f"/static/v{APP_VERSION}/{f}", "env": cfg.ENV, "demo_mode": cfg.DEMO, "clinic_cfg": util.clinic_settings}
 
     def _err(code, title, msg):

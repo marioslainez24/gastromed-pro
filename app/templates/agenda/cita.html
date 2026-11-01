@@ -16,6 +16,10 @@
       {% if a.admin_note %}<dt>Nota administrativa</dt><dd>{{ a.admin_note }}</dd>{% endif %}
       <dt>Teléfono</dt><dd>{{ p.phone or '—' }}</dd>
     </dl>
+    {% if intake %}<div class="card intake-box"><b>Preconsulta</b> <span class="small muted">por {{ intake.full_name }}, {{ fmt_time(intake.updated_at) }}</span>
+      <p class="small">{% for key, val in intake_v.items() %}{{ {'pa_sistolica':'PAS','pa_diastolica':'PAD','fc':'FC','fr':'FR','temperatura':'T','spo2':'SpO₂','peso_kg':'Peso','talla_cm':'Talla'}.get(key, key) }} {{ '%g' % val }}{% if not loop.last %} · {% endif %}{% endfor %}
+      {% if intake.motivo %}<br>Motivo: {{ intake.motivo }}{% endif %}</p></div>{% endif %}
+    {% if can('preconsulta.registrar') and a.status not in ('atendida','cancelada','no_asistio') %}<p><a class="btn btn-sm" href="{{ url_for('agenda.intake', appt_id=a.id) }}">{{ 'Corregir preconsulta' if intake else 'Registrar signos vitales y motivo (preconsulta)' }}</a></p>{% endif %}
     {% if note %}<p><a class="btn" href="{{ url_for('notes.view', note_id=note.id) }}">Ver nota ({{ label('note_status', note.status)|lower }})</a></p>
     {% elif can('clinico.editar') and a.status in ('presente','en_consulta','atendida') %}<p><a class="btn btn-primary" href="{{ url_for('notes.new', patient_id=p.id, appointment_id=a.id) }}">Escribir nota de esta consulta</a></p>{% endif %}
 
@@ -26,7 +30,7 @@
         {% if st not in ('en_consulta','atendida') or can('clinico.editar') %}
         <form method="post" action="{{ url_for('agenda.change_status', appt_id=a.id) }}" class="inline" {% if st in ('cancelada','no_asistio') %}data-confirm="¿Marcar la cita como «{{ label('appt_status', st) }}»?"{% endif %}>
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ a.version }}"><input type="hidden" name="status" value="{{ st }}">
-          <button class="btn {{ 'btn-danger-quiet' if st in ('cancelada','no_asistio') else '' }}" type="submit">{{ {'confirmada':'Confirmar','presente':'Registrar llegada','en_consulta':'Iniciar consulta','atendida':'Marcar atendida','no_asistio':'No asistió','cancelada':'Cancelar cita'}[st] }}</button>
+          <button class="btn {{ 'btn-danger-quiet' if st in ('cancelada','no_asistio') else '' }}" type="submit">{{ {'confirmada':'Confirmar','presente':'Registrar llegada','en_consulta':'Atender →','atendida':'Marcar atendida','no_asistio':'No asistió','cancelada':'Cancelar cita'}[st] }}</button>
         </form>
         {% endif %}
       {% endfor %}

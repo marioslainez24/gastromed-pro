@@ -63,9 +63,13 @@ def day():
     s, e = _day_bounds(d)
     rows = _appointments_between(s, e, prac)
     waiting = [r for r in rows if r["status"] == "presente"]
+    in_consult = [r for r in rows if r["status"] == "en_consulta"]
+    intake_ids = {r["appointment_id"] for r in get_db().execute(
+        "SELECT appointment_id FROM appointment_intake WHERE appointment_id IN (%s)" % ",".join("?" * len(rows)), [r["id"] for r in rows])} if rows else set()
     from .views_extras import day_blocks
     blocks = day_blocks(get_db(), g.user["org_id"], d, prac)
     return render_template("agenda/dia.html", d=d, d_label=fmt_date_long(d), rows=rows, waiting=waiting, blocks=blocks,
+                           in_consult=in_consult, intake_ids=intake_ids, now_utc=utcnow(),
                            prev=d - timedelta(days=1), next=d + timedelta(days=1), today=local_today(),
                            practitioners=practitioners(), prac=prac, transitions=TRANSITIONS)
 
@@ -216,7 +220,10 @@ def view(appt_id):
                       (a["id"],)).fetchone() if can("clinico.ver") else None
     start_local = parse_utc(a["starts_at"]).astimezone(clinic_tz())
     minutes = int((parse_utc(a["ends_at"]) - parse_utc(a["starts_at"])).total_seconds() // 60)
+    intake = db.execute("SELECT i.*, u.full_name FROM appointment_intake i JOIN users u ON u.id = i.recorded_by WHERE i.appointment_id = ?",
+                        (a["id"],)).fetchone() if can("clinico.ver") else None
     return render_template("agenda/cita.html", a=a, p=p, events=events, prac=prac, note=note, transitions=TRANSITIONS,
+                           intake=intake, intake_v=json.loads(intake["vitals"]) if intake else {},
                            start_local=start_local.strftime("%Y-%m-%dT%H:%M"), minutes=minutes)
 
 
@@ -246,7 +253,7 @@ def change_status(appt_id):
             abort(409, description="No se puede reactivar: el horario ya está ocupado.")
         raise
     if to == "en_consulta" and can("clinico.editar"):
-        return redirect(url_for("notes.new", patient_id=a["patient_id"], appointment_id=a["id"]))
+        return redirect(url_for("notes.new", patient_id=a["patient_id"], appointment_id=a["id"], auto=1))
     back = request.form.get("back")
     if back and back.startswith("/") and not back.startswith("//"):
         return redirect(back)
@@ -293,3 +300,50 @@ def reschedule(appt_id):
         raise
     flash("Cita reprogramada. Quedó en estado «Solicitada» hasta confirmar con el paciente.", "ok")
     return redirect(url_for("agenda.view", appt_id=a["id"]))
+
+
+# ------------------------------------------------------------------------------------------------ preconsulta (enfermería)
+@bp.route("/cita/<appt_id>/preconsulta", methods=["GET", "POST"])
+@require("preconsulta.registrar")
+def intake(appt_id):
+    from .views_notes import VITALS, _clean_fields
+    a = _get_appt(appt_id)
+    if a["status"] in ("atendida", "cancelada", "no_asistio"):
+        abort(409, description="La cita ya terminó: los signos vitales se registran en la nota.")
+    db = get_db()
+    p = db.execute("SELECT * FROM patients WHERE id = ?", (a["patient_id"],)).fetchone()
+    row = db.execute("SELECT * FROM appointment_intake WHERE appointment_id = ?", (a["id"],)).fetchone()
+    data = {"vitales": json.loads(row["vitals"]) if row else {}, "motivo": row["motivo"] if row else ""}
+    errors = {}
+    if request.method == "POST":
+        fields, errors = _clean_fields({k: v for k, v in request.form.items() if k.startswith("v_") or k == "motivo"}, "soap")
+        motivo = (fields.get("motivo") or "").strip()[:2000] or None
+        if not errors:
+            with write_tx(db):
+                if row:
+                    db.execute("UPDATE appointment_intake SET vitals = ?, motivo = ?, recorded_by = ?, updated_at = ? WHERE appointment_id = ?",
+                               (json.dumps(fields["vitales"]), motivo, g.user["id"], utcnow(), a["id"]))
+                else:
+                    db.execute("INSERT INTO appointment_intake(appointment_id, org_id, vitals, motivo, recorded_by, recorded_at, updated_at)"
+                               " VALUES (?,?,?,?,?,?,?)", (a["id"], g.user["org_id"], json.dumps(fields["vitales"]), motivo, g.user["id"],
+                                                          utcnow(), utcnow()))
+                # si el médico ya abrió la nota en borrador y está vacía en esos campos, se completan
+                n = db.execute("SELECT id, fields FROM clinical_notes WHERE appointment_id = ? AND status = 'borrador'", (a["id"],)).fetchone()
+                if n:
+                    f = json.loads(n["fields"])
+                    changed = False
+                    if not f.get("vitales") and fields["vitales"]:
+                        f["vitales"] = fields["vitales"]
+                        changed = True
+                    if not f.get("motivo") and motivo:
+                        f["motivo"] = motivo
+                        changed = True
+                    if changed:
+                        db.execute("UPDATE clinical_notes SET fields = ?, updated_at = ?, version = version + 1 WHERE id = ?",
+                                   (json.dumps(f, ensure_ascii=False, sort_keys=True), utcnow(), n["id"]))
+                audit("preconsulta_registrada", "cita", a["id"], {"paciente": a["patient_id"]}, db=db)
+            flash("Preconsulta guardada: el médico la encontrará en la nota.", "ok")
+            back = request.form.get("back") or ""
+            return redirect(back if back.startswith("/") and not back.startswith("//") else url_for("agenda.view", appt_id=a["id"]))
+        data = {"vitales": {k[2:]: request.form.get(k) for k in request.form if k.startswith("v_")}, "motivo": request.form.get("motivo", "")}
+    return render_template("agenda/preconsulta.html", a=a, p=p, data=data, errors=errors, vitals=VITALS), 422 if errors else 200

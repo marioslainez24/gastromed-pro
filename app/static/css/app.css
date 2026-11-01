@@ -462,3 +462,8 @@ fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
 [data-efind-msg].is-error { color: var(--danger); font-weight: 600; }
 .dx-suggest { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; margin: .3rem 0; padding: .45rem; border-radius: 8px; background: var(--ok-soft); }
 .dx-sug { border-color: var(--ok); }
+
+/* Sala de espera (v0.13.0) */
+.waiting-room .wr-item { display: grid; gap: .35rem; padding: .5rem 0; border-bottom: 1px solid var(--line); }
+.waiting-room .wr-item .tag { margin-left: .3rem; }
+.intake-box { background: var(--ok-soft); padding: .55rem .7rem; margin: .4rem 0; }

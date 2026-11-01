@@ -109,17 +109,29 @@ def new():
         if existing:
             return redirect(url_for("notes.view", note_id=existing["id"]))
     has_prior = db.execute("SELECT 1 FROM clinical_notes WHERE patient_id = ? AND status = 'finalizada' LIMIT 1", (p["id"],)).fetchone()
-    if request.method == "POST":
-        kind = request.form.get("kind")
-        template = request.form.get("template")
+    auto = request.method == "GET" and request.args.get("auto") == "1" and appt_id
+    if request.method == "POST" or auto:
+        if auto:   # «Atender» desde la agenda: tipo sugerido y la última plantilla que usó este médico
+            kind = "subsecuente" if has_prior else "primera"
+            last = db.execute("SELECT template FROM clinical_notes WHERE author_id = ? ORDER BY created_at DESC LIMIT 1", (g.user["id"],)).fetchone()
+            template = last["template"] if last else "soap"
+        else:
+            kind = request.form.get("kind")
+            template = request.form.get("template")
         if kind not in ("primera", "subsecuente") or template not in TEMPLATES:
             abort(400)
         nid = new_id()
+        start = {"vitales": {}}
+        intake = db.execute("SELECT vitals, motivo FROM appointment_intake WHERE appointment_id = ?", (appt_id,)).fetchone() if appt_id else None
+        if intake:   # preconsulta de enfermería
+            start["vitales"] = json.loads(intake["vitals"])
+            if intake["motivo"]:
+                start["motivo"] = intake["motivo"]
         with write_tx(db):
             db.execute("INSERT INTO clinical_notes(id, org_id, patient_id, appointment_id, author_id, kind, template, fields, status,"
                        " created_at, updated_at, updated_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                        (nid, g.user["org_id"], p["id"], appt_id, g.user["id"], kind, template,
-                        json.dumps({"vitales": {}}, ensure_ascii=False), "borrador", utcnow(), utcnow(), g.user["id"]))
+                        json.dumps(start, ensure_ascii=False, sort_keys=True), "borrador", utcnow(), utcnow(), g.user["id"]))
             audit("nota_creada", "nota", nid, {"paciente": p["id"]}, db=db)
         return redirect(url_for("notes.view", note_id=nid))
     return render_template("notas/nueva.html", p=p, appointment_id=appt_id, suggested="subsecuente" if has_prior else "primera")
@@ -232,6 +244,13 @@ def finalize(note_id):
         if cur.rowcount == 0:
             abort(409, description="La nota cambió antes de finalizar. Revise la versión actual y vuelva a finalizar.")
         audit("nota_finalizada", "nota", n["id"], {"sha256": digest}, db=db)
+        if n["appointment_id"]:   # la cita en consulta pasa a «atendida»
+            a = db.execute("SELECT id, status FROM appointments WHERE id = ?", (n["appointment_id"],)).fetchone()
+            if a and a["status"] == "en_consulta":
+                db.execute("UPDATE appointments SET status = 'atendida', updated_at = ?, version = version + 1 WHERE id = ?", (utcnow(), a["id"]))
+                db.execute("INSERT INTO appointment_events(id, appointment_id, at, user_id, action, from_status, to_status, detail)"
+                           " VALUES (?,?,?,?,?,?,?,?)", (new_id(), a["id"], utcnow(), g.user["id"], "estado", "en_consulta", "atendida",
+                                                         "Automático al finalizar la nota"))
     flash("Nota finalizada. Ya no puede modificarse; las correcciones se registran como adendas.", "ok")
     return redirect(url_for("notes.view", note_id=n["id"]))
 
