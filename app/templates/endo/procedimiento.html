@@ -232,7 +232,7 @@
     {% if can('notas.finalizar') %}<button class="btn btn-primary" type="submit" name="then" value="finalizar">Finalizar…</button>{% endif %}
   </div>
 </form>
-<form method="post" class="discard-form discard-bottom" action="{{ url_for('endo.proc_discard', proc_id=pr.id) }}"
+<form method="post" class="discard-form discard-bottom" action="{{ url_for('endo.proc_discard', proc_id=pr.id) }}" data-discard
   data-confirm="¿Descartar este borrador? Dejará de aparecer en las listas y no se podrá recuperar desde el programa. Use esta opción solo si el informe no se va a usar.">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-quiet btn-sm" type="submit">✕ Descartar este borrador</button></form>
 {% else %}

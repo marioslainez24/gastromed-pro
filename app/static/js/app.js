@@ -101,7 +101,10 @@
 
   // ---- Confirmaciones y utilidades -----------------------------------------
   $$("form[data-confirm]").forEach(function (f) {
-    f.addEventListener("submit", function (e) { if (!window.confirm(f.getAttribute("data-confirm"))) e.preventDefault(); });
+    f.addEventListener("submit", function (e) {
+      if (!window.confirm(f.getAttribute("data-confirm"))) e.preventDefault();
+      else if (f.hasAttribute("data-discard")) dirty = false;     // descartar: no preguntar por cambios sin guardar
+    });
   });
   $$("[data-autosubmit]").forEach(function (s) { s.addEventListener("change", function () { s.form.submit(); }); });
   $$("[data-back]").forEach(function (a) {

@@ -111,7 +111,7 @@ Actualizada: 1 de noviembre de 2026 · versión 0.18.0 (rama desarrollo; publica
 | C.10 | Notas de enfermería del procedimiento que alimentan el informe | 3 | ⬜ |
 | C.11 | Indicadores de calidad (tasa de detección de adenomas, etc.) | 3 | ⬜ |
 | C.12 | Calculadoras de otras especialidades (v0.17.0): CKD-EPI 2021, Cockcroft-Gault, calcio corregido, brecha aniónica, CHA₂DS₂-VASc, HAS-BLED, QTc Bazett, CURB-65, qSOFA, Glasgow, superficie corporal; con fuente y casos de referencia. Cada una requiere aprobación del propietario antes de guardarse en el expediente | 2 | ✅ (🟡 aprobación clínica) |
-| C.14 | Descartar informes de endoscopia en borrador (se ocultan, no se borran; quedan en la auditoría) — v0.18.0 | 3 | ✅ |
+| C.14 | Descartar informes de endoscopia y notas de consulta en borrador (se ocultan, no se borran; quedan en la auditoría) — v0.18.0 | 2–3 | ✅ |
 | C.13 | Diario de síntomas: pantalla quitada en v0.17.0 a pedido del Dr. Lainez (los registros antiguos se conservan en la base) | 2 | — |
 
 ## Fases 2 a 5 (alcance conservado)

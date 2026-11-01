@@ -191,7 +191,7 @@ def view(patient_id):
                                       (p["id"],)).fetchall()
         ctx["notes"] = db.execute(
             "SELECT n.*, u.full_name AS author, (SELECT COUNT(*) FROM note_addenda x WHERE x.note_id = n.id) AS addenda"
-            " FROM clinical_notes n JOIN users u ON u.id = n.author_id WHERE n.patient_id = ? AND n.org_id = ?"
+            " FROM clinical_notes n JOIN users u ON u.id = n.author_id WHERE n.patient_id = ? AND n.org_id = ? AND n.discarded_at IS NULL"
             " ORDER BY n.created_at DESC", (p["id"], g.user["org_id"])).fetchall()
         ctx["prescriptions"] = db.execute(
             "SELECT r.*, u.full_name AS author, (SELECT GROUP_CONCAT(active_ingredient, ', ') FROM prescription_items i"

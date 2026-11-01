@@ -58,7 +58,7 @@ def new():
     p = get_patient_or_404(src.get("patient_id", ""))
     db = get_db()
     note_id = src.get("note_id") or None
-    if note_id and not db.execute("SELECT 1 FROM clinical_notes WHERE id = ? AND patient_id = ? AND org_id = ?",
+    if note_id and not db.execute("SELECT 1 FROM clinical_notes WHERE id = ? AND patient_id = ? AND org_id = ? AND discarded_at IS NULL",
                                   (note_id, p["id"], g.user["org_id"])).fetchone():
         abort(404)
     allergies = db.execute("SELECT * FROM patient_allergies WHERE patient_id = ? AND active = 1", (p["id"],)).fetchall()

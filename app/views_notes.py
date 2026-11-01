@@ -94,7 +94,7 @@ def _get_note(note_id):
         abort(404)
     n = get_db().execute("SELECT n.*, u.full_name AS author, f.full_name AS finalizer FROM clinical_notes n"
                          " JOIN users u ON u.id = n.author_id LEFT JOIN users f ON f.id = n.finalized_by"
-                         " WHERE n.id = ? AND n.org_id = ?", (note_id, g.user["org_id"])).fetchone()
+                         " WHERE n.id = ? AND n.org_id = ? AND n.discarded_at IS NULL", (note_id, g.user["org_id"])).fetchone()
     if not n:
         abort(404)
     return n
@@ -147,7 +147,7 @@ def new():
                        (appt_id, p["id"], g.user["org_id"])).fetchone()
         if not a:
             abort(404)
-        existing = db.execute("SELECT id FROM clinical_notes WHERE appointment_id = ? AND status = 'borrador' AND author_id = ?",
+        existing = db.execute("SELECT id FROM clinical_notes WHERE appointment_id = ? AND status = 'borrador' AND author_id = ? AND discarded_at IS NULL",
                               (appt_id, g.user["id"])).fetchone()
         if existing:
             return redirect(url_for("notes.view", note_id=existing["id"]))
@@ -268,6 +268,22 @@ def save(note_id):
         return redirect(url_for("notes.view", note_id=n["id"]))
     flash("Borrador guardado.", "ok")
     return redirect(url_for("notes.view", note_id=n["id"]))
+
+
+@bp.route("/<note_id>/descartar", methods=["POST"])
+@require("clinico.editar")
+def discard(note_id):
+    """Quita de las listas una nota en borrador que no se va a usar (no se borra: queda marcada y en la auditoría)."""
+    n = _get_note(note_id)
+    if n["status"] != "borrador" or n["author_id"] != g.user["id"]:
+        abort(409, description="Solo el autor puede descartar una nota, y solo mientras está en borrador.")
+    db = get_db()
+    with write_tx(db):
+        db.execute("UPDATE clinical_notes SET discarded_at = ?, discarded_by = ?, version = version + 1 WHERE id = ? AND status = 'borrador'",
+                   (utcnow(), g.user["id"], n["id"]))
+        audit("nota_descartada", "nota", n["id"], {"tipo": n["kind"]}, db=db)
+    flash("Nota en borrador descartada.", "ok")
+    return redirect(url_for("patients.view", patient_id=n["patient_id"]))
 
 
 @bp.route("/<note_id>/finalizar", methods=["POST"])

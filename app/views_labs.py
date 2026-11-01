@@ -78,7 +78,7 @@ def order_new():
     p = get_patient_or_404(src.get("patient_id", ""))
     db = get_db()
     note_id = src.get("note_id") or None
-    if note_id and not db.execute("SELECT 1 FROM clinical_notes WHERE id = ? AND patient_id = ?", (note_id, p["id"])).fetchone():
+    if note_id and not db.execute("SELECT 1 FROM clinical_notes WHERE id = ? AND patient_id = ? AND discarded_at IS NULL", (note_id, p["id"])).fetchone():
         abort(404)
     otype = src.get("order_type") or "laboratorio"     # laboratorio | imagen | endoscopia | colonoscopia (pantalla)
     if otype != "laboratorio" and otype not in SC.KINDS:

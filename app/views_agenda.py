@@ -216,7 +216,7 @@ def view(appt_id):
     events = db.execute("SELECT e.*, u.full_name FROM appointment_events e JOIN users u ON u.id = e.user_id"
                         " WHERE e.appointment_id = ? ORDER BY e.at", (a["id"],)).fetchall()
     prac = db.execute("SELECT full_name FROM users WHERE id = ?", (a["practitioner_id"],)).fetchone()
-    note = db.execute("SELECT id, status FROM clinical_notes WHERE appointment_id = ? ORDER BY created_at DESC LIMIT 1",
+    note = db.execute("SELECT id, status FROM clinical_notes WHERE appointment_id = ? AND discarded_at IS NULL ORDER BY created_at DESC LIMIT 1",
                       (a["id"],)).fetchone() if can("clinico.ver") else None
     start_local = parse_utc(a["starts_at"]).astimezone(clinic_tz())
     minutes = int((parse_utc(a["ends_at"]) - parse_utc(a["starts_at"])).total_seconds() // 60)
@@ -328,7 +328,7 @@ def intake(appt_id):
                                " VALUES (?,?,?,?,?,?,?)", (a["id"], g.user["org_id"], json.dumps(fields["vitales"]), motivo, g.user["id"],
                                                           utcnow(), utcnow()))
                 # si el médico ya abrió la nota en borrador y está vacía en esos campos, se completan
-                n = db.execute("SELECT id, fields FROM clinical_notes WHERE appointment_id = ? AND status = 'borrador'", (a["id"],)).fetchone()
+                n = db.execute("SELECT id, fields FROM clinical_notes WHERE appointment_id = ? AND status = 'borrador' AND discarded_at IS NULL", (a["id"],)).fetchone()
                 if n:
                     f = json.loads(n["fields"])
                     changed = False

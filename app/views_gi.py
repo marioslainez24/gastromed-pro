@@ -17,7 +17,7 @@ bp = Blueprint("gi", __name__)
 def _get_note(note_id):
     if not re.fullmatch(r"[0-9a-f]{32}", note_id or ""):
         abort(404)
-    n = get_db().execute("SELECT * FROM clinical_notes WHERE id = ? AND org_id = ?", (note_id, g.user["org_id"])).fetchone()
+    n = get_db().execute("SELECT * FROM clinical_notes WHERE id = ? AND org_id = ? AND discarded_at IS NULL", (note_id, g.user["org_id"])).fetchone()
     if not n:
         abort(404)
     return n

@@ -45,3 +45,40 @@ def test_informe_finalizado_no_se_puede_descartar(env):
     assert med.post(f"/procedimientos/{proc}/descartar", data={"csrf_token": tok}).status_code == 409
     with pytest.raises(sqlite3.DatabaseError):
         env["db"].execute("UPDATE procedures SET discarded_at = '2026-11-01' WHERE id = ?", (proc,))
+
+
+def test_descartar_nota_en_borrador(env):
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    nid = med.post("/notas/nueva", data={"csrf_token": tok, "patient_id": pid, "kind": "primera", "template": "soap"}
+                   ).headers["Location"].rsplit("/", 1)[-1]
+    exp = med.get(f"/pacientes/{pid}").get_data(as_text=True)
+    assert f"/notas/{nid}/descartar" in exp and "1 nota(s) de consulta en borrador" in exp
+    assert "Descartar esta nota" in med.get(f"/notas/{nid}").get_data(as_text=True)
+    otro = login(env["app"], "medico")
+    assert otro.post(f"/notas/{nid}/descartar", data={"csrf_token": csrf(otro)}).status_code == 409
+    r = med.post(f"/notas/{nid}/descartar", data={"csrf_token": tok})
+    assert r.status_code == 302 and r.headers["Location"].endswith(f"/pacientes/{pid}")
+    exp = med.get(f"/pacientes/{pid}").get_data(as_text=True)
+    assert nid not in exp and "en borrador</a>" not in exp
+    assert med.get(f"/notas/{nid}").status_code == 404
+    assert med.post(f"/notas/{nid}/guardar", data={"csrf_token": tok, "motivo": "x"}).status_code == 404
+    db = env["db"]
+    assert db.execute("SELECT discarded_at IS NOT NULL FROM clinical_notes WHERE id = ?", (nid,)).fetchone()[0] == 1
+    assert db.execute("SELECT COUNT(*) FROM audit_log WHERE action = 'nota_descartada' AND entity_id = ?", (nid,)).fetchone()[0] == 1
+    with pytest.raises(sqlite3.DatabaseError):
+        db.execute("UPDATE clinical_notes SET fields = '{}' WHERE id = ?", (nid,))
+
+
+def test_nota_finalizada_no_se_descarta(env):
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    nid = med.post("/notas/nueva", data={"csrf_token": tok, "patient_id": pid, "kind": "primera", "template": "soap"}
+                   ).headers["Location"].rsplit("/", 1)[-1]
+    env["db"].execute("UPDATE clinical_notes SET status = 'finalizada', finalized_at = '2026-11-01T00:00:00Z' WHERE id = ?", (nid,))
+    env["db"].commit()
+    assert med.post(f"/notas/{nid}/descartar", data={"csrf_token": tok}).status_code == 409
+    with pytest.raises(sqlite3.DatabaseError):
+        env["db"].execute("UPDATE clinical_notes SET discarded_at = '2026-11-01' WHERE id = ?", (nid,))

@@ -37,7 +37,7 @@
     {% include "pacientes/_resumen.html" %}
     {% include "pacientes/_clinico.html" %}
     <section class="card">
-      <h2>Historia cronológica</h2>
+      <h2 id="historia">Historia cronológica</h2>
       {% set items = [] %}
       {% for n in notes %}{% set _ = items.append(('nota', n.created_at, n)) %}{% endfor %}
       {% for r in prescriptions %}{% set _ = items.append(('receta', r.issued_at, r)) %}{% endfor %}
@@ -51,6 +51,9 @@
             <span class="tag {{ 'tag-ok' if it.status == 'finalizada' else 'tag-warn' }}">{{ label('note_status', it.status) }}</span>
             {% if it.addenda %}<span class="tag">{{ it.addenda }} adenda(s)</span>{% endif %}
             <span class="muted small">· {{ it.author }}</span>
+            {% if it.status == 'borrador' and it.author_id == current_user.id and can('clinico.editar') %}<form method="post" class="discard-form" action="{{ url_for('notes.discard', note_id=it.id) }}"
+              data-confirm="¿Descartar esta nota en borrador del {{ fmt_dt(ts) }}? Dejará de aparecer en el expediente y no se podrá recuperar desde el programa. Las recetas, órdenes y documentos ya emitidos no se anulan.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-quiet btn-sm" type="submit">✕ Descartar</button></form>{% endif %}
           {% else %}
             <a href="{{ url_for('rx.view', rx_id=it.id) }}" class="strong">Receta</a>
             {% if it.status == 'anulada' %}<span class="tag tag-danger">Anulada</span>{% endif %}

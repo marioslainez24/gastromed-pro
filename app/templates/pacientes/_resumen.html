@@ -30,7 +30,8 @@
         {% for o in P.orders %}<li><a href="{{ url_for('labs.order_view', order_id=o.id) }}">Orden de {{ o.order_type }}</a> del {{ fmt_dt(o.created_at, false) }}: {{ (o.items or '')[:80] }}{% if (o.items or '')|length > 80 %}…{% endif %}</li>{% endfor %}
         {% if P.to_review %}<li><a href="{{ url_for('labs.patient_labs', patient_id=p.id) }}">{{ P.to_review }} resultado(s) por revisar</a></li>{% endif %}
         {% for t in P.tasks %}<li>Tarea: {{ t.title }}{% if t.due_on %} ({{ fmt_birth(t.due_on) }}){% endif %}</li>{% endfor %}
-        {% if P.drafts %}<li>{{ P.drafts }} nota(s) o informe(s) en borrador</li>{% endif %}
+        {% if P.draft_notes %}<li><a href="#historia">{{ P.draft_notes }} nota(s) de consulta en borrador</a> (en «Historia cronológica»)</li>{% endif %}
+        {% if P.draft_procs %}<li><a href="{{ url_for('endo.patient_procs', patient_id=p.id) }}">{{ P.draft_procs }} informe(s) de endoscopia en borrador</a></li>{% endif %}
       </ul>{% else %}<p class="muted small">Nada pendiente.</p>{% endif %}</div>
     <div class="sum-box"><h3>Cálculos con los últimos laboratorios</h3>
       {% for c in S.calcs %}<div class="calc-quick">

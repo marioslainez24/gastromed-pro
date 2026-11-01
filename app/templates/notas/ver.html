@@ -106,6 +106,9 @@
       {% if can('notas.finalizar') %}<button class="btn btn-primary" type="submit" name="then" value="finalizar">Finalizar…</button>{% endif %}
     </div>
   </form>
+  <form method="post" class="discard-form discard-bottom" action="{{ url_for('notes.discard', note_id=n.id) }}" data-discard
+    data-confirm="¿Descartar esta nota en borrador? Dejará de aparecer en el expediente y no se podrá recuperar desde el programa. Las recetas, órdenes y documentos ya emitidos no se anulan.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-quiet btn-sm" type="submit">✕ Descartar esta nota</button></form>
 {% else %}
   {% if n.status == 'borrador' %}<div class="flash flash-info">Borrador en edición por {{ n.author }}. Solo su autor puede modificarlo.</div>{% endif %}
   {% for title, keys in sections %}
