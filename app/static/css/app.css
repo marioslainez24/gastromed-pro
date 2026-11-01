@@ -488,3 +488,8 @@ button.hea-chip { font: inherit; font-size: .88rem; color: inherit; }
 .ant-rel, .ant-habit { display: inline-flex; flex-wrap: wrap; gap: .3rem; align-items: center; margin-right: .6rem; }
 [data-ant-msg].is-error { color: var(--danger); font-weight: 600; }
 .ant-clic select { max-width: 220px; }
+
+/* v0.18: descartar borradores de endoscopia */
+.discard-form { display: inline-block; margin: 0 0 0 .5rem; }
+.discard-form .btn { color: var(--danger); }
+.discard-bottom { display: block; margin: 1rem 0 0; }

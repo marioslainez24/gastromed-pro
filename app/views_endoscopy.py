@@ -28,7 +28,7 @@ def _get_proc(pid):
     if not _id_ok(pid):
         abort(404)
     r = get_db().execute("SELECT pr.*, u.full_name AS author FROM procedures pr JOIN users u ON u.id = pr.author_id"
-                         " WHERE pr.id = ? AND pr.org_id = ?", (pid, g.user["org_id"])).fetchone()
+                         " WHERE pr.id = ? AND pr.org_id = ? AND pr.discarded_at IS NULL", (pid, g.user["org_id"])).fetchone()
     if not r:
         abort(404)
     return r
@@ -283,6 +283,24 @@ def proc_save(proc_id):
     else:
         flash("Informe guardado.", "ok")
     return redirect(url_for("endo.proc_view", proc_id=pr["id"]))
+
+
+@bp.route("/procedimientos/<proc_id>/descartar", methods=["POST"])
+@require("clinico.editar")
+def proc_discard(proc_id):
+    """Quita de las listas un informe en borrador que no se va a usar (no se borra: queda marcado y en la auditoría)."""
+    pr = _get_proc(proc_id)
+    if pr["status"] != "borrador" or pr["author_id"] != g.user["id"]:
+        abort(409, description="Solo el autor puede descartar un informe, y solo mientras está en borrador.")
+    db = get_db()
+    with write_tx(db):
+        db.execute("UPDATE procedures SET discarded_at = ?, discarded_by = ?, version = version + 1 WHERE id = ? AND status = 'borrador'",
+                   (utcnow(), g.user["id"], pr["id"]))
+        audit("procedimiento_descartado", "procedimiento", pr["id"], {"tipo": pr["kind"], "fecha": pr["performed_on"]}, db=db)
+    flash(f"Borrador de {D.KINDS[pr['kind']].lower()} del {pr['performed_on'][8:10]}/{pr['performed_on'][5:7]}/{pr['performed_on'][:4]} descartado.", "ok")
+    if request.form.get("back") == "endoscopia":
+        return redirect(url_for("endo.index"))
+    return redirect(url_for("endo.patient_procs", patient_id=pr["patient_id"]))
 
 
 @bp.route("/procedimientos/<proc_id>/finalizar", methods=["POST"])
@@ -621,7 +639,7 @@ def index():
     org = g.user["org_id"]
     today = local_today().isoformat()
     recent = db.execute("SELECT pr.*, p.first_names, p.last_names, p.mrn FROM procedures pr JOIN patients p ON p.id = pr.patient_id"
-                        " WHERE pr.org_id = ? ORDER BY pr.performed_on DESC, pr.created_at DESC LIMIT 50", (org,)).fetchall()
+                        " WHERE pr.org_id = ? AND pr.discarded_at IS NULL ORDER BY pr.performed_on DESC, pr.created_at DESC LIMIT 50", (org,)).fetchall()
     path = db.execute("SELECT s.*, p.first_names, p.last_names, pr.kind, pr.performed_on FROM specimens s JOIN patients p ON p.id = s.patient_id"
                       " JOIN procedures pr ON pr.id = s.procedure_id WHERE s.org_id = ? AND s.status IN ('pendiente_envio','enviado','resultado_recibido')"
                       " ORDER BY pr.performed_on", (org,)).fetchall()
@@ -640,7 +658,7 @@ def patient_procs(patient_id):
     p = get_patient_or_404(patient_id)
     db = get_db()
     rows = db.execute("SELECT pr.*, u.full_name AS author FROM procedures pr JOIN users u ON u.id = pr.author_id WHERE pr.patient_id = ?"
-                      " ORDER BY pr.performed_on DESC", (p["id"],)).fetchall()
+                      " AND pr.discarded_at IS NULL ORDER BY pr.performed_on DESC, pr.created_at DESC", (p["id"],)).fetchall()
     stents = db.execute("SELECT * FROM stents WHERE patient_id = ? ORDER BY placed_on DESC", (p["id"],)).fetchall()
     return render_template("endo/paciente.html", p=p, rows=rows, stents=stents, D=D, today=local_today().isoformat())
 
@@ -759,7 +777,7 @@ def equipment():
     log = db.execute("SELECT r.*, s.name, u.full_name FROM scope_reprocessing r JOIN scopes s ON s.id = r.scope_id JOIN users u ON u.id = r.done_by"
                      " WHERE r.org_id = ? ORDER BY r.done_at DESC LIMIT 100", (org,)).fetchall()
     recent = db.execute("SELECT pr.id, pr.kind, pr.performed_on, p.last_names FROM procedures pr JOIN patients p ON p.id = pr.patient_id"
-                        " WHERE pr.org_id = ? ORDER BY pr.created_at DESC LIMIT 20", (org,)).fetchall()
+                        " WHERE pr.org_id = ? AND pr.discarded_at IS NULL ORDER BY pr.created_at DESC LIMIT 20", (org,)).fetchall()
     return render_template("endo/equipos.html", eq=eq, log=log, recent=recent, D=D)
 
 

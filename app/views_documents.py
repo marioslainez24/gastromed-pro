@@ -294,7 +294,7 @@ def referrer_letter():
         body = letter_from_note(db, src, p, s)
         draft = src["status"] != "finalizada"
     elif pid_ and re.fullmatch(r"[0-9a-f]{32}", pid_):
-        src = db.execute("SELECT * FROM procedures WHERE id = ? AND org_id = ?", (pid_, g.user["org_id"])).fetchone() or abort(404)
+        src = db.execute("SELECT * FROM procedures WHERE id = ? AND org_id = ? AND discarded_at IS NULL", (pid_, g.user["org_id"])).fetchone() or abort(404)
         p = get_patient_or_404(src["patient_id"])
         body = letter_from_proc(db, src, p, s)
         draft = src["status"] != "finalizado"

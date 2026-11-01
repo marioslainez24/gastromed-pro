@@ -57,7 +57,7 @@ def summary(db, p, approved=None):
         "to_review": db.execute("SELECT COUNT(*) FROM lab_results WHERE patient_id = ? AND status = 'pendiente_revision'", (pid,)).fetchone()[0],
         "tasks": db.execute("SELECT title, due_on FROM tasks WHERE patient_id = ? AND status = 'abierta' ORDER BY due_on", (pid,)).fetchall(),
         "drafts": db.execute("SELECT COUNT(*) FROM clinical_notes WHERE patient_id = ? AND status = 'borrador'", (pid,)).fetchone()[0]
-        + db.execute("SELECT COUNT(*) FROM procedures WHERE patient_id = ? AND status = 'borrador'", (pid,)).fetchone()[0],
+        + db.execute("SELECT COUNT(*) FROM procedures WHERE patient_id = ? AND status = 'borrador' AND discarded_at IS NULL", (pid,)).fetchone()[0],
     }
     out["next_appt"] = db.execute("SELECT id, starts_at, appt_type FROM appointments WHERE patient_id = ? AND starts_at > ?"
                                   " AND status IN ('solicitada','confirmada') ORDER BY starts_at LIMIT 1", (pid, utcnow())).fetchone()

@@ -43,7 +43,10 @@
     <thead><tr><th>Fecha</th><th>Paciente</th><th>Estudio</th><th>Estado</th></tr></thead>
     <tbody>{% for r in recent %}<tr><td>{{ fmt_birth(r.performed_on) }}</td><td>{{ r.first_names }} {{ r.last_names }} <span class="muted small">{{ r.mrn }}</span></td>
       <td><a href="{{ url_for('endo.proc_view', proc_id=r.id) }}">{{ D.KINDS[r.kind] }}</a></td>
-      <td><span class="tag {{ 'tag-ok' if r.status == 'finalizado' else 'tag-warn' }}">{{ 'Finalizado' if r.status == 'finalizado' else 'Borrador' }}</span></td></tr>{% endfor %}</tbody>
+      <td><span class="tag {{ 'tag-ok' if r.status == 'finalizado' else 'tag-warn' }}">{{ 'Finalizado' if r.status == 'finalizado' else 'Borrador' }}</span>
+        {% if r.status == 'borrador' and r.author_id == current_user.id and can('clinico.editar') %}<form method="post" class="discard-form" action="{{ url_for('endo.proc_discard', proc_id=r.id) }}"
+          data-confirm="¿Descartar este borrador de {{ D.KINDS[r.kind]|lower }} de {{ r.first_names }} {{ r.last_names }} del {{ fmt_birth(r.performed_on) }}? Dejará de aparecer en las listas y no se podrá recuperar desde el programa.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="back" value="endoscopia"><button class="btn btn-quiet btn-sm" type="submit">✕ Descartar</button></form>{% endif %}</td></tr>{% endfor %}</tbody>
   </table></div>{% else %}<p class="muted small">Sin procedimientos.</p>{% endif %}
 </section>
 {% endblock %}

@@ -11,6 +11,16 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 18 · 1-nov-2026 · Descartar informes de endoscopia en borrador (v0.18.0 · rama `desarrollo`, SIN publicar)
+
+**Pedido del Dr. Lainez:** una opción para quitar de la lista los informes de endoscopia que quedaron en «Borrador».
+- Botón **«✕ Descartar»** junto a cada borrador (pestaña Procedimientos del paciente y lista de Endoscopia) y **«✕ Descartar este borrador»**
+  al pie del informe. Pide confirmación.
+- Solo el autor y solo en borrador. Un informe finalizado no se puede descartar (lo impide también la base de datos).
+- No se borra: migración 0013 agrega `discarded_at`/`discarded_by`; el informe deja de verse en listas, resumen y cartas, queda en la
+  auditoría (`procedimiento_descartado`) y ya no se puede modificar (trigger).
+**Cómo se comprobó**: 176 pruebas (`test_v018.py`); navegador real PC y celular actualizando desde v0.17.0; prueba del ejecutable.
+
 ## Etapa 17 · 1-nov-2026 · Sin dictado ni diario; calculadoras de otras especialidades (v0.17.0 · PUBLICADA)
 
 **Pedido del Dr. Lainez:** «quita la opción de dictar y lo de diario de síntomas, añade más cálculos aparte de los de gastroenterología y haz
