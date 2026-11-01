@@ -12,4 +12,5 @@
   {% else %}<p class="muted small">Sin procedimientos.</p>{% endif %}
 </section>
 {% if stents %}<section class="card"><h2>Prótesis</h2><ul class="list">{% for s in stents %}<li>{{ s.kind }}{% if s.description %} · {{ s.description }}{% endif %} · {{ fmt_birth(s.placed_on) }}{% if s.review_due %} · revisión {{ fmt_birth(s.review_due) }}{% endif %} · <b>{{ s.status }}</b></li>{% endfor %}</ul></section>{% endif %}
+{% set cita = None %}{% include "endo/_hojas_links.html" %}
 {% endblock %}

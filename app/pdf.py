@@ -518,3 +518,24 @@ def jar_labels_pdf(pr, d, p, s, size, kind_label) -> bytes:
         c.drawString(20 * mm, pagesize[1] - 30 * mm, "El informe no tiene frascos registrados.")
     c.save()
     return buf.getvalue()
+
+
+def sheet_pdf(title, body, s, size, assets=None) -> bytes:
+    """Hoja de preparación o consentimiento con el encabezado del consultorio."""
+    buf = io.BytesIO()
+    pagesize = LETTER if size == "carta" else A4
+    doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=20 * mm, rightMargin=20 * mm, topMargin=16 * mm, bottomMargin=18 * mm,
+                            title=title, author=s["doctor_display_name"], creator="GastroMed Pro")
+    width = pagesize[0] - 40 * mm
+    story = [Paragraph(_e(s["doctor_display_name"]), ST["doctor"])]
+    sub = [x for x in [s["specialty"], s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
+    if sub:
+        story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
+    story = _with_logo(story, assets, width)
+    story += [Spacer(1, 5 * mm), Paragraph(_e(title), ST["title"]), Spacer(1, 4 * mm)]
+    style = ParagraphStyle("sheet", **{**_base, "fontSize": 10.5, "leading": 15})
+    for block in body.split("\n\n"):
+        story.append(Paragraph(_e(block).replace("\n", "<br/>"), style))
+        story.append(Spacer(1, 3 * mm))
+    doc.build(story)
+    return buf.getvalue()

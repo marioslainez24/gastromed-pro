@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Hojas de preparación y consentimiento{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Hojas de preparación y consentimiento</h1><a class="btn btn-quiet" href="{{ url_for('endo.index') }}">← Endoscopia</a></div>
+<p class="muted">Escriba sus indicaciones y su consentimiento para cada estudio. Al guardar quedan <b>aprobados</b> y se pueden imprimir desde la cita o el
+  expediente, con los datos del paciente y la fecha y hora de la cita ya puestos. El borrador inicial no trae productos, dosis ni riesgos: complételo usted.</p>
+<nav class="seg tabs" aria-label="Tipo de estudio">
+  {% for k, v in KINDS.items() %}<a href="{{ url_for('endo.sheets_edit', tipo=k) }}" {% if k == kind %}aria-current="page"{% endif %}>{{ v }}{% if status[k].prep and status[k].consent %} ✓{% endif %}</a>{% endfor %}
+</nav>
+<form method="post" class="stack" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="tipo" value="{{ kind }}">
+  {% for doc, label in DOCS.items() %}{% set t, ok = texts[doc] %}
+  <section class="card">
+    <div class="row-between"><h2>{{ label }} · {{ KINDS[kind] }}</h2>
+      <span class="tag {{ 'tag-ok' if ok else 'tag-warn' }}">{{ 'Aprobado' if ok else 'Borrador sin revisar' }}</span></div>
+    <textarea name="{{ doc }}" rows="16" data-grow maxlength="12000">{{ t }}</textarea>
+    {% if ok %}<label class="check small"><input type="checkbox" name="{{ doc }}-reset" value="1"> Volver al borrador inicial (deja de estar aprobado)</label>{% endif %}
+  </section>
+  {% endfor %}
+  <section class="card"><h3>Datos que se llenan solos</h3>
+    <p class="small">{% for k, v in PH.items() %}<span class="mono">{{ k }}</span> {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</p></section>
+  <div class="sticky-actions"><button class="btn btn-primary" type="submit">Guardar y aprobar</button></div>
+</form>
+{% endblock %}

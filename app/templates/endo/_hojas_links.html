@@ -1,0 +1,9 @@
+{# Enlaces a hojas aprobadas. Variables: p (paciente), cita (id o None). #}
+{% set _sh = approved_sheets() %}
+<section class="card"><h2>Hojas para el paciente</h2>
+  {% if _sh %}
+  <ul class="list">{% for k, docs in _sh.items() %}<li><b>{{ ENDO_KINDS[k] }}:</b>
+    {% for d in docs %}{% if d == 'prep' or can('clinico.ver') %}<a class="btn btn-sm" href="{{ url_for('endo.sheet_pdf', patient_id=p.id, doc=d, kind=k, cita=cita) }}" target="_blank" rel="noopener">{{ 'Preparación' if d == 'prep' else 'Consentimiento' }} (PDF)</a> {% endif %}{% endfor %}</li>{% endfor %}</ul>
+  {% if cita %}<p class="tiny muted">Salen con la fecha y hora de esta cita.</p>{% endif %}
+  {% else %}<p class="muted small">Aún no hay hojas aprobadas.{% if can('notas.finalizar') %} <a href="{{ url_for('endo.sheets_edit') }}">Escribir mis hojas de preparación y consentimiento</a>{% endif %}</p>{% endif %}
+</section>

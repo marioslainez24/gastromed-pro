@@ -36,6 +36,7 @@ PERMISSIONS = {
     "tareas.gestionar": "Crear y completar tareas",
     "calculadoras.aprobar": "Aprobar calculadoras para uso clínico",
     "endoscopia.reprocesamiento": "Registrar reprocesamiento de endoscopios",
+    "preconsulta.registrar": "Registrar signos vitales y motivo antes de la consulta",
 }
 
 DEFAULT_ROLES = {
@@ -43,9 +44,9 @@ DEFAULT_ROLES = {
     "medico": ("Médico colaborador", ["pacientes.ver_admin", "pacientes.editar_admin", "clinico.ver", "clinico.editar",
                                        "notas.finalizar", "recetas.emitir", "recetas.anular", "agenda.ver", "agenda.editar",
                                        "resultados.registrar", "resultados.revisar", "ordenes.emitir", "tareas.gestionar",
-                                       "endoscopia.reprocesamiento"]),
+                                       "endoscopia.reprocesamiento", "preconsulta.registrar"]),
     "enfermeria": ("Enfermería", ["pacientes.ver_admin", "clinico.ver", "agenda.ver", "resultados.registrar", "tareas.gestionar",
-                                  "endoscopia.reprocesamiento"]),
+                                  "endoscopia.reprocesamiento", "preconsulta.registrar"]),
     "recepcion": ("Recepción", ["pacientes.ver_admin", "pacientes.editar_admin", "agenda.ver", "agenda.editar", "tareas.gestionar"]),
     "caja": ("Caja y contabilidad", ["pacientes.ver_admin", "agenda.ver"]),
 }

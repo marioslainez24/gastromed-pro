@@ -134,7 +134,7 @@ def proc_view(proc_id):
     return with_dictation(render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable,
                            normal_sec=normal_sec, normal_concl=normal_concl, phrases_json=phrases_json(db) if editable else "[]",
                            dx_json=json.dumps(DX.for_kind(pr["kind"]), ensure_ascii=False), dx_source=DX.ICD_SOURCE,
-                           EF_FINDINGS=EF.FINDINGS, allergies=allergies, meds=meds,
+                           EF_FINDINGS=EF.FINDINGS, recs_json=json.dumps(endo_recs(), ensure_ascii=False) if editable else "{}", allergies=allergies, meds=meds,
                            images=_images(db, pr["id"]), specimens=specimens, stents=stents, addenda=addenda, scopes=scopes(),
                            scope=scope, empty_finding=dict.fromkeys(["segment", "type", "desc", "classification", "size_mm", "prague_c",
                                                                      "prague_m", "removed", "jar"]),
@@ -786,3 +786,121 @@ def normal_texts_edit():
         return redirect(url_for("endo.normal_texts_edit"))
     sec, concl = D.normal_texts(st["endo_normal_texts"])
     return render_template("endo/textos_normales.html", D=D, sec=sec, concl=concl)
+
+
+# ------------------------------------------------------------------------------------------------ recomendaciones por diagnóstico
+def endo_recs():
+    try:
+        return json.loads(clinic_settings()["endo_recs"] or "{}")
+    except ValueError:
+        return {}
+
+
+@bp.route("/endoscopia/recomendaciones", methods=["GET", "POST"])
+@require("clinico.editar", "notas.finalizar")
+def recs_edit():
+    recs = endo_recs()
+    known = {t for _, _, t, _, _ in DX.DIAGNOSES}
+    if request.method == "POST":
+        dx = request.form.get("dx") or ""
+        if dx not in known:
+            abort(400)
+        text = (request.form.get("text") or "").replace("\r\n", "\n").strip()[:3000]
+        if text:
+            recs[dx] = text
+        else:
+            recs.pop(dx, None)
+        db = get_db()
+        with write_tx(db):
+            db.execute("UPDATE clinic_settings SET endo_recs = ?, updated_at = ?, updated_by = ?, version = version + 1 WHERE org_id = ?",
+                       (json.dumps(recs, ensure_ascii=False) if recs else None, utcnow(), g.user["id"], g.user["org_id"]))
+            audit("recomendacion_endoscopia_guardada", "ajustes", g.user["org_id"], {"diagnostico": dx}, db=db)
+        flash("Recomendación guardada." if text else "Recomendación eliminada.", "ok")
+        return redirect(url_for("endo.recs_edit") + "#lista")
+    groups = {}
+    for g_, kinds, t, c, a in DX.DIAGNOSES:
+        groups.setdefault(g_, []).append((t, c, a))
+    return render_template("endo/recomendaciones.html", recs=recs, groups=groups, edit=request.args.get("dx"))
+
+
+# ------------------------------------------------------------------------------------------------ hojas de preparación y consentimiento
+SHEET_DOCS = {"prep": "Indicaciones de preparación", "consent": "Consentimiento informado"}
+
+
+@bp.route("/endoscopia/hojas", methods=["GET", "POST"])
+@require("clinico.editar", "notas.finalizar")
+def sheets_edit():
+    from . import proc_sheets as PS
+    sheets = PS.load(clinic_settings()["proc_sheets"])
+    kind = request.values.get("tipo") or "colonoscopia"
+    if kind not in D.KINDS:
+        abort(400)
+    if request.method == "POST":
+        cur = sheets.get(kind, {})
+        for doc in SHEET_DOCS:
+            t = (request.form.get(doc) or "").replace("\r\n", "\n").strip()[:12000]
+            if request.form.get(f"{doc}-reset") == "1":
+                cur.pop(doc, None)
+            elif t:
+                cur[doc] = t
+        sheets[kind] = cur
+        db = get_db()
+        with write_tx(db):
+            db.execute("UPDATE clinic_settings SET proc_sheets = ?, updated_at = ?, updated_by = ?, version = version + 1 WHERE org_id = ?",
+                       (json.dumps(sheets, ensure_ascii=False), utcnow(), g.user["id"], g.user["org_id"]))
+            audit("hojas_procedimiento_guardadas", "ajustes", g.user["org_id"], {"tipo": kind}, db=db)
+        flash(f"Hojas de {D.KINDS[kind].lower()} guardadas y aprobadas para imprimir.", "ok")
+        return redirect(url_for("endo.sheets_edit", tipo=kind))
+    texts = {doc: PS.text_for(sheets, kind, doc) for doc in SHEET_DOCS}
+    return render_template("endo/hojas.html", kind=kind, KINDS=D.KINDS, texts=texts, DOCS=SHEET_DOCS, PH=PS.PLACEHOLDERS,
+                           status={k: {d: bool((sheets.get(k) or {}).get(d)) for d in SHEET_DOCS} for k in D.KINDS})
+
+
+@bp.route("/pacientes/<patient_id>/hoja/<doc>/<kind>")
+@require("agenda.ver")
+def sheet_pdf(patient_id, doc, kind):
+    from . import proc_sheets as PS
+    from .pdf import sheet_pdf as build
+    from .util import age, fmt_birth, fmt_date_long, parse_utc
+    from .views_extras import load_assets
+    from zoneinfo import ZoneInfo
+    if doc not in SHEET_DOCS or kind not in D.KINDS:
+        abort(404)
+    if doc == "consent" and not can("clinico.ver"):
+        abort(403)
+    p = get_patient_or_404(patient_id)
+    s = clinic_settings()
+    text, approved = PS.text_for(PS.load(s["proc_sheets"]), kind, doc)
+    if not approved:
+        abort(409, description="Primero revise y guarde el texto de esta hoja en Endoscopia → Hojas de preparación y consentimiento.")
+    fecha = hora = None
+    appt = request.args.get("cita")
+    if appt:
+        a = get_db().execute("SELECT starts_at FROM appointments WHERE id = ? AND patient_id = ? AND org_id = ?",
+                             (appt, p["id"], g.user["org_id"])).fetchone()
+        if not a:
+            abort(404)
+        dt = parse_utc(a["starts_at"]).astimezone(ZoneInfo(s["timezone"]))
+        fecha, hora = fmt_date_long(dt.date()), dt.strftime("%I:%M %p").lstrip("0").replace("AM", "a. m.").replace("PM", "p. m.")
+    values = {"{paciente}": f"{p['first_names']} {p['last_names']}",
+              "{identidad}": p["document_number"] if p["document_type"] != "sin_documento" else None, "{expediente}": p["mrn"],
+              "{edad}": age(p["birth_date"]) if p["birth_date"] else None, "{procedimiento}": D.KINDS[kind].lower(),
+              "{fecha_cita}": fecha, "{hora_cita}": hora, "{medico}": s["doctor_display_name"], "{direccion}": s["address"],
+              "{telefono}": s["phones"], "{fecha_hoy}": fmt_birth(local_today().isoformat())}
+    title = f"{SHEET_DOCS[doc].upper()} · {D.KINDS[kind].upper()}"
+    size = request.args.get("papel") or s["paper_size"]
+    if size not in ("carta", "a4"):
+        abort(400)
+    data = build(title, PS.fill(text, values), s, size, load_assets(g.user["org_id"]))
+    audit("hoja_procedimiento_generada", "paciente", p["id"], {"hoja": doc, "tipo": kind})
+    resp = make_response(data)
+    resp.headers["Content-Type"] = "application/pdf"
+    resp.headers["Content-Disposition"] = f'inline; filename="{doc}-{kind}.pdf"'
+    return resp
+
+
+def approved_sheets():
+    """{tipo: [docs aprobados]} para mostrar enlaces en la cita y el expediente."""
+    from . import proc_sheets as PS
+    sheets = PS.load(clinic_settings()["proc_sheets"])
+    return {k: [d for d in SHEET_DOCS if (sheets.get(k) or {}).get(d)] for k in D.KINDS if any((sheets.get(k) or {}).get(d) for d in SHEET_DOCS)}

@@ -471,6 +471,32 @@
     });
   }
 
+  // ---- Endoscopia: recomendaciones sugeridas según la conclusión ------------
+  var recBox = $("[data-rec-suggest]");
+  if (recBox) {
+    var recs = {}; try { recs = JSON.parse(recBox.getAttribute("data-recs") || "{}"); } catch (e) {}
+    var cTa = document.getElementById("conclusion"), rTa = document.getElementById("recommendations");
+    function recSync() {
+      $$("button", recBox).forEach(function (b) { b.remove(); });
+      Object.keys(recs).forEach(function (dx) {
+        if (cTa.value.indexOf(dx) < 0 || rTa.value.indexOf(recs[dx]) >= 0) return;
+        var b = document.createElement("button"); b.type = "button"; b.className = "hea-chip dx-sug"; b.title = recs[dx];
+        b.textContent = "＋ " + dx;
+        b.addEventListener("click", function () {
+          var v = rTa.value.replace(/\s+$/, ""); rTa.value = (v ? v + "\n" : "") + recs[dx];
+          rTa.dispatchEvent(new Event("input", { bubbles: true })); dirty = true; recSync();
+        });
+        recBox.appendChild(b);
+      });
+      recBox.hidden = !$$("button", recBox).length;
+    }
+    if (cTa && rTa) { cTa.addEventListener("input", recSync); rTa.addEventListener("input", recSync); recSync(); }
+  }
+  var recSel = $("[data-rec-select]");
+  if (recSel) recSel.addEventListener("change", function () {
+    var o = recSel.options[recSel.selectedIndex]; $("[data-rec-text]").value = o ? (o.getAttribute("data-rec") || "") : "";
+  });
+
   // ---- Solicitud de laboratorio: perfiles, buscador y contador ---------------
   var sheet = $("[data-lab-sheet]");
   if (sheet) {

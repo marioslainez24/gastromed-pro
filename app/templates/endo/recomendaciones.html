@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Recomendaciones por diagnóstico{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Recomendaciones por diagnóstico</h1><a class="btn btn-quiet" href="{{ url_for('endo.index') }}">← Endoscopia</a></div>
+<p class="muted">Escriba una vez lo que usted recomienda para cada diagnóstico. En el informe, cuando la conclusión tenga ese diagnóstico, aparece como
+  <b>sugerencia</b> junto a «Recomendaciones» y usted decide si la agrega. Nada se escribe solo.</p>
+<section class="card">
+  <h2>Escribir o cambiar una recomendación</h2>
+  <form method="post" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="field">Diagnóstico<select name="dx" required data-rec-select>
+      <option value="">— Elija —</option>
+      {% for grp, items in groups.items() %}<optgroup label="{{ grp }}">{% for t, c, a in items %}<option value="{{ t }}" {% if edit == t %}selected{% endif %} data-rec="{{ recs.get(t, '') }}">{{ t }}{% if t in recs %} ✓{% endif %}</option>{% endfor %}</optgroup>{% endfor %}
+    </select></label>
+    <label class="field">Recomendación<textarea name="text" rows="4" data-grow maxlength="3000" data-rec-text placeholder="Ej.: Esperar el resultado de patología. Control con colonoscopia según el resultado.">{{ recs.get(edit, '') }}</textarea></label>
+    <div><button class="btn btn-primary" type="submit">Guardar</button> <span class="small muted">Deje el texto vacío y guarde para borrar la recomendación.</span></div>
+  </form>
+</section>
+<section class="card" id="lista"><h2>Sus recomendaciones <span class="count">{{ recs|length }}</span></h2>
+  {% if recs %}<ul class="list">{% for t, r in recs.items() %}<li><b>{{ t }}</b> · <a class="small" href="{{ url_for('endo.recs_edit', dx=t) }}">editar</a><br><span class="prewrap small">{{ r }}</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Aún no hay recomendaciones.</p>{% endif %}
+</section>
+{% endblock %}

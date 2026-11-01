@@ -91,3 +91,41 @@ def test_hallazgo_con_clics_en_el_informe(env):
     assert r.status_code == 200 and r.get_json()["texto"] == "Úlcera de 8 mm en antro, Forrest III (fondo limpio)."
     assert r.get_json()["dx"][0]["c"] == "K25.9"
     assert med.post(f"/procedimientos/{proc}/hallazgo", data={"csrf_token": tok, "section": "colon", "finding": "polipo"}).status_code == 422
+
+
+def test_recomendaciones_por_diagnostico(env):
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    assert "Recomendaciones por diagnóstico" in med.get("/endoscopia/recomendaciones").get_data(as_text=True)
+    med.post("/endoscopia/recomendaciones", data={"csrf_token": tok, "dx": "Pólipo de colon", "text": "Esperar patología (ficticio)."})
+    assert med.post("/endoscopia/recomendaciones", data={"csrf_token": tok, "dx": "inventado", "text": "x"}).status_code == 400
+    assert json.loads(env["db"].execute("SELECT endo_recs FROM clinic_settings").fetchone()[0]) == {"Pólipo de colon": "Esperar patología (ficticio)."}
+    pid = create_patient(med)
+    html = med.get(f"/procedimientos/{new_proc(med, pid, tok)}").get_data(as_text=True)
+    assert "data-rec-suggest" in html and "Esperar patología (ficticio)." in html
+    med.post("/endoscopia/recomendaciones", data={"csrf_token": tok, "dx": "Pólipo de colon", "text": ""})
+    assert env["db"].execute("SELECT endo_recs FROM clinic_settings").fetchone()[0] is None
+
+
+def test_hojas_preparacion_y_consentimiento(env):
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    # sin aprobar no se imprime
+    assert med.get(f"/pacientes/{pid}/hoja/prep/colonoscopia").status_code == 409
+    html = med.get("/endoscopia/hojas?tipo=colonoscopia").get_data(as_text=True)
+    assert "Borrador sin revisar" in html and "{fecha_cita}" in html
+    med.post("/endoscopia/hojas", data={"csrf_token": tok, "tipo": "colonoscopia",
+                                        "prep": "Paciente: {paciente}\nCita: {fecha_cita} a las {hora_cita}\n\nDieta líquida (texto del médico, ficticio).",
+                                        "consent": "Yo, {paciente}, autorizo la {procedimiento}. Fecha {fecha_hoy}."})
+    r = med.get(f"/pacientes/{pid}/hoja/prep/colonoscopia")
+    t = pdf_text(r.data)
+    assert r.status_code == 200 and "INDICACIONES DE PREPARACIÓN" in t and "Dieta líquida (texto del médico, ficticio)." in t
+    assert "{paciente}" not in t and "__________" in t           # sin cita: fecha en blanco para llenar a mano
+    assert "colonoscopia" in pdf_text(med.get(f"/pacientes/{pid}/hoja/consent/colonoscopia").data)
+    assert "Hojas para el paciente" in med.get(f"/pacientes/{pid}/procedimientos").get_data(as_text=True)
+    # recepción puede imprimir la preparación pero no el consentimiento
+    rec = login(env["app"], "recepcion")
+    assert rec.get(f"/pacientes/{pid}/hoja/prep/colonoscopia").status_code == 200
+    assert rec.get(f"/pacientes/{pid}/hoja/consent/colonoscopia").status_code == 403
+    assert med.get(f"/pacientes/{pid}/hoja/otra/colonoscopia").status_code == 404
