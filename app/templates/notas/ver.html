@@ -166,6 +166,11 @@
   {% endif %}
 </section>
 
+{% set _np = papers[0]|length + papers[1]|length + papers[2]|length %}
+{% if _np %}<section class="card print-all"><div class="row-between"><div><h2>Imprimir todo</h2>
+  <p class="small muted">{{ papers[0]|length }} receta(s), {{ papers[1]|length }} orden(es) y {{ papers[2]|length }} documento(s) de hoy, en un solo PDF.</p></div>
+  <div class="btn-row"><a class="btn btn-primary" href="{{ url_for('notes.print_all', note_id=n.id, papel='carta') }}" target="_blank" rel="noopener">🖨 Imprimir todo (carta)</a>
+  <a class="btn" href="{{ url_for('notes.print_all', note_id=n.id, papel='a4') }}" target="_blank" rel="noopener">A4</a></div></div></section>{% endif %}
 <section class="card">
   <h2>Recetas de esta consulta</h2>
   {% for r in prescriptions %}<p><a href="{{ url_for('rx.view', rx_id=r.id) }}">Receta del {{ fmt_dt(r.issued_at) }}</a>{% if r.status == 'anulada' %} <span class="tag tag-danger">Anulada</span>{% endif %}</p>{% else %}<p class="muted small">Ninguna.</p>{% endfor %}

@@ -180,3 +180,29 @@ def test_hoja_con_fecha_y_hora_de_la_cita(env):
     t = pdf_text(med.get(f"/pacientes/{pid}/hoja/prep/eda?cita={aid}").data)
     assert "10 de noviembre de 2026" in t and "7:30 a. m." in t, t
     assert "Hojas para el paciente" in med.get(f"/agenda/cita/{aid}").get_data(as_text=True)
+
+
+def test_imprimir_todo_une_receta_orden_y_documento(env):
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    nid = med.post("/notas/nueva", data={"csrf_token": tok, "patient_id": pid, "kind": "primera", "template": "soap"}
+                   ).headers["Location"].rsplit("/", 1)[-1]
+    assert "Imprimir todo" not in med.get(f"/notas/{nid}").get_data(as_text=True)
+    assert med.get(f"/notas/{nid}/imprimir-todo").status_code == 409
+    r = med.post("/recetas/nueva", data={"csrf_token": tok, "patient_id": pid, "note_id": nid, "ack_allergies": "1",
+                                         "item-0-active_ingredient": "Omeprazol", "item-0-dose": "20", "item-0-dose_unit": "mg",
+                                         "item-0-route": "oral", "item-0-frequency": "cada 24 h", "item-0-duration": "8 semanas",
+                                         "item-0-quantity": "56 cápsulas"})
+    assert r.status_code == 302, r.get_data(as_text=True)[:300]
+    r = med.post("/ordenes/nueva", data={"csrf_token": tok, "patient_id": pid, "note_id": nid, "order_type": "laboratorio",
+                                         "lab": "ferritina", "priority": "rutina", "responsible_id": env["users"]["propietario"]})
+    assert r.status_code == 302
+    med.post(f"/pacientes/{pid}/documentos/nuevo", data={"csrf_token": tok, "kind": "constancia", "step": "emitir",
+                                                         "body": "Constancia de atención (ficticio).", "final_title": "CONSTANCIA DE ATENCIÓN MÉDICA"})
+    html = med.get(f"/notas/{nid}").get_data(as_text=True)
+    assert "1 receta(s), 1 orden(es) y 1 documento(s)" in html
+    r = med.get(f"/notas/{nid}/imprimir-todo?papel=carta")
+    t = pdf_text(r.data)
+    assert r.status_code == 200 and "Omeprazol" in t and "Ferritina" in t and "Constancia de atención (ficticio)." in t
+    assert len(PdfReader(io.BytesIO(r.data)).pages) >= 3

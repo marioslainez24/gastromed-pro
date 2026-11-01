@@ -167,7 +167,7 @@ def view(note_id):
                            exam_target="exploracion_general" if n["template"] == "soap" else "narrativa", EXAM_SYSTEMS=EXAM.SYSTEMS,
                            dx_json=json.dumps(CDX.as_list(), ensure_ascii=False), dx_source=CDX.ICD_SOURCE,
                            note_tpls=json.dumps(templates_for(db, n["template"]), ensure_ascii=False) if editable else "[]",
-                           errors={}), editable)
+                           papers=visit_papers(db, n), errors={}), editable)
 
 
 @bp.route("/<note_id>/guardar", methods=["POST"])
@@ -273,3 +273,63 @@ def addendum(note_id):
         audit("nota_adenda", "nota", n["id"], {"adenda": aid}, db=db)
     flash("Adenda registrada.", "ok")
     return redirect(url_for("notes.view", note_id=n["id"]) + "#adendas")
+
+
+# ------------------------------------------------------------------------------------------------ imprimir todo
+def visit_papers(db, n):
+    """Recetas y órdenes vigentes de la nota, y documentos del mismo médico emitidos el día de la consulta."""
+    from .util import clinic_tz, parse_utc
+    rx = db.execute("SELECT id FROM prescriptions WHERE note_id = ? AND status = 'emitida' ORDER BY issued_at", (n["id"],)).fetchall()
+    orders = db.execute("SELECT id FROM orders WHERE note_id = ? AND status <> 'anulada' ORDER BY created_at", (n["id"],)).fetchall()
+    day = parse_utc(n["created_at"]).astimezone(clinic_tz()).date()
+    docs = [r for r in db.execute("SELECT id, issued_at FROM clinical_documents WHERE patient_id = ? AND author_id = ? AND status = 'emitido'"
+                                  " ORDER BY issued_at", (n["patient_id"], n["author_id"]))
+            if parse_utc(r["issued_at"]).astimezone(clinic_tz()).date() == day]
+    return [r["id"] for r in rx], [r["id"] for r in orders], [r["id"] for r in docs]
+
+
+@bp.route("/<note_id>/imprimir-todo")
+@require("clinico.ver")
+def print_all(note_id):
+    import io
+    from flask import make_response
+    from pypdf import PdfReader, PdfWriter
+    from . import pdf as P
+    from .util import clinic_settings
+    from .views_extras import load_assets
+    from .views_labs import ORDER_TYPES, PRIORITIES, _get_order
+    n = _get_note(note_id)
+    db = get_db()
+    p = db.execute("SELECT * FROM patients WHERE id = ?", (n["patient_id"],)).fetchone()
+    s = clinic_settings()
+    size = request.args.get("papel") or s["paper_size"]
+    if size not in ("carta", "a4"):
+        abort(400)
+    assets = load_assets(g.user["org_id"])
+    rx_ids, order_ids, doc_ids = visit_papers(db, n)
+    parts = []
+    allergies = db.execute("SELECT * FROM patient_allergies WHERE patient_id = ? AND active = 1", (p["id"],)).fetchall()
+    for rid in rx_ids:
+        r = db.execute("SELECT r.*, u.full_name AS author FROM prescriptions r JOIN users u ON u.id = r.author_id WHERE r.id = ?", (rid,)).fetchone()
+        items = db.execute("SELECT * FROM prescription_items WHERE prescription_id = ? ORDER BY position", (rid,)).fetchall()
+        parts.append(P.prescription_pdf(r, items, p, s, size, allergies, assets))
+    for oid in order_ids:
+        o = _get_order(oid)
+        items = db.execute("SELECT * FROM order_items WHERE order_id = ? ORDER BY position", (oid,)).fetchall()
+        parts.append(P.order_pdf(o, items, p, s, size, ORDER_TYPES[o["order_type"]], PRIORITIES[o["priority"]], assets))
+    for did in doc_ids:
+        d = db.execute("SELECT * FROM clinical_documents WHERE id = ?", (did,)).fetchone()
+        parts.append(P.document_pdf(d, p, s, size, assets))
+    if not parts:
+        abort(409, description="Esta consulta no tiene recetas, órdenes ni documentos para imprimir.")
+    w = PdfWriter()
+    for b in parts:
+        for page in PdfReader(io.BytesIO(b)).pages:
+            w.add_page(page)
+    out = io.BytesIO()
+    w.write(out)
+    audit("imprimir_todo", "nota", n["id"], {"recetas": len(rx_ids), "ordenes": len(order_ids), "documentos": len(doc_ids)})
+    resp = make_response(out.getvalue())
+    resp.headers["Content-Type"] = "application/pdf"
+    resp.headers["Content-Disposition"] = f'inline; filename="consulta-{n["id"][:8]}.pdf"'
+    return resp

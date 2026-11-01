@@ -6,6 +6,8 @@ reportlab==5.0.1
 cryptography==50.0.1
 # Imágenes del informe de endoscopia (anotaciones en el PDF)
 Pillow>=11.0
+# Unir receta, órdenes y documentos en un solo PDF («Imprimir todo»)
+pypdf>=6.0
 # Base de zonas horarias: Windows no la trae (necesaria para America/Tegucigalpa)
 tzdata>=2024.1
 # Servidor de producción para Windows/Linux (instalado por el instalador; no probado en el entorno de desarrollo)
