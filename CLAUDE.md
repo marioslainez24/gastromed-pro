@@ -41,12 +41,12 @@ Flask 3 + Jinja2 + SQLite, con WAL, tablas STRICT y triggers de inmutabilidad y 
 El usuario pidió NO construir el .exe hasta que diga «ya». Trabajar en la rama `desarrollo` (empujarla para no perder el trabajo; no dispara la
 construcción). Cuando diga «ya»: `git checkout main && git merge --ff-only desarrollo && git push`, esperar la CI y avisarle.
 El 31-oct-2026 dijo «ya» y se publicó la v0.14.0 (todo lo acumulado). Para mejoras nuevas, seguir en `desarrollo` y esperar su «ya».
-v0.15.0 en `desarrollo`, sin publicar (esperando «ya»).
+v0.15.0 y v0.16.0 en `desarrollo`, sin publicar (esperando «ya»).
 Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó
 1. Crear tareas, programar y escribir pruebas pytest para cada función nueva. Ejemplo: un servidor SMTP falso en localhost; nunca simular un éxito.
-2. Correr `python3 -m pytest -q` (147 pruebas en v0.15.0).
+2. Correr `python3 -m pytest -q` (149 pruebas en v0.16.0).
 3. Revisar en el navegador con Playwright y guardar capturas en `evidencia/capturas/`.
 4. Correr la prueba del exe en local: `build/smoke_exe.py` con un script que ejecute `python3 gastromed_exe.py`. Si waitress no está instalado, usar un sustituto con `werkzeug.make_server` en `PYTHONPATH`.
 5. Actualizar `docs/PROGRESO.md` y `docs/MATRIZ.md` (y `INSTALACION_WINDOWS.md` si cambia el uso). Copiarlos al Proyecto con `project_write`.

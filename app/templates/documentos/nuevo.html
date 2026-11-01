@@ -4,10 +4,11 @@
 <div class="page-head"><h1>{{ KINDS[kind] }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1><span class="pill mono">{{ p.mrn }}</span></div>
 {% include "labs/_ptabs.html" %}
 {% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
-<form method="post" class="stack" data-dirty-guard>
+<form method="post" class="stack" data-dirty-guard {% if form_action %}action="{{ form_action }}"{% endif %}>
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="kind" value="{{ kind }}">
   <div id="frases-data" data-frases="{{ phrases_json }}" data-admin="{{ url_for('texts.phrases') }}" hidden></div>
-  <section class="card"><h2>1 · Datos</h2>
+  {% if letter_note %}<div class="flash flash-info">{{ letter_note }}</div>{% endif %}
+  {% if not hide_data %}<section class="card"><h2>1 · Datos</h2>
     <div class="grid4">
       <label class="field">Fecha de la consulta<input type="date" name="seen_on" value="{{ f.get('seen_on') or today }}" max="{{ today }}"></label>
       {% if kind == 'incapacidad' %}
@@ -31,7 +32,7 @@
     </div>{% endif %}
     <label class="field">{{ 'Texto del documento' if kind == 'libre' else 'Texto adicional (opcional)' }}<textarea name="extra" rows="3" data-grow data-phrase-field="doc:body">{{ f.get('extra', '') }}</textarea></label>
     <div><button class="btn" type="submit" name="step" value="revisar">Preparar el texto ↓</button></div>
-  </section>
+  </section>{% endif %}
 
   {% if step %}
   <section class="card"><h2>2 · Revise y emita</h2>
@@ -39,7 +40,7 @@
     <label class="field">Título<input name="final_title" maxlength="120" value="{{ title }}"></label>
     <label class="field">Texto<textarea name="body" rows="10" data-grow>{{ body }}</textarea></label>
     <div class="btn-row"><button class="btn btn-primary" type="submit" name="step" value="emitir">Emitir documento</button>
-      <button class="btn btn-quiet" type="submit" name="step" value="revisar">Volver a armar el texto con los datos</button></div>
+      {% if not hide_data %}<button class="btn btn-quiet" type="submit" name="step" value="revisar">Volver a armar el texto con los datos</button>{% endif %}</div>
   </section>
   {% endif %}
 </form>

@@ -229,3 +229,81 @@ def doc_void(doc_id):
         audit("documento_anulado", "documento", d["id"], {"motivo": reason}, db=db)
     flash("Documento anulado.", "ok")
     return redirect(url_for("docs.doc_view", doc_id=d["id"]))
+
+
+# ------------------------------------------------------------------------------------------------ carta al médico que refirió
+def _who(p, on):
+    return _patient_phrase(p, on)
+
+
+def letter_from_note(db, n, p, s):
+    from .views_notes import legacy_plan_text
+    f = json.loads(n["fields"])
+    seen = date.fromisoformat((n["finalized_at"] or n["created_at"])[:10])
+    parts = [f"Estimado(a) Dr(a). {p['referring_physician'] or '______________________'}:",
+             f"Agradezco la referencia de {_who(p, seen)}, quien fue evaluado(a) en consulta de gastroenterología el {fmt_birth(seen.isoformat())}."]
+    def add(label, key_text):
+        t = (key_text or "").strip()
+        if t:
+            parts.append(f"{label}: {t}")
+    add("Motivo de consulta", f.get("motivo"))
+    add("Impresión diagnóstica", f.get("impresion"))
+    add("Diagnósticos", f.get("diagnosticos"))
+    add("Plan", (f.get("plan") or "").strip() or legacy_plan_text(f))
+    parts.append("Quedo a sus órdenes para cualquier consulta sobre el paciente.")
+    parts.append(f"Atentamente,\n{s['doctor_display_name']}")
+    return "\n\n".join(parts)
+
+
+def letter_from_proc(db, pr, p, s):
+    from . import endoscopy_defs as D
+    d = json.loads(pr["data"])
+    parts = [f"Estimado(a) Dr(a). {p['referring_physician'] or '______________________'}:",
+             f"Le informo que a {_who(p, date.fromisoformat(pr['performed_on']))} se le realizó {D.KINDS[pr['kind']].lower()} "
+             f"el {fmt_birth(pr['performed_on'])}, con los siguientes resultados."]
+    nar = d.get("narrative") or {}
+    lines = []
+    for key, lab in D.NARRATIVE[pr["kind"]]:
+        txt = (nar.get(key) or "").strip()
+        if key == "ueg" and d.get("zline"):
+            txt = (D.zline_text(d) + " " + txt).strip()
+        if txt:
+            lines.append(f"{lab}: {txt}" if len(D.NARRATIVE[pr["kind"]]) > 1 else txt)
+    if lines:
+        parts.append("Hallazgos:\n" + "\n".join(lines))
+    if d.get("conclusion"):
+        parts.append("Conclusión:\n" + d["conclusion"].strip())
+    if d.get("jars"):
+        parts.append(f"Se tomaron muestras para estudio histopatológico ({len(d['jars'])} frasco(s)); le comunicaré el resultado.")
+    if d.get("recommendations"):
+        parts.append("Recomendaciones:\n" + d["recommendations"].strip())
+    parts.append("Quedo a sus órdenes para cualquier consulta sobre el paciente.")
+    parts.append(f"Atentamente,\n{s['doctor_display_name']}")
+    return "\n\n".join(parts)
+
+
+@bp.route("/carta-referente")
+@require("clinico.editar", "notas.finalizar")
+def referrer_letter():
+    db = get_db()
+    s = clinic_settings()
+    nid, pid_ = request.args.get("note_id"), request.args.get("proc_id")
+    if nid and re.fullmatch(r"[0-9a-f]{32}", nid):
+        src = db.execute("SELECT * FROM clinical_notes WHERE id = ? AND org_id = ?", (nid, g.user["org_id"])).fetchone() or abort(404)
+        p = get_patient_or_404(src["patient_id"])
+        body = letter_from_note(db, src, p, s)
+        draft = src["status"] != "finalizada"
+    elif pid_ and re.fullmatch(r"[0-9a-f]{32}", pid_):
+        src = db.execute("SELECT * FROM procedures WHERE id = ? AND org_id = ?", (pid_, g.user["org_id"])).fetchone() or abort(404)
+        p = get_patient_or_404(src["patient_id"])
+        body = letter_from_proc(db, src, p, s)
+        draft = src["status"] != "finalizado"
+    else:
+        abort(400)
+    note = ("Carta armada con los datos de la " + ("nota" if nid else "endoscopia") + ". Revise y corrija el texto antes de emitirla."
+            + (" ATENCIÓN: todavía está en borrador; lo ideal es finalizarla primero." if draft else "")
+            + ("" if p["referring_physician"] else " El expediente no tiene médico remitente: escriba su nombre en el saludo."))
+    return render_template("documentos/nuevo.html", p=p, kind="libre", KINDS=KINDS, f={"title": "Carta al médico que refirió"},
+                           title="CARTA AL MÉDICO QUE REFIRIÓ", body=body, errors=[], step="revisar", today=local_today().isoformat(),
+                           data={}, phrases_json=phrases_json(), hide_data=True, letter_note=note,
+                           form_action=url_for("docs.doc_new", patient_id=p["id"], kind="libre"))

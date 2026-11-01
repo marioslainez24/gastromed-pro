@@ -24,6 +24,7 @@
   <a class="btn" href="{{ url_for('endo.proc_pdf', proc_id=pr.id, papel='carta') }}" target="_blank" rel="noopener">PDF carta{{ ' (borrador)' if pr.status != 'finalizado' }}</a>
   <a class="btn" href="{{ url_for('endo.proc_pdf', proc_id=pr.id, papel='a4') }}" target="_blank" rel="noopener">PDF A4</a>
   {% if editable %}<a class="btn btn-primary" href="{{ url_for('endo.capture', proc_id=pr.id) }}">Capturar imágenes del video</a>{% endif %}
+  {% if can('notas.finalizar') and can('clinico.editar') %}<a class="btn" href="{{ url_for('docs.referrer_letter', proc_id=pr.id) }}">✉ Carta al médico que refirió</a>{% endif %}
   {% if d.jars %}<a class="btn" href="{{ url_for('endo.jar_labels', proc_id=pr.id) }}" target="_blank" rel="noopener">🏷 Etiquetas de frascos ({{ d.jars|length }})</a>{% endif %}
 </div>
 

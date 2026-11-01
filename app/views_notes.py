@@ -9,7 +9,7 @@ from .db import get_db, new_id, utcnow, write_tx
 from .security import audit, require
 from .views_patients import get_patient_or_404
 from .gi_forms import BRISTOL as GI_BRISTOL, FORMS as GI_FORMS
-from . import consult_diagnoses as CDX, exam as EXAM
+from . import antecedents as ANT, consult_diagnoses as CDX, exam as EXAM
 from .views_texts import create_template, phrases_json, templates_for
 
 bp = Blueprint("notes", __name__, url_prefix="/notas")
@@ -22,7 +22,8 @@ VITALS = [  # clave, etiqueta, unidad, mínimo, máximo (rangos de plausibilidad
 ]
 
 TEXT_FIELDS = {
-    "motivo": "Motivo de consulta", "hea": "Historia de la enfermedad actual", "revision_sistemas": "Revisión por sistemas",
+    "motivo": "Motivo de consulta", "hea": "Historia de la enfermedad actual", "antecedentes": "Antecedentes",
+    "revision_sistemas": "Revisión por sistemas",
     "narrativa": "Nota narrativa", "exploracion_general": "Exploración física general",
     "exploracion_abdominal": "Exploración abdominal", "impresion": "Impresión diagnóstica",
     "diagnosticos": "Diagnósticos (texto libre)", "plan": "Plan",
@@ -36,13 +37,13 @@ ACTIVE_FIELDS = {k: v for k, v in TEXT_FIELDS.items() if k not in LEGACY_FIELDS}
 
 TEMPLATES = {
     "soap": [
-        ("S · Subjetivo", ["motivo", "hea", "revision_sistemas"]),
+        ("S · Subjetivo", ["motivo", "hea", "antecedentes", "revision_sistemas"]),
         ("O · Objetivo", ["__vitales__", "exploracion_general", "exploracion_abdominal"]),
         ("A · Análisis", ["impresion", "diagnosticos", "diferenciales"]),
         ("P · Plan", ["plan", "plan_diagnostico", "plan_terapeutico", "educacion", "signos_alarma", "seguimiento"]),
     ],
     "narrativa": [
-        ("Consulta", ["motivo", "narrativa"]),
+        ("Consulta", ["motivo", "antecedentes", "narrativa"]),
         ("Signos vitales", ["__vitales__"]),
         ("Diagnóstico y plan", ["impresion", "diagnosticos", "plan", "plan_terapeutico", "signos_alarma", "seguimiento"]),
     ],
@@ -164,6 +165,10 @@ def new():
             abort(400)
         nid = new_id()
         start = {"vitales": {}}
+        from .antecedents import compose_text
+        ant = compose_text(db, p)   # antecedentes del expediente: se arrastran a cada consulta (copia editable)
+        if ant:
+            start["antecedentes"] = ant
         intake = db.execute("SELECT vitals, motivo FROM appointment_intake WHERE appointment_id = ?", (appt_id,)).fetchone() if appt_id else None
         if intake:   # preconsulta de enfermería
             start["vitales"] = json.loads(intake["vitals"])
@@ -205,7 +210,9 @@ def view(note_id):
                            gi_forms=note_forms(db, n["id"]), GI_FORMS=GI_FORMS,
                            orders=db.execute("SELECT o.*, (SELECT GROUP_CONCAT(description, ', ') FROM order_items i WHERE i.order_id = o.id)"
                                              " AS items FROM orders o WHERE o.note_id = ? ORDER BY o.created_at", (n["id"],)).fetchall(),
-                           phrases_json=phrases_json(db) if editable else "[]", BRISTOL=GI_BRISTOL,
+                           phrases_json=phrases_json(db) if editable else "[]", BRISTOL=GI_BRISTOL, ANT=ANT,
+                           ant_active={r["description"].lower() for r in db.execute(
+                               "SELECT description FROM patient_history WHERE patient_id = ? AND active = 1", (p["id"],))} if editable else set(),
                            hea_target="hea" if n["template"] == "soap" else "narrativa",
                            exam_target="exploracion_general" if n["template"] == "soap" else "narrativa", EXAM_SYSTEMS=EXAM.SYSTEMS,
                            dx_json=json.dumps(CDX.as_list(), ensure_ascii=False), dx_source=CDX.ICD_SOURCE,

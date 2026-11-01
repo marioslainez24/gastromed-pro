@@ -47,6 +47,51 @@ def add_history(patient_id):
     return _back(p, "antecedentes")
 
 
+@bp.route("/antecedentes/clic", methods=["POST"])
+@require("clinico.editar")
+def add_history_click(patient_id):
+    """Agrega un antecedente marcado con clics. Los hábitos reemplazan la respuesta anterior del mismo tipo."""
+    from flask import jsonify
+    from . import antecedents as A
+    p = get_patient_or_404(patient_id)
+    is_fetch = request.headers.get("X-Requested-With") == "fetch"
+    try:
+        cat, desc, when = A.build(request.form)
+    except A.Invalid as e:
+        if is_fetch:
+            return jsonify({"error": str(e)}), 422
+        flash(str(e), "error")
+        return _back(p, "antecedentes")
+    db = get_db()
+    added = False
+    with write_tx(db):
+        dup = db.execute("SELECT 1 FROM patient_history WHERE patient_id = ? AND active = 1 AND lower(description) = lower(?)",
+                         (p["id"], desc)).fetchone()
+        if not dup:
+            if cat == "habito":
+                prefix = desc.split(":")[0] + ":"
+                db.execute("UPDATE patient_history SET active = 0, inactivated_by = ?, inactivated_at = ? WHERE patient_id = ? AND active = 1"
+                           " AND category = 'habito' AND description LIKE ?", (g.user["id"], utcnow(), p["id"], prefix + "%"))
+            hid = new_id()
+            db.execute("INSERT INTO patient_history(id, patient_id, category, description, when_text, recorded_by, recorded_at)"
+                       " VALUES (?,?,?,?,?,?,?)", (hid, p["id"], cat, desc, when, g.user["id"], utcnow()))
+            audit("antecedente_registrado", "paciente", p["id"], {"antecedente": hid, "categoria": cat, "clic": True}, db=db)
+            added = True
+    if is_fetch:
+        return jsonify({"ok": True, "agregado": added, "descripcion": desc, "texto": A.compose_text(db, p)})
+    flash(f"Antecedente agregado: {desc}." if added else f"Ya estaba registrado: {desc}.", "ok")
+    return _back(p, "antecedentes")
+
+
+@bp.route("/antecedentes/texto")
+@require("clinico.ver")
+def history_text(patient_id):
+    from flask import jsonify
+    from . import antecedents as A
+    p = get_patient_or_404(patient_id)
+    return jsonify({"texto": A.compose_text(get_db(), p)})
+
+
 @bp.route("/antecedentes/<item_id>/inactivar", methods=["POST"])
 @require("clinico.editar")
 def inactivate_history(patient_id, item_id):

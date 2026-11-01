@@ -502,6 +502,70 @@
     var o = recSel.options[recSel.selectedIndex]; $("[data-rec-text]").value = o ? (o.getAttribute("data-rec") || "") : "";
   });
 
+  // ---- Antecedentes con clics (se guardan en el expediente) -----------------
+  $$("[data-ant]").forEach(function (box) {
+    var url = box.getAttribute("data-url"), msg = $("[data-ant-msg]", box);
+    var target = box.getAttribute("data-target") ? document.getElementById(box.getAttribute("data-target")) : null;
+    var lastGen = target ? target.value : "";
+    function setText(t) {
+      if (!target) return;
+      if (!target.value.trim() || target.value === lastGen) {
+        target.value = t; lastGen = t; target.dispatchEvent(new Event("input", { bubbles: true })); dirty = true;
+        return true;
+      }
+      return false;
+    }
+    function send(data, btn) {
+      var fd = new FormData(), tok = csrf();
+      fd.append("csrf_token", tok);
+      Object.keys(data).forEach(function (k) { [].concat(data[k]).forEach(function (v) { fd.append(k, v); }); });
+      msg.textContent = "Guardando…"; msg.classList.remove("is-error");
+      fetch(url, { method: "POST", body: fd, credentials: "same-origin", headers: { "X-Requested-With": "fetch", "X-CSRF-Token": tok, Accept: "application/json" } })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) { msg.textContent = res.d.error || res.d.detalle || "No se pudo guardar."; msg.classList.add("is-error"); return; }
+          if (btn) { btn.classList.add("is-on"); if (btn.textContent.indexOf("✓") !== 0) btn.textContent = "✓ " + btn.textContent; }
+          if (data.habit) $$("[data-ant-habit='" + data.habit + "']", box).forEach(function (b) { if (b !== btn) { b.classList.remove("is-on"); b.textContent = b.getAttribute("data-value"); } });
+          var updated = setText(res.d.texto);
+          msg.textContent = (res.d.agregado ? "Guardado en el expediente: " : "Ya estaba registrado: ") + res.d.descripcion +
+            (target && !updated ? ". Usted editó el campo: pulse «Actualizar» para traer la lista completa." : ".");
+          if (!target) { setTimeout(function () { dirty = false; location.hash = "antecedentes"; location.reload(); }, 600); }
+        })
+        .catch(function () { msg.textContent = "Sin conexión con el programa."; msg.classList.add("is-error"); });
+    }
+    $$("[data-ant-add]", box).forEach(function (b) {
+      b.addEventListener("click", function () { send({ category: b.getAttribute("data-category"), item: b.getAttribute("data-item") }, b); });
+    });
+    $$("[data-ant-habit]", box).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var det = $("[data-ant-detail]", box);
+        send({ category: "habito", habit: b.getAttribute("data-ant-habit"), value: b.getAttribute("data-value"), detail: det.value }, b);
+        det.value = "";
+      });
+    });
+    var famBtn = $("[data-ant-fam-add]", box);
+    if (famBtn) famBtn.addEventListener("click", function () {
+      var it = box.querySelector("[data-ant-fam]:checked");
+      if (!it) { msg.textContent = "Elija el antecedente familiar."; msg.classList.add("is-error"); return; }
+      send({ category: "familiar", item: it.value, relative: $$("[data-ant-rel]:checked", box).map(function (c) { return c.value; }) });
+      it.checked = false; $$("[data-ant-rel]", box).forEach(function (c) { c.checked = false; });
+    });
+    $("[data-ant-other-add]", box).addEventListener("click", function () {
+      var o = $("[data-ant-other]", box), w = $("[data-ant-when]", box);
+      send({ category: $("[data-ant-other-cat]", box).value, item: "__otro__", other: o.value, when_text: w.value });
+      o.value = ""; w.value = "";
+    });
+    var ref = $("[data-ant-refresh]", box);
+    if (ref) ref.addEventListener("click", function () {
+      fetch(box.getAttribute("data-text-url"), { credentials: "same-origin", headers: { Accept: "application/json" } })
+        .then(function (r) { return r.json(); }).then(function (d) {
+          if (target.value.trim() && target.value !== lastGen && !window.confirm("¿Reemplazar el texto del campo «Antecedentes» por la lista del expediente?")) return;
+          target.value = d.texto; lastGen = d.texto; target.dispatchEvent(new Event("input", { bubbles: true })); dirty = true;
+          msg.textContent = "Antecedentes actualizados desde el expediente.";
+        });
+    });
+  });
+
   // ---- Solicitud de laboratorio: perfiles, buscador y contador ---------------
   var sheet = $("[data-lab-sheet]");
   if (sheet) {

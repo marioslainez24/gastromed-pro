@@ -143,6 +143,11 @@ def main(exe):
         r = post(f"/pacientes/{pid}/laboratorio/registrar", {"csrf_token": csrf, "taken_on": "2026-10-01", "otro-0-name": "Elastasa fecal",
                                                              "otro-0-value": "450"})
         assert "Elastasa fecal" in get(f"/pacientes/{pid}/laboratorio").read().decode(), "Otros resultados"
+        # v0.16: antecedentes con clics y carta al médico que refirió
+        post(f"/pacientes/{pid}/expediente/antecedentes/clic", {"csrf_token": csrf, "category": "personal", "item": "Hipertensión arterial"})
+        r = post("/notas/nueva", {"csrf_token": csrf, "patient_id": pid, "kind": "subsecuente", "template": "soap"})
+        assert "Hipertensión arterial" in r.read().decode(), "Antecedentes en la nota nueva"
+        assert "Estimado(a) Dr(a)." in get(f"/carta-referente?note_id={nid}").read().decode(), "Carta al médico que refirió"
         # v0.14: imprimir todo (pypdf dentro del .exe), etiquetas, hojas, recomendaciones y resumen del paciente
         allpdf = get(f"/notas/{nid}/imprimir-todo").read()
         assert allpdf.startswith(b"%PDF-"), "Imprimir todo"

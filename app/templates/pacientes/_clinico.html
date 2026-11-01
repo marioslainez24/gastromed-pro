@@ -72,7 +72,8 @@
   {% endfor %}
   {% else %}<p class="muted small">Sin antecedentes registrados. «Sin registros» no equivale a «niega antecedentes».</p>{% endif %}
   {% if can('clinico.editar') %}
-  <details class="mt"><summary>Agregar antecedente</summary>
+  {% set ant_target = none %}{% set ant_active = history|map(attribute='description')|map('lower')|list %}{% include "pacientes/_antecedentes_clic.html" %}
+  <details class="mt"><summary>Agregar antecedente escribiéndolo</summary>
     <form method="post" action="{{ url_for('record.add_history', patient_id=p.id) }}" class="grid2 mt">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <label class="field">Tipo<select name="category">{% for k, v in history_categories.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>

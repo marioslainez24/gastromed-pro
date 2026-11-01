@@ -11,6 +11,20 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 16 · 31-oct-2026 · Antecedentes con clics que se arrastran y carta al médico que refirió (v0.16.0 · rama `desarrollo`, SIN publicar)
+
+**Pedido del Dr. Lainez:** ideas 4 y 5.
+- **Antecedentes con clics** (`app/antecedents.py`): panel «＋ Antecedentes con clics» en la nota (campo nuevo «Antecedentes») y en el expediente:
+  patológicos, quirúrgicos, familiares (con parentesco), procedimientos previos, hábitos (tabaco, alcohol, drogas: la respuesta nueva deja como
+  no vigente la anterior) y «Otro» con año. Se guardan en el expediente (`patient_history`, sin borrar nada; sin duplicados) y cada **nota nueva**
+  trae el campo «Antecedentes» ya escrito con antecedentes, medicamentos actuales y alergias (copia del momento, editable). Si el médico no ha
+  editado el campo, se actualiza al marcar; si lo editó, el botón «↻ Actualizar desde el expediente» lo reemplaza (con confirmación).
+- **Carta al médico que refirió**: botón en la nota («✉ Preparar carta») y en el informe de endoscopia. Arma el texto con el médico remitente del
+  expediente, motivo, impresión, diagnósticos y plan (nota) o hallazgos por segmento, línea Z, conclusión, frascos y recomendaciones (endoscopia).
+  El médico revisa y emite como documento clínico (inmutable, PDF con encabezado y firma). Avisa si la nota/estudio sigue en borrador o si falta
+  el nombre del remitente.
+**Cómo se comprobó**: 149 pruebas (2 nuevas en `test_v016.py`); navegador real PC y celular actualizando desde v0.14.0; prueba del ejecutable.
+
 ## Etapa 15 · 31-oct-2026 · Nota anterior útil, plan único, otros resultados y solicitudes con estudios para marcar (v0.15.0 · rama `desarrollo`, SIN publicar)
 
 **Pedido del Dr. Lainez** (tras probar la v0.14.0):

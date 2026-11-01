@@ -68,6 +68,7 @@
           <div class="field bmi"><span>IMC <span class="muted small">(kg/m², OMS)</span></span><output data-bmi>{{ bmi if bmi else '—' }}</output></div>
         </div>
         {% else %}
+        {% if k == 'antecedentes' %}{% set ant_target = 'f-antecedentes' %}{% include "pacientes/_antecedentes_clic.html" %}{% endif %}
         {% if k == hea_target %}{% include "notas/_hea_asistente.html" %}{% endif %}
         {% if k == exam_target %}{% include "notas/_exploracion.html" %}{% endif %}
         {% if k == 'diagnosticos' %}
@@ -174,6 +175,9 @@
   <p class="small muted">{{ papers[0]|length }} receta(s), {{ papers[1]|length }} orden(es) y {{ papers[2]|length }} documento(s) de hoy, en un solo PDF.</p></div>
   <div class="btn-row"><a class="btn btn-primary" href="{{ url_for('notes.print_all', note_id=n.id, papel='carta') }}" target="_blank" rel="noopener">🖨 Imprimir todo (carta)</a>
   <a class="btn" href="{{ url_for('notes.print_all', note_id=n.id, papel='a4') }}" target="_blank" rel="noopener">A4</a></div></div></section>{% endif %}
+{% if can('notas.finalizar') and can('clinico.editar') %}<section class="card row-between"><div><h2>Carta al médico que refirió</h2>
+  <p class="small muted">Se arma con el motivo, la impresión, los diagnósticos y el plan de esta nota; usted la revisa antes de emitirla.</p></div>
+  <a class="btn" href="{{ url_for('docs.referrer_letter', note_id=n.id) }}">✉ Preparar carta</a></section>{% endif %}
 <section class="card">
   <h2>Recetas de esta consulta</h2>
   {% for r in prescriptions %}<p><a href="{{ url_for('rx.view', rx_id=r.id) }}">Receta del {{ fmt_dt(r.issued_at) }}</a>{% if r.status == 'anulada' %} <span class="tag tag-danger">Anulada</span>{% endif %}</p>{% else %}<p class="muted small">Ninguna.</p>{% endfor %}

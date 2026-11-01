@@ -1,0 +1,30 @@
+{# Antecedentes con clics (v0.16.0). Variables: p, ANT, ant_active (descripciones vigentes en minúsculas), ant_target (id del campo de la nota o none). #}
+<div class="ant-clic" data-ant data-url="{{ url_for('record.add_history_click', patient_id=p.id) }}" data-text-url="{{ url_for('record.history_text', patient_id=p.id) }}"
+     {% if ant_target %}data-target="{{ ant_target }}"{% endif %}>
+  <details {% if not ant_active %}open{% endif %}><summary><b>＋ Antecedentes con clics</b> <span class="muted small">— se guardan en el expediente y aparecen solos en cada consulta</span></summary>
+  {% for cat, items in ANT.CHIPS.items() %}
+  <div class="hea-row"><span class="hea-lab">{{ ANT.SHORT[cat] }}</span>
+    {% if cat == 'familiar' %}
+      {% for it in items %}<label class="hea-chip"><input type="radio" name="ant-fam-item" value="{{ it }}" data-ant-fam> {{ it }}</label>{% endfor %}
+      <span class="ant-rel">en: {% for r in ANT.RELATIVES %}<label class="hea-chip"><input type="checkbox" value="{{ r }}" data-ant-rel> {{ r }}</label>{% endfor %}</span>
+      <button type="button" class="btn btn-sm" data-ant-fam-add>Agregar familiar</button>
+    {% else %}
+      {% for it in items %}<button type="button" class="hea-chip ant-chip {% if it|lower in ant_active %}is-on{% endif %}" data-ant-add data-category="{{ cat }}" data-item="{{ it }}">{% if it|lower in ant_active %}✓ {% endif %}{{ it }}</button>{% endfor %}
+    {% endif %}
+  </div>
+  {% endfor %}
+  <div class="hea-row"><span class="hea-lab">Hábitos <span class="muted">(la respuesta nueva reemplaza la anterior)</span></span>
+    {% for h, opts in ANT.HABITS.items() %}<span class="ant-habit"><b class="small">{{ h }}:</b>
+      {% for o in opts %}<button type="button" class="hea-chip ant-chip {% if (h ~ ': ' ~ o|lower) in ant_active %}is-on{% endif %}" data-ant-habit="{{ h }}" data-value="{{ o }}">{{ o }}</button>{% endfor %}</span>{% endfor %}
+    <input class="hea-text" placeholder="Detalle opcional para el hábito (ej.: 10 cigarrillos al día, 20 años)" data-ant-detail maxlength="120">
+  </div>
+  <div class="hea-row"><span class="hea-lab">Otro antecedente</span>
+    <select data-ant-other-cat aria-label="Tipo">{% for k in ANT.ORDER if k != 'habito' and k in ANT.CHIPS %}<option value="{{ k }}">{{ ANT.SHORT[k] }}</option>{% endfor %}</select>
+    <input class="hea-text" placeholder="Ej.: Lupus eritematoso sistémico" data-ant-other maxlength="200">
+    <input class="w-num" placeholder="Año" data-ant-when maxlength="80" aria-label="Fecha o época">
+    <button type="button" class="btn btn-sm" data-ant-other-add>Agregar</button>
+  </div>
+  <p class="small muted" data-ant-msg aria-live="polite"></p>
+  </details>
+  {% if ant_target %}<button type="button" class="link-btn small" data-ant-refresh>↻ Actualizar «Antecedentes» desde el expediente</button>{% endif %}
+</div>

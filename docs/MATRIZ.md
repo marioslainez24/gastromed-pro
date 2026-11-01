@@ -1,6 +1,6 @@
 # Matriz de requisitos y cobertura — GastroMed Pro
 
-Actualizada: 30 de octubre de 2026 · versión 0.15.0 (rama desarrollo) · ver también `COMPARATIVA.md`
+Actualizada: 30 de octubre de 2026 · versión 0.16.0 (rama desarrollo) · ver también `COMPARATIVA.md`
 
 **Fuentes:** el documento de requisitos del Dr. Mario Lainez. Las páginas de Medilink (softwaremedilink.com y ayuda.softwaremedilink.com) **no fueron accesibles** desde el entorno de desarrollo (bloqueo de red). Por lo tanto **no se afirma haber revisado ninguna función de Medilink**; la comparación queda pendiente hasta que se puedan consultar (o el usuario envíe capturas/textos).
 
@@ -73,6 +73,8 @@ Actualizada: 30 de octubre de 2026 · versión 0.15.0 (rama desarrollo) · ver t
 | 8.3 | Respaldo diario automático, verificado, con copia a disco externo y retención | ✅ | `test_instalacion_respaldo_y_diagnostico…`, `test_retencion…`; tarea de Windows 🟡 |
 | 8.4 | Modo demostración separado de los datos reales | ✅ | Base y puerto propios |
 | L.1 | Solicitud de laboratorio tipo hoja: secciones, >300 pruebas, 24 perfiles, buscador, PDF agrupado | ✅ | `test_solicitud_laboratorio.py` + navegador |
+| N.6 | Antecedentes con clics que se arrastran a cada nota nueva | ✅ (sin publicar) | `test_v016.py` + navegador |
+| C.9 | Carta al médico que refirió desde la nota o la endoscopia | ✅ (sin publicar) | `test_v016.py` + navegador |
 | N.4 | Nota anterior: mostrar todo y copiar (por campo o todo) con marca de revisión | ✅ (sin publicar) | `test_v015.py` + navegador |
 | N.5 | Un solo «Plan», sin diagnósticos diferenciales (notas antiguas intactas) | ✅ (sin publicar) | `test_v015.py` |
 | L.2 | Otros resultados de laboratorio escritos a mano, recordados en el catálogo | ✅ (sin publicar) | `test_v015.py` + navegador |

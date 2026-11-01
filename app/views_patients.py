@@ -204,6 +204,8 @@ def view(patient_id):
         from .patient_summary import summary
         from .views_gi import approvals
         ctx["summary"] = summary(db, p, approvals())
+        from . import antecedents as ANT
+        ctx["ANT"] = ANT
         ctx["reconciler"] = db.execute("SELECT full_name FROM users WHERE id = ?", (p["meds_reconciled_by"],)).fetchone() \
             if p["meds_reconciled_by"] else None
         audit("expediente_consultado", "paciente", p["id"])
