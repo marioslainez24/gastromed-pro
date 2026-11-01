@@ -43,7 +43,7 @@ construcción). Cuando diga «ya»: `git checkout main && git merge --ff-only de
 El 31-oct-2026 dijo «ya» y se publicó la v0.14.0 (todo lo acumulado). Para mejoras nuevas, seguir en `desarrollo` y esperar su «ya».
 El 31-oct-2026 (noche) dijo «ya» otra vez: se publicó la v0.16.0 (incluye v0.15).
 El 1-nov-2026 pidió publicar «de un solo» la v0.17.0 (sin dictado ni diario, calculadoras de otras especialidades). Lo siguiente, de nuevo en `desarrollo` hasta su «ya».
-v0.18.0 (descartar borradores; hojas de preparación de colonoscopía y EDA) está en `desarrollo` esperando su «ya».
+El 1-nov-2026 dijo «ya»: se publicó la v0.18.0 (descartar borradores; hojas de preparación de colonoscopía y EDA). Lo siguiente, en `desarrollo` hasta su «ya».
 Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó

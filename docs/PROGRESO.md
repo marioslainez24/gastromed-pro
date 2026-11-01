@@ -11,7 +11,7 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
-## Etapa 18 · 1-nov-2026 · Descartar borradores y hojas de preparación de colonoscopía y EDA (v0.18.0 · rama `desarrollo`, SIN publicar)
+## Etapa 18 · 1-nov-2026 · Descartar borradores y hojas de preparación de colonoscopía y EDA (v0.18.0 · PUBLICADA 1-nov-2026)
 
 **Pedido del Dr. Lainez:** una opción para quitar los informes que quedaron en «Borrador», y ponerla donde convenga en el programa.
 - **Informes de endoscopia:** botón **«✕ Descartar»** en la pestaña Procedimientos del paciente y en la lista de Endoscopia, y
