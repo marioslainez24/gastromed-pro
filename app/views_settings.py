@@ -216,3 +216,93 @@ def security_settings():
         audit("politica_mfa", "ajustes", g.user["org_id"], {"obligatoria": bool(require_mfa)}, db=db)
     flash("Política de verificación en dos pasos actualizada.", "ok")
     return redirect(url_for("settings.users"))
+
+
+# ------------------------------------------------------------------------------------------------ respaldos y copia en Google Drive
+def _backup_status():
+    from pathlib import Path
+    from flask import current_app
+    from .backup import last_backup_age_hours
+    cfg = current_app.config["GM"]
+    files = sorted(Path(cfg.BACKUP_DIR).glob("gastromed-*.gmbak")) if Path(cfg.BACKUP_DIR).exists() else []
+    log = Path(cfg.DATABASE_PATH).parent / "respaldo.log"
+    lines = log.read_text(encoding="utf-8", errors="replace").splitlines()[-8:] if log.exists() else []
+    return {"last": files[-1].name if files else None, "size_mb": round(files[-1].stat().st_size / 1048576, 1) if files else None,
+            "age_h": last_backup_age_hours(cfg.BACKUP_DIR), "count": len(files), "log": list(reversed(lines)), "dir": cfg.BACKUP_DIR}
+
+
+@bp.route("/respaldos")
+@require("ajustes.editar")
+def backups():
+    from .backup import OFFSITE_SUBDIR, drive_candidates
+    from .views_setup import _is_local
+    st = get_db().execute("SELECT * FROM clinic_settings WHERE org_id = ?", (g.user["org_id"],)).fetchone()
+    return render_template("ajustes/respaldos.html", st=st, b=_backup_status(), candidates=drive_candidates(), local=_is_local(),
+                           sub=OFFSITE_SUBDIR)
+
+
+@bp.route("/respaldos/drive", methods=["POST"])
+@require("ajustes.editar")
+def backups_drive():
+    import os
+    import secrets as _s
+    from pathlib import Path
+    from flask import current_app
+    from .backup import OFFSITE_SUBDIR, offsite_copy, run_automatic
+    from .views_setup import _is_local
+    if not _is_local():
+        abort(403, description="Por seguridad, la copia en Google Drive se configura solo desde la PC del consultorio.")
+    action = request.form.get("action")
+    db = get_db()
+    cfg = current_app.config["GM"]
+    if action == "activar":
+        folder = ((request.form.get("folder_other") or "").strip() or (request.form.get("folder") or "").strip()).strip('"')
+        try:
+            keep = int(request.form.get("keep") or 7)
+        except ValueError:
+            keep = 7
+        keep = keep if keep in (3, 7, 14, 30) else 7
+        p = Path(folder)
+        problem = None
+        if not folder or not p.is_absolute() or not p.is_dir():
+            problem = "No se encontró esa carpeta. Elija la carpeta de Google Drive que aparece en la lista o escriba la ruta completa."
+        else:
+            try:
+                (p / OFFSITE_SUBDIR).mkdir(exist_ok=True)
+                probe = p / OFFSITE_SUBDIR / f".prueba-{_s.token_hex(4)}"
+                probe.write_bytes(b"ok")
+                probe.unlink()
+            except OSError as e:
+                problem = f"No se pudo escribir en esa carpeta: {e}"
+        if problem:
+            flash(problem, "error")
+            return redirect(url_for("settings.backups"))
+        with write_tx(db):
+            db.execute("UPDATE clinic_settings SET offsite_enabled = 1, offsite_dir = ?, offsite_keep = ?, updated_at = ?, updated_by = ?,"
+                       " version = version + 1 WHERE org_id = ?", (str(p), keep, utcnow(), g.user["id"], g.user["org_id"]))
+            audit("copia_drive_activada", "ajustes", g.user["org_id"], {"carpeta": str(p), "conservar": keep}, db=db)
+        flash(f"Copia en Google Drive ACTIVADA en {p / OFFSITE_SUBDIR}. Pulse «Copiar ahora» para hacer la primera.", "ok")
+    elif action == "desactivar":
+        with write_tx(db):
+            db.execute("UPDATE clinic_settings SET offsite_enabled = 0, updated_at = ?, updated_by = ?, version = version + 1 WHERE org_id = ?",
+                       (utcnow(), g.user["id"], g.user["org_id"]))
+            audit("copia_drive_desactivada", "ajustes", g.user["org_id"], db=db)
+        flash("Copia en Google Drive desactivada. Las copias que ya están en Drive no se borran.", "ok")
+    elif action == "copiar":
+        files = sorted(Path(cfg.BACKUP_DIR).glob("gastromed-*.gmbak")) if Path(cfg.BACKUP_DIR).exists() else []
+        if not files:
+            key = os.environ.get("GASTROMED_BACKUP_KEY", "").encode()
+            if not key:
+                flash("No hay respaldos todavía y falta la clave de respaldo en esta instalación.", "error")
+                return redirect(url_for("settings.backups"))
+            from . import APP_VERSION
+            from .crypto import load_data_key
+            ok, msgs = run_automatic(cfg, key, load_data_key(cfg), APP_VERSION)   # ya incluye la copia a Drive
+            flash(" ".join(msgs), "ok" if ok else "error")
+        else:
+            ok, msg = offsite_copy(cfg.DATABASE_PATH, files[-1])
+            flash(msg or "La copia en Google Drive está desactivada.", "ok" if ok and msg else "error")
+        audit("copia_drive_manual", "ajustes", g.user["org_id"])
+    else:
+        abort(400)
+    return redirect(url_for("settings.backups"))

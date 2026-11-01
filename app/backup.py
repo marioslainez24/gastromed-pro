@@ -195,6 +195,78 @@ def last_backup_age_hours(backup_dir: str) -> float | None:
     return (datetime.now().timestamp() - files[-1].stat().st_mtime) / 3600
 
 
+OFFSITE_SUBDIR = "GastroMed-respaldos"
+
+
+def drive_candidates() -> list[str]:
+    """Carpetas de Google Drive para computadora (u OneDrive) que existen en esta PC."""
+    import os
+    import string
+    out = []
+    if os.name == "nt":
+        for letter in string.ascii_uppercase[3:]:
+            for name in ("Mi unidad", "My Drive"):
+                p = Path(f"{letter}:/") / name
+                try:
+                    if p.is_dir():
+                        out.append(str(p))
+                except OSError:
+                    pass
+    home = Path(os.environ.get("USERPROFILE") or Path.home())
+    for name in ("Google Drive/Mi unidad", "Google Drive/My Drive", "Google Drive", "My Drive", "OneDrive"):
+        p = home / name
+        if p.is_dir() and str(p) not in out:
+            out.append(str(p))
+    return out
+
+
+def offsite_settings(db_path: str):
+    import sqlite3
+    con = sqlite3.connect(db_path, timeout=10)
+    try:
+        con.row_factory = sqlite3.Row
+        return con.execute("SELECT offsite_enabled, offsite_dir, offsite_keep FROM clinic_settings ORDER BY offsite_enabled DESC LIMIT 1").fetchone()
+    except sqlite3.Error:
+        return None
+    finally:
+        con.close()
+
+
+def offsite_record(db_path: str, msg: str):
+    import sqlite3
+    con = sqlite3.connect(db_path, timeout=10)
+    try:
+        con.execute("UPDATE clinic_settings SET offsite_last_at = ?, offsite_last_msg = ? WHERE offsite_enabled = 1",
+                    (datetime.now().astimezone().isoformat(timespec="seconds"), msg[:500]))
+        con.commit()
+    finally:
+        con.close()
+
+
+def offsite_copy(db_path: str, backup_path: Path) -> tuple[bool, str]:
+    """Copia el respaldo cifrado a la carpeta sincronizada (si está activada). Conserva los últimos N allí."""
+    import shutil
+    st = offsite_settings(db_path)
+    if not st or not st["offsite_enabled"] or not st["offsite_dir"]:
+        return True, ""
+    dest = Path(st["offsite_dir"]) / OFFSITE_SUBDIR
+    try:
+        if not Path(st["offsite_dir"]).is_dir():
+            raise FileNotFoundError("no se encontró la carpeta de Google Drive (¿está abierto «Google Drive para computadora»?)")
+        dest.mkdir(exist_ok=True)
+        tmp = dest / (backup_path.name + ".parcial")
+        shutil.copy2(backup_path, tmp)
+        tmp.replace(dest / backup_path.name)
+        prune(dest, max(1, int(st["offsite_keep"] or 7)))
+        msg = f"OK: copia {backup_path.name} en {dest}"
+        ok = True
+    except Exception as e:  # noqa: BLE001
+        msg = f"ALERTA: no se pudo copiar a Google Drive: {e}"
+        ok = False
+    offsite_record(db_path, msg)
+    return ok, msg
+
+
 def run_automatic(cfg, backup_key: bytes, data_key: bytes, app_version: str) -> tuple[bool, list[str]]:
     """Crear → verificar restaurando → copiar a disco externo → conservar los últimos N. Devuelve (ok, mensajes)."""
     import shutil
@@ -223,6 +295,9 @@ def run_automatic(cfg, backup_key: bytes, data_key: bytes, app_version: str) -> 
                 note(f"OK: copiado a {dest}")
             else:
                 note(f"ALERTA: no se encontró la carpeta de copia externa {dest} (¿está conectado el disco?)")
+        ok_off, msg_off = offsite_copy(cfg.DATABASE_PATH, path)
+        if msg_off:
+            note(msg_off)
         removed = prune(Path(cfg.BACKUP_DIR), cfg.BACKUP_KEEP)
         if removed:
             note(f"Se eliminaron {removed} respaldos antiguos (se conservan los últimos {cfg.BACKUP_KEEP}).")

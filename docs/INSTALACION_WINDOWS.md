@@ -65,6 +65,12 @@ En *Hallazgos por segmento* escriba (o dicte) lo que ve en cada segmento. El bot
 **Todo normal** llena los segmentos vacíos y la conclusión. Revise siempre el texto. Para cambiar esas frases a su manera:
 *Endoscopia → Textos de estudio normal*.
 
+## Copia de seguridad en Google Drive (opcional, gratis)
+1. Instale **Google Drive para computadora** e inicie sesión con su Gmail (aparece la unidad «Google Drive (G:)» con «Mi unidad»).
+2. En GastroMed Pro: **Ajustes → Respaldos → Activar copia en Google Drive** (desde la PC del consultorio).
+3. Pulse **Copiar ahora**. Desde entonces, cada respaldo diario se copia solo. El archivo va cifrado.
+4. Imprima su **clave de respaldo** y guárdela lejos de la PC; no la suba a Drive.
+
 ## Novedades de la versión 0.14
 - **Agenda:** cuando el paciente llega, «Registrar llegada»; enfermería pulsa «Signos vitales» en la sala de espera; usted pulsa **Atender →** y la nota
   se abre con esos datos. Al finalizar la nota, la cita queda «atendida».

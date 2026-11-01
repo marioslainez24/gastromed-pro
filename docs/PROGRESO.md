@@ -11,6 +11,21 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 14.1 · 31-oct-2026 · Copia de los respaldos en Google Drive con botón en Ajustes (v0.14.0 · rama `desarrollo`, SIN publicar)
+
+**Pedido del Dr. Lainez:** copia de respaldo cifrada en Google Drive, gratis, que él active con un botón en Ajustes.
+**Qué quedó funcionando**
+- Nueva pestaña **Ajustes → Respaldos** (solo propietario): estado del respaldo diario (último, tamaño, antigüedad, mensajes) y la sección
+  «Copia fuera del consultorio (Google Drive, gratis)», **desactivada por defecto**.
+- Usa **Google Drive para computadora** (gratis): el programa copia cada respaldo cifrado (.gmbak) a `<Mi unidad>\GastroMed-respaldos` y Drive lo sube.
+  Sin API ni cuenta de Google en el programa. Detecta solo las carpetas «Mi unidad»/«My Drive» (y OneDrive); también se puede escribir la ruta.
+- Botones: **Activar** (comprueba que se pueda escribir), **Copiar ahora**, **Desactivar** (no borra lo que ya está en Drive). Conserva las últimas
+  3/7/14/30 copias en Drive. Copia atómica (archivo «.parcial» renombrado). Si Drive no está disponible, avisa sin afectar el respaldo local.
+- Solo se configura desde la PC del consultorio (no desde el celular). La clave de respaldo NUNCA se sube; la pantalla lo advierte.
+- Migración 0011 (`clinic_settings.offsite_*`).
+**Cómo se comprobó**: 143 pruebas (2 nuevas en `test_copia_drive.py`: apagada por defecto, carpeta inválida, copiar, conservar últimas N, Drive
+desconectado, desactivar, permisos y acceso remoto); navegador real; prueba del ejecutable activando y copiando.
+
 ## Etapa 14 · 31-oct-2026 · Diez mejoras para endoscopia y consulta (v0.14.0 · rama `desarrollo`, SIN publicar)
 
 **Pedido del Dr. Lainez:** ideas 5 a 14 de la lista. Sigue vigente: no construir el .exe hasta que diga «ya».

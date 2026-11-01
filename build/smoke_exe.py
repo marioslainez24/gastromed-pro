@@ -139,6 +139,12 @@ def main(exe):
         allpdf = get(f"/notas/{nid}/imprimir-todo").read()
         assert allpdf.startswith(b"%PDF-"), "Imprimir todo"
         assert get(f"/procedimientos/{proc_id}/etiquetas").read().startswith(b"%PDF-"), "Etiquetas de frascos"
+        # Copia en Google Drive: se activa con el botón de Ajustes y copia el respaldo cifrado
+        drive = root.parent / "Drive" / "Mi unidad"
+        drive.mkdir(parents=True, exist_ok=True)
+        post("/ajustes/respaldos/drive", {"csrf_token": csrf, "action": "activar", "folder_other": str(drive), "keep": "7"})
+        post("/ajustes/respaldos/drive", {"csrf_token": csrf, "action": "copiar"})
+        assert list((drive / "GastroMed-respaldos").glob("gastromed-*.gmbak")), "Copia en Google Drive"
         for path in ("/endoscopia/hojas", "/endoscopia/recomendaciones"):
             assert get(path).status == 200, path
         assert "Resumen" in get(f"/pacientes/{pid}").read().decode(), "Resumen del paciente"

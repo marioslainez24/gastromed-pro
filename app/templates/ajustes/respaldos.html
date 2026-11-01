@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Respaldos{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Ajustes</h1></div>
+{% include "ajustes/_tabs.html" %}
+
+<section class="card">
+  <h2>Respaldo automático en esta PC</h2>
+  {% if b.last %}
+  <p>Último respaldo: <b>{{ b.last }}</b> ({{ b.size_mb }} MB) · {{ 'hace menos de una hora' if b.age_h < 1 else 'hace %.0f h' % b.age_h }} · {{ b.count }} guardados en <span class="mono small">{{ b.dir }}</span></p>
+  {% else %}<p class="flash flash-warn">Todavía no hay respaldos. El programa hace el primero unos segundos después de abrirse y luego uno cada 24 horas.</p>{% endif %}
+  <p class="small muted">Cada respaldo va cifrado y se comprueba restaurándolo en una carpeta temporal antes de darlo por bueno.</p>
+  {% if b.log %}<details><summary class="small">Últimos mensajes del respaldo</summary><pre class="small log">{% for l in b.log %}{{ l }}
+{% endfor %}</pre></details>{% endif %}
+</section>
+
+<section class="card offsite {{ 'is-on' if st.offsite_enabled else '' }}" id="drive">
+  <div class="row-between"><h2>Copia fuera del consultorio (Google Drive, gratis)</h2>
+    <span class="tag big {{ 'tag-ok' if st.offsite_enabled else '' }}">{{ 'ACTIVADA' if st.offsite_enabled else 'Desactivada' }}</span></div>
+  <p>Si hay un robo, un incendio o se daña la PC, una copia en su Google Drive le permite recuperar todo. El archivo que se sube <b>va cifrado</b>:
+    Google ni nadie puede leerlo sin su <b>clave de respaldo</b>, que <b>no se sube</b>.</p>
+
+  {% if st.offsite_enabled %}
+    <p>Se copia cada respaldo diario a <span class="mono">{{ st.offsite_dir }}\{{ sub }}</span> y se conservan los últimos <b>{{ st.offsite_keep }}</b>.</p>
+    {% if st.offsite_last_msg %}<p class="small {{ 'flash flash-warn' if st.offsite_last_msg.startswith('ALERTA') else 'muted' }}">Última copia: {{ st.offsite_last_msg }} · {{ st.offsite_last_at }}</p>{% endif %}
+    {% if local %}
+    <div class="btn-row">
+      <form method="post" action="{{ url_for('settings.backups_drive') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="btn btn-primary" name="action" value="copiar" type="submit">Copiar ahora</button></form>
+      <form method="post" action="{{ url_for('settings.backups_drive') }}" class="inline" data-confirm="¿Desactivar la copia en Google Drive? Las copias que ya están en Drive no se borran.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-danger-quiet" name="action" value="desactivar" type="submit">Desactivar</button></form>
+    </div>
+    {% endif %}
+  {% endif %}
+
+  {% if not local %}
+    <p class="flash flash-warn">Por seguridad, esta opción se activa o cambia solo desde la PC del consultorio (no desde el celular).</p>
+  {% else %}
+  <details {% if not st.offsite_enabled %}open{% endif %}><summary><b>{{ 'Cambiar la carpeta' if st.offsite_enabled else 'Activar en 3 pasos' }}</b></summary>
+    <ol class="steps">
+      <li>Instale <b>Google Drive para computadora</b> (gratis, de google.com/drive/download) e inicie sesión con su cuenta de Gmail.</li>
+      <li>Se crea en su PC la unidad <b>«Google Drive (G:)»</b> con la carpeta <b>«Mi unidad»</b>. Todo lo que se guarde ahí se sube solo a internet.</li>
+      <li>Elija esa carpeta abajo y pulse <b>«Activar copia en Google Drive»</b>.</li>
+    </ol>
+    <form method="post" action="{{ url_for('settings.backups_drive') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      {% if candidates %}
+      <fieldset><legend class="small">Carpetas encontradas en esta PC</legend>
+        {% for c in candidates %}<label class="check"><input type="radio" name="folder" value="{{ c }}" {% if loop.first or c == st.offsite_dir %}checked{% endif %}> <span class="mono">{{ c }}</span></label>{% endfor %}
+      </fieldset>
+      {% else %}<p class="small flash flash-warn">No se encontró la carpeta de Google Drive. Instálelo (paso 1) y vuelva a abrir esta página, o escriba la ruta.</p>{% endif %}
+      <label class="field">Otra carpeta (ruta completa)<input name="folder_other" placeholder="Ej.: G:\Mi unidad" {% if not candidates %}required{% endif %}></label>
+      <label class="field">Cuántas copias conservar en Drive<select name="keep">{% for k in (3, 7, 14, 30) %}<option value="{{ k }}" {% if k == (st.offsite_keep or 7) %}selected{% endif %}>Las últimas {{ k }}</option>{% endfor %}</select></label>
+      {% if b.size_mb %}<p class="small muted">Cada copia ocupa unos {{ b.size_mb }} MB. Google Drive gratis tiene 15 GB.</p>{% endif %}
+      <div><button class="btn btn-primary" name="action" value="activar" type="submit">{{ 'Guardar la nueva carpeta' if st.offsite_enabled else 'Activar copia en Google Drive' }}</button></div>
+    </form>
+  </details>
+  {% endif %}
+
+  <div class="flash flash-warn small mt"><b>Muy importante:</b> para abrir una copia hace falta su <b>clave de respaldo</b> (está en el archivo
+    «GastroMed - CLAVES» que se creó en su Escritorio al instalar). Imprímala y guárdela lejos de la PC, y <b>no</b> la suba a Drive: si alguien tuviera la copia y la clave,
+    podría leer los expedientes.</div>
+</section>
+{% endblock %}

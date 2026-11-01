@@ -476,3 +476,4 @@ fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
 .table.compact td { padding: .2rem .35rem; }
 .calc-quick { padding: .35rem 0; border-bottom: 1px dashed var(--line); }
 .calc-quick .tag { margin-left: .3rem; }
+.offsite.is-on { border-color: var(--ok); } .steps { margin: .4rem 0 .8rem; } pre.log { white-space: pre-wrap; background: var(--surface-2); padding: .5rem; border-radius: 8px; }

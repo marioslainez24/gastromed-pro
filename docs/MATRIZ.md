@@ -73,6 +73,7 @@ Actualizada: 30 de octubre de 2026 · versión 0.14.0 (rama desarrollo) · ver t
 | 8.3 | Respaldo diario automático, verificado, con copia a disco externo y retención | ✅ | `test_instalacion_respaldo_y_diagnostico…`, `test_retencion…`; tarea de Windows 🟡 |
 | 8.4 | Modo demostración separado de los datos reales | ✅ | Base y puerto propios |
 | L.1 | Solicitud de laboratorio tipo hoja: secciones, >300 pruebas, 24 perfiles, buscador, PDF agrupado | ✅ | `test_solicitud_laboratorio.py` + navegador |
+| S.1 | Copia cifrada de respaldos en Google Drive (gratis), activable con botón en Ajustes | ✅ (sin publicar) | `test_copia_drive.py` + prueba del .exe |
 | E.4 | Hallazgos de endoscopia con clics y sugerencia de diagnóstico | ✅ (sin publicar) | `test_lote_v013.py` + navegador |
 | E.5 | Recomendaciones por diagnóstico (texto del médico, sugeridas) | ✅ (sin publicar) | `test_lote_v013.py` + navegador |
 | E.6 | Hojas de preparación y consentimiento con datos de la cita | ✅ (sin publicar) | `test_lote_v013.py` |
