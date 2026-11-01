@@ -201,6 +201,9 @@ def view(patient_id):
         from .views_record import load_record
         ctx.update(load_record(db, p["id"]))
         ctx["files"] = list_files(db, p["id"])
+        from .patient_summary import summary
+        from .views_gi import approvals
+        ctx["summary"] = summary(db, p, approvals())
         ctx["reconciler"] = db.execute("SELECT full_name FROM users WHERE id = ?", (p["meds_reconciled_by"],)).fetchone() \
             if p["meds_reconciled_by"] else None
         audit("expediente_consultado", "paciente", p["id"])

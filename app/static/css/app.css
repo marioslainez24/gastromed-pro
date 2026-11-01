@@ -467,3 +467,12 @@ fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
 .waiting-room .wr-item { display: grid; gap: .35rem; padding: .5rem 0; border-bottom: 1px solid var(--line); }
 .waiting-room .wr-item .tag { margin-left: .3rem; }
 .intake-box { background: var(--ok-soft); padding: .55rem .7rem; margin: .4rem 0; }
+
+/* Resumen del paciente (v0.13.0) */
+.summary h3 { font-size: .85rem; margin: .2rem 0 .3rem; color: var(--accent); text-transform: uppercase; letter-spacing: .03em; }
+.sum-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: .8rem; }
+.sum-box { border: 1px solid var(--line); border-radius: 10px; padding: .6rem .75rem; min-width: 0; }
+.sum-box ul { margin: .1rem 0 .5rem; padding-left: 1.1rem; }
+.table.compact td { padding: .2rem .35rem; }
+.calc-quick { padding: .35rem 0; border-bottom: 1px dashed var(--line); }
+.calc-quick .tag { margin-left: .3rem; }

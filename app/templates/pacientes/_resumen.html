@@ -1,0 +1,45 @@
+{# Resumen del paciente (v0.13.0) #}
+{% set S = summary %}
+<section class="card summary" id="resumen">
+  <div class="row-between"><h2>Resumen</h2>
+    {% if S.next_appt %}<span class="tag">Próxima cita: <a href="{{ url_for('agenda.view', appt_id=S.next_appt.id) }}">{{ fmt_dt(S.next_appt.starts_at) }}</a></span>{% endif %}</div>
+  <div class="sum-grid">
+    <div class="sum-box"><h3>Problemas activos</h3>
+      {% if S.problems %}<ul>{% for x in S.problems %}<li>{{ x }}</li>{% endfor %}</ul>{% else %}<p class="muted small">Sin problemas registrados.</p>{% endif %}
+      <h3>Medicamentos actuales</h3>
+      {% if S.meds %}<p class="small">{{ S.meds|join(' · ') }}</p>{% else %}<p class="muted small">Sin medicamentos registrados.</p>{% endif %}</div>
+    <div class="sum-box"><h3>Última consulta</h3>
+      {% if S.last_note %}<p class="small"><a href="{{ url_for('notes.view', note_id=S.last_note.id) }}">{{ fmt_dt(S.last_note.at, false) }}</a></p>
+        {% if S.last_note.dx %}<ul class="small">{% for x in S.last_note.dx %}<li>{{ x }}</li>{% endfor %}</ul>{% endif %}
+        {% if S.last_note.plan %}<p class="small muted">Plan: {{ S.last_note.plan }}{% if S.last_note.plan|length >= 240 %}…{% endif %}</p>{% endif %}
+      {% else %}<p class="muted small">Sin consultas finalizadas.</p>{% endif %}</div>
+    <div class="sum-box"><h3>Endoscopia</h3>
+      {% for x in S.procs %}<p class="small"><a href="{{ url_for('endo.proc_view', proc_id=x.id) }}"><b>{{ x.label }}</b></a> · {{ fmt_birth(x.on) }}
+        {% if x.concl %}<br><span class="muted">{{ x.concl|join(' · ') }}</span>{% endif %}</p>{% else %}<p class="muted small">Sin estudios finalizados.</p>{% endfor %}
+      {% if S.path %}<p class="small"><span class="tag tag-warn">Patología pendiente: {{ S.path|length }} frasco(s)</span></p>{% endif %}
+      {% if S.surveillance %}<p class="small">Control indicado: <b>{{ fmt_birth(S.surveillance.due) }}</b> ({{ S.surveillance.label|lower }})</p>{% endif %}</div>
+    <div class="sum-box"><h3>Últimos laboratorios</h3>
+      {% if S.labs %}<table class="table compact"><tbody>{% for x in S.labs %}
+        <tr><td class="small">{{ x.name }}</td><td class="num {% if x.flag in ('alto','bajo') %}is-out{% endif %}">{{ x.text if x.value is none else ('%g' % x.value) }} {{ x.unit or '' }}
+          {% if x.trend %}<span class="muted" title="Anterior: {{ '%g' % x.prev }}">{{ x.trend }}</span>{% endif %}</td><td class="small muted">{{ fmt_birth(x.on) }}</td></tr>{% endfor %}</tbody></table>
+        <p class="small"><a href="{{ url_for('labs.patient_labs', patient_id=p.id) }}">Ver todos y gráficas →</a></p>
+      {% else %}<p class="muted small">Sin resultados registrados.</p>{% endif %}</div>
+    <div class="sum-box"><h3>Pendientes</h3>
+      {% set P = S.pending %}
+      {% if P.orders or P.to_review or P.tasks or P.drafts %}<ul class="small">
+        {% for o in P.orders %}<li><a href="{{ url_for('labs.order_view', order_id=o.id) }}">Orden de {{ o.order_type }}</a> del {{ fmt_dt(o.created_at, false) }}: {{ (o.items or '')[:80] }}{% if (o.items or '')|length > 80 %}…{% endif %}</li>{% endfor %}
+        {% if P.to_review %}<li><a href="{{ url_for('labs.patient_labs', patient_id=p.id) }}">{{ P.to_review }} resultado(s) por revisar</a></li>{% endif %}
+        {% for t in P.tasks %}<li>Tarea: {{ t.title }}{% if t.due_on %} ({{ fmt_birth(t.due_on) }}){% endif %}</li>{% endfor %}
+        {% if P.drafts %}<li>{{ P.drafts }} nota(s) o informe(s) en borrador</li>{% endif %}
+      </ul>{% else %}<p class="muted small">Nada pendiente.</p>{% endif %}</div>
+    <div class="sum-box"><h3>Cálculos con los últimos laboratorios</h3>
+      {% for c in S.calcs %}<div class="calc-quick">
+        <a href="{{ url_for('gi.calc_use', code=c.code, patient_id=p.id) }}"><b>{{ c.name }}</b></a>
+        {% if c.preview %}<span class="tag tag-ok">Preliminar: {{ c.preview }}</span>{% endif %}
+        {% if c.old %}<span class="tag tag-warn">Datos de hace más de 3 meses</span>{% endif %}
+        <div class="tiny muted">{% for lab, val, on in c.found %}{{ lab }} {{ val }} ({{ fmt_birth(on) }}){% if not loop.last %} · {% endif %}{% endfor %}</div>
+        {% if c.missing %}<div class="tiny">Falta: {{ c.missing|join(', ') }}</div>{% endif %}
+      </div>{% else %}<p class="muted small">Registre laboratorios (bilirrubina, albúmina, INR, creatinina, sodio, AST, ALT, plaquetas) para ver los cálculos aquí.</p>{% endfor %}
+      {% if S.calcs %}<p class="tiny muted">Preliminar = calculado solo con datos del expediente. Para guardarlo, ábralo, revise valores y fechas y confirme.</p>{% endif %}</div>
+  </div>
+</section>
