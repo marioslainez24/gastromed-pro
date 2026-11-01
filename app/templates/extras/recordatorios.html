@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Recordatorios y dictado{% endblock %}
+{% block title %}Recordatorios{% endblock %}
 {% block content %}
 <div class="page-head"><h1>Ajustes</h1></div>
 {% include "ajustes/_tabs.html" %}
@@ -43,19 +43,6 @@
 <section class="card">
   <h2>Recordatorios por WhatsApp (gratis, con un toque)</h2>
   <p class="small">La API oficial de WhatsApp para envíos automáticos es de pago, por eso no se usa. En su lugar, en <a href="{{ url_for('extras.reminders_today') }}">Agenda → Recordatorios</a> aparece un botón <b>WhatsApp</b> por cada cita: al tocarlo se abre WhatsApp (en el celular o WhatsApp Web) con el mensaje ya escrito y usted solo pulsa «Enviar». Funciona con el WhatsApp normal o Business del consultorio.</p>
-</section>
-
-<section class="card" id="dictado">
-  <h2>Dictado de notas por voz</h2>
-  <p class="small">Usa el reconocimiento de voz que ya trae <b>Google Chrome</b> o <b>Microsoft Edge</b>, sin costo. Aparece un botón 🎤 junto a cada campo de texto de las notas clínicas y de los informes de endoscopia. Usted habla, el texto aparece en el campo y <b>usted lo revisa y corrige antes de guardar</b>; el programa no inventa ni agrega contenido.</p>
-  <div class="flash flash-warn"><b>Aviso de privacidad:</b> para convertir voz en texto, el navegador envía el audio a los servidores de Google (Chrome) o Microsoft (Edge). El texto resultante se guarda solo en su computadora. Recomendación: no dicte nombres completos, DNI ni teléfonos del paciente; esos datos ya están en la ficha. Necesita internet para dictar. En el celular, abra el programa con la dirección <b>https://</b>.</div>
-  <form method="post" action="{{ url_for('extras.dictation_settings') }}" class="form-grid">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <label class="check"><input type="checkbox" name="dictation_enabled" value="1" {% if s.dictation_enabled %}checked{% endif %}> Activar el dictado por voz</label>
-    <label class="field">Idioma y acento<select name="dictation_lang">{% for k, v in [('es-MX','Español (México)'),('es-US','Español (Estados Unidos)'),('es-419','Español (Latinoamérica)'),('es-ES','Español (España)')] %}<option value="{{ k }}" {% if s.dictation_lang == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
-    <label class="check"><input type="checkbox" name="ack_privacy" value="1" {% if s.dictation_enabled %}checked{% endif %}> Leí el aviso: el audio lo procesa Google o Microsoft, y reviso cada texto dictado.</label>
-    <div class="actions"><button class="btn btn-primary" type="submit">Guardar dictado</button></div>
-  </form>
 </section>
 
 <section class="card">

@@ -7,9 +7,27 @@ El Dr. Lainez indicó que **no desea** las funciones administrativas y financier
 liquidaciones, inventario ni reportes financieros). No se desarrollarán salvo que él lo solicite de nuevo.
 Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsulta, IA opcional) o mejoras de las fases 1–3.
 
-## Decisión 30-oct-2026: de la Fase 5 solo recordatorios y dictado, sin servicios de pago
+## Decisión 30-oct-2026: de la Fase 5 solo recordatorios y dictado, sin servicios de pago (el dictado se quitó el 1-nov-2026)
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
+
+## Etapa 17 · 1-nov-2026 · Sin dictado ni diario; calculadoras de otras especialidades (v0.17.0 · PUBLICADA)
+
+**Pedido del Dr. Lainez:** «quita la opción de dictar y lo de diario de síntomas, añade más cálculos aparte de los de gastroenterología y haz
+el programa de un solo» (publicar sin esperar el «ya»).
+- **Dictado quitado**: sin botón 🎤 en notas ni endoscopia, sin sección en Ajustes (pestaña ahora «Recordatorios»), sin `dictado.js`
+  ni la ruta `/ajustes/dictado`; el micrófono queda bloqueado en todas las pantallas. Las columnas `dictation_*` de la base se dejan sin uso.
+- **Diario de síntomas quitado**: sin pestaña ni pantalla (`/pacientes/<id>/diario` da 404). La tabla `symptom_diary` y sus datos se conservan.
+- **11 calculadoras nuevas** (`app/calculators.py`), cada una con fuente, población, límites y casos de referencia:
+  - Riñón y electrolitos: CKD-EPI 2021 (Inker NEJM 2021; caso externo MetricGate 53.5), Cockcroft-Gault, calcio corregido (Payne),
+    brecha aniónica (Kraut y Madias).
+  - Cardiología: CHA₂DS₂-VASc (Lip 2010), HAS-BLED (Pisters 2010), QTc de Bazett (umbrales AHA/ACCF/HRS 2009).
+  - Infección y urgencias: CURB-65 (Lim 2003), qSOFA (Sepsis-3), escala de coma de Glasgow (Teasdale 1974).
+  - General: superficie corporal de Mosteller.
+  - Se rellenan solas con creatinina, BUN, sodio y albúmina del expediente, y con la edad y el sexo del paciente.
+  - Como todas, deben aprobarse en «Calculadoras → Revisar» antes de poder guardar un resultado en el expediente.
+**Cómo se comprobó**: 174 pruebas (`test_v017.py` y casos de referencia); navegador real PC y celular actualizando desde v0.16.0;
+prueba del ejecutable.
 
 ## Etapa 16 · 31-oct-2026 · Antecedentes con clics que se arrastran y carta al médico que refirió (v0.16.0 · rama `desarrollo`, SIN publicar)
 

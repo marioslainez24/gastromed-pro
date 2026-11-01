@@ -10,10 +10,10 @@ Bitácora detallada: `docs/PROGRESO.md`. Estado de cada requisito: `docs/MATRIZ.
 - **Sin servicios de pago.** Si algo cuesta, se sustituye por una opción gratuita y se explica la diferencia.
   - WhatsApp: enlace wa.me con envío manual (no la API).
   - Correo: su Gmail con contraseña de aplicación.
-  - Dictado: Web Speech API de Chrome/Edge, con aviso de privacidad.
+  - Dictado: QUITADO en v0.17.0 a pedido del usuario (no volver a ponerlo sin que lo pida). Diario de síntomas también quitado.
   - HTTPS: certificado autofirmado.
 - **Fase 4 (finanzas: cobros, caja, inventario, presupuestos) DESCARTADA.**
-- **Fase 5:** solo recordatorios y dictado. Portal del paciente, reserva en línea, teleconsulta y campañas no fueron solicitados.
+- **Fase 5:** solo recordatorios (el dictado se quitó en v0.17.0). Portal del paciente, reserva en línea, teleconsulta y campañas no fueron solicitados.
 - Reglas del documento de requisitos original:
   - Sin integraciones falsas ni precios o fórmulas inventados.
   - Calculadoras con fuente y caso verificado.
@@ -41,12 +41,13 @@ Flask 3 + Jinja2 + SQLite, con WAL, tablas STRICT y triggers de inmutabilidad y 
 El usuario pidió NO construir el .exe hasta que diga «ya». Trabajar en la rama `desarrollo` (empujarla para no perder el trabajo; no dispara la
 construcción). Cuando diga «ya»: `git checkout main && git merge --ff-only desarrollo && git push`, esperar la CI y avisarle.
 El 31-oct-2026 dijo «ya» y se publicó la v0.14.0 (todo lo acumulado). Para mejoras nuevas, seguir en `desarrollo` y esperar su «ya».
-El 31-oct-2026 (noche) dijo «ya» otra vez: se publicó la v0.16.0 (incluye v0.15). Lo siguiente, de nuevo en `desarrollo` hasta su «ya».
+El 31-oct-2026 (noche) dijo «ya» otra vez: se publicó la v0.16.0 (incluye v0.15).
+El 1-nov-2026 pidió publicar «de un solo» la v0.17.0 (sin dictado ni diario, calculadoras de otras especialidades). Lo siguiente, de nuevo en `desarrollo` hasta su «ya».
 Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó
 1. Crear tareas, programar y escribir pruebas pytest para cada función nueva. Ejemplo: un servidor SMTP falso en localhost; nunca simular un éxito.
-2. Correr `python3 -m pytest -q` (149 pruebas en v0.16.0).
+2. Correr `python3 -m pytest -q` (174 pruebas en v0.17.0).
 3. Revisar en el navegador con Playwright y guardar capturas en `evidencia/capturas/`.
 4. Correr la prueba del exe en local: `build/smoke_exe.py` con un script que ejecute `python3 gastromed_exe.py`. Si waitress no está instalado, usar un sustituto con `werkzeug.make_server` en `PYTHONPATH`.
 5. Actualizar `docs/PROGRESO.md` y `docs/MATRIZ.md` (y `INSTALACION_WINDOWS.md` si cambia el uso). Copiarlos al Proyecto con `project_write`.
@@ -77,4 +78,3 @@ Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
   - Fórmula de Lille (diferencia de bilirrubina) y regla de diálisis en MELD 3.0.
   - Capturadora de video real.
   - Envío real con Gmail.
-  - Micrófono del celular por https con certificado autofirmado.

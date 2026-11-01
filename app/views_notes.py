@@ -202,8 +202,7 @@ def view(note_id):
                            " AND id <> ? ORDER BY finalized_at DESC LIMIT 1", (p["id"], n["id"])).fetchone()
     prescriptions = db.execute("SELECT id, issued_at, status FROM prescriptions WHERE note_id = ? ORDER BY issued_at", (n["id"],)).fetchall()
     audit("nota_consultada", "nota", n["id"])
-    from .views_extras import with_dictation
-    return with_dictation(render_template("notas/ver.html", n=n, p=p, fields=fields, addenda=addenda, allergies=allergies, editable=editable,
+    return (render_template("notas/ver.html", n=n, p=p, fields=fields, addenda=addenda, allergies=allergies, editable=editable,
                            sections=sections_for(n["template"], fields), text_labels=TEXT_FIELDS, vitals=VITALS, bmi=bmi(fields.get("vitales", {})),
                            prior=prior, prior_items=prior_items(json.loads(prior["fields"]), n["template"], fields) if prior else [],
                            prescriptions=prescriptions,
@@ -217,7 +216,7 @@ def view(note_id):
                            exam_target="exploracion_general" if n["template"] == "soap" else "narrativa", EXAM_SYSTEMS=EXAM.SYSTEMS,
                            dx_json=json.dumps(CDX.as_list(), ensure_ascii=False), dx_source=CDX.ICD_SOURCE,
                            note_tpls=json.dumps(templates_for(db, n["template"]), ensure_ascii=False) if editable else "[]",
-                           papers=visit_papers(db, n), errors={}), editable)
+                           papers=visit_papers(db, n), errors={}))
 
 
 @bp.route("/<note_id>/guardar", methods=["POST"])

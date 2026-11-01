@@ -1,4 +1,4 @@
-"""Recordatorios de citas, dictado por voz, logo/firma, horarios de atención y bloqueos."""
+"""Recordatorios de citas, logo/firma, horarios de atención y bloqueos."""
 import re
 from datetime import date, datetime, timedelta, timezone
 
@@ -12,7 +12,6 @@ from .views_files import validate as validate_file
 
 bp = Blueprint("extras", __name__)
 WEEKDAYS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-DICTATION_LANGS = {"es-MX": "Español (México)", "es-US": "Español (Estados Unidos)", "es-ES": "Español (España)", "es-419": "Español (Latinoamérica)"}
 
 
 def load_assets(org_id) -> dict:
@@ -122,32 +121,6 @@ def whatsapp(appt_id):
     R.record(db, a["id"], "whatsapp", "abierto_en_whatsapp", user_id=g.user["id"])
     audit("recordatorio_whatsapp_abierto", "cita", a["id"])
     return redirect(link)
-
-
-# ------------------------------------------------------------------------------------------------ dictado
-def with_dictation(html: str, editable: bool):
-    """Respuesta con micrófono permitido solo si el dictado está activado y la pantalla es editable."""
-    resp = make_response(html)
-    if editable and clinic_settings()["dictation_enabled"]:
-        resp.headers["Permissions-Policy"] = "camera=(), microphone=(self), geolocation=(), payment=()"
-    return resp
-
-
-@bp.route("/ajustes/dictado", methods=["POST"])
-@require("ajustes.editar")
-def dictation_settings():
-    enabled = int(request.form.get("dictation_enabled") == "1")
-    lang = request.form.get("dictation_lang") if request.form.get("dictation_lang") in DICTATION_LANGS else "es-MX"
-    if enabled and request.form.get("ack_privacy") != "1":
-        flash("Para activar el dictado debe confirmar que leyó el aviso de privacidad.", "error")
-        return redirect(url_for("extras.reminders_settings") + "#dictado")
-    db = get_db()
-    with write_tx(db):
-        db.execute("UPDATE clinic_settings SET dictation_enabled = ?, dictation_lang = ?, version = version + 1 WHERE org_id = ?",
-                   (enabled, lang, g.user["org_id"]))
-        audit("dictado_configurado", "ajustes", g.user["org_id"], {"activo": bool(enabled), "idioma": lang}, db=db)
-    flash("Dictado " + ("activado." if enabled else "desactivado."), "ok")
-    return redirect(url_for("extras.reminders_settings") + "#dictado")
 
 
 # ------------------------------------------------------------------------------------------------ logo y firma

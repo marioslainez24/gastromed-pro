@@ -1,17 +1,13 @@
-"""Fase 2: formularios GI en la nota, diario de síntomas y calculadoras."""
+"""Fase 2: formularios GI en la nota y calculadoras (el diario de síntomas se quitó en v0.17.0; sus datos se conservan)."""
 import json
 import re
-from datetime import date
 
 from flask import jsonify, Blueprint, abort, flash, g, redirect, render_template, request, url_for
-from markupsafe import Markup
 
 from . import calculators as C
 from . import gi_forms
-from .charts import trend_svg
 from .db import get_db, new_id, utcnow, write_tx
 from .security import audit, can, require
-from .util import fmt_birth, local_today
 from .views_labs import latest_values
 from .views_patients import get_patient_or_404
 
@@ -121,52 +117,6 @@ def note_forms(db, note_id):
     return [{"code": r["form_code"], "title": gi_forms.FORMS.get(r["form_code"], (r["form_code"],))[0],
              "summary": gi_forms.render_summary(r["form_code"], json.loads(r["data"])) if r["form_code"] in gi_forms.FORMS else []}
             for r in rows]
-
-
-# ------------------------------------------------------------------------------------------------ diario de síntomas
-@bp.route("/pacientes/<patient_id>/diario", methods=["GET", "POST"])
-@require("clinico.ver")
-def diary(patient_id):
-    p = get_patient_or_404(patient_id)
-    db = get_db()
-    if request.method == "POST":
-        if not can("clinico.editar") and not can("resultados.registrar"):
-            abort(403)
-        try:
-            d = date.fromisoformat(request.form.get("entry_date", ""))
-            if d > local_today():
-                raise ValueError
-        except ValueError:
-            flash("Fecha no válida.", "error")
-            return redirect(url_for("gi.diary", patient_id=p["id"]))
-
-        def opt_int(k, lo, hi):
-            v = (request.form.get(k) or "").strip()
-            if not v:
-                return None
-            try:
-                x = int(v)
-            except ValueError:
-                return None
-            return x if lo <= x <= hi else None
-        with write_tx(db):
-            did = new_id()
-            db.execute("INSERT INTO symptom_diary(id, org_id, patient_id, entry_date, stools, bristol, blood, urgency, nocturnal, pain, notes,"
-                       " recorded_by, recorded_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                       (did, g.user["org_id"], p["id"], d.isoformat(), opt_int("stools", 0, 60), opt_int("bristol", 1, 7),
-                        int(request.form.get("blood") == "1"), int(request.form.get("urgency") == "1"), int(request.form.get("nocturnal") == "1"),
-                        opt_int("pain", 0, 10), (request.form.get("notes") or "").strip()[:500] or None, g.user["id"], utcnow()))
-            audit("diario_registrado", "paciente", p["id"], db=db)
-        flash("Registro del diario agregado.", "ok")
-        return redirect(url_for("gi.diary", patient_id=p["id"]))
-    rows = db.execute("SELECT * FROM symptom_diary WHERE patient_id = ? ORDER BY entry_date, recorded_at", (p["id"],)).fetchall()
-    stools = Markup(trend_svg([(fmt_birth(r["entry_date"])[:5], r["stools"], None) for r in rows if r["stools"] is not None][-30:],
-                              unit="evacuaciones", title="Evacuaciones por día")) if rows else None
-    pain = Markup(trend_svg([(fmt_birth(r["entry_date"])[:5], r["pain"], None) for r in rows if r["pain"] is not None][-30:],
-                            unit="/10", title="Dolor (0–10)")) if rows else None
-    audit("diario_consultado", "paciente", p["id"])
-    return render_template("gi/diario.html", p=p, rows=list(reversed(rows)), stools=stools, pain=pain, BRISTOL=gi_forms.BRISTOL,
-                           today=local_today().isoformat())
 
 
 # ------------------------------------------------------------------------------------------------ calculadoras

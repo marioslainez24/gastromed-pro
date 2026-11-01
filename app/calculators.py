@@ -540,7 +540,310 @@ BMI = Calculator(
                      ({"peso": "90", "talla": "170"}, {"valor": 31.1, "categoria": "obesidad"})])
 
 
-ALL = [CHILD, MELD_NA, MELD3, FIB4, APRI, MADDREY, LILLE, GBS, ROCKALL, BISAP, BMI]
+# =============================================================================================== v0.17: otras especialidades
+SEXO = Field("sexo", "Sexo", kind="select", options=[("femenino", "Femenino"), ("masculino", "Masculino")])
+EDAD = Field("edad", "Edad", "años", min=18, max=120)
+
+
+def _kdigo(e):
+    return "G1" if e >= 90 else "G2" if e >= 60 else "G3a" if e >= 45 else "G3b" if e >= 30 else "G4" if e >= 15 else "G5"
+
+
+def _ckd_epi(v):
+    fem = v["sexo"] == "femenino"
+    k, a = (0.7, -0.241) if fem else (0.9, -0.302)
+    r = v["creat"] / k
+    e = 142 * min(r, 1) ** a * max(r, 1) ** -1.200 * 0.9938 ** v["edad"] * (1.012 if fem else 1)
+    cat = _kdigo(e)
+    return {"valor": round(e, 1), "categoria": cat, "texto": f"TFGe {e:.1f} mL/min/1.73 m² · categoría {cat} (KDIGO)",
+            "interpretacion": "Categorías KDIGO de filtrado: G1 ≥90, G2 60–89, G3a 45–59, G3b 30–44, G4 15–29, G5 <15 mL/min/1.73 m². "
+                              "Una sola medición no establece enfermedad renal crónica (requiere >3 meses)."}
+
+
+CKD_EPI = Calculator(
+    code="ckd_epi_2021", name="Filtrado glomerular CKD-EPI 2021", version="CKD-EPI-2021", group="Riñón y electrolitos",
+    source="Inker LA et al. New creatinine- and cystatin C-based equations to estimate GFR without race. N Engl J Med 2021;385:1737-49.",
+    verified_against=["Ecuación publicada (NEJM 2021) y ejemplo resuelto de MetricGate: mujer 55 años, creatinina 1.2 mg/dL → 53.5 "
+                      "(consultado 1-nov-2026)"],
+    population="Adultos ≥18 años con creatinina estable. No válido en lesión renal aguda, embarazo, amputados o masa muscular extrema.",
+    formula="142 × min(Cr/κ, 1)^α × max(Cr/κ, 1)^−1.200 × 0.9938^edad × 1.012 [mujer]; κ = 0.7 (mujer) o 0.9 (hombre); "
+            "α = −0.241 (mujer) o −0.302 (hombre). Sin coeficiente de raza.",
+    rounding="Un decimal.", missing="Creatinina, edad y sexo obligatorios.",
+    limitations="En cirrosis la creatinina sobreestima el filtrado (poca masa muscular). Para dosificar fármacos algunas fichas usan Cockcroft-Gault.",
+    fields=[Field("creat", "Creatinina sérica", "mg/dL", lab="creat", min=0.1, max=25), EDAD, SEXO],
+    compute=_ckd_epi,
+    reference_cases=[({"creat": "1.2", "edad": "55", "sexo": "femenino"}, {"valor": 53.5, "categoria": "G3a"}),
+                     ({"creat": "1.0", "edad": "50", "sexo": "masculino"}, {"valor": 91.7, "categoria": "G1"}),
+                     ({"creat": "0.6", "edad": "40", "sexo": "femenino"}, {"valor": 116.3, "categoria": "G1"})])
+
+
+def _cockcroft(v):
+    c = (140 - v["edad"]) * v["peso"] / (72 * v["creat"]) * (0.85 if v["sexo"] == "femenino" else 1)
+    return {"valor": round(c, 1), "texto": f"Depuración de creatinina estimada {c:.1f} mL/min",
+            "interpretacion": "Estimación de la depuración de creatinina (mL/min, no ajustada a superficie corporal), usada en muchas fichas "
+                              "técnicas para ajustar dosis. Verifique la recomendación de la ficha de cada fármaco."}
+
+
+COCKCROFT = Calculator(
+    code="cockcroft_gault", name="Cockcroft-Gault (depuración de creatinina)", version="CG-1976", group="Riñón y electrolitos",
+    source="Cockcroft DW, Gault MH. Prediction of creatinine clearance from serum creatinine. Nephron 1976;16:31-41.",
+    verified_against=["Fórmula publicada (Nephron 1976); casos calculados a mano: hombre 60 años, 72 kg, Cr 1.0 → 80.0"],
+    population="Adultos con creatinina estable.",
+    formula="[(140 − edad) × peso (kg)] / (72 × creatinina mg/dL) × 0.85 si es mujer.",
+    rounding="Un decimal.", missing="Edad, peso, creatinina y sexo obligatorios.",
+    limitations="Se usa el peso real; en obesidad, ascitis o edemas sobreestima la depuración. No válido en lesión renal aguda.",
+    fields=[EDAD, Field("peso", "Peso", "kg", min=20, max=300), Field("creat", "Creatinina sérica", "mg/dL", lab="creat", min=0.1, max=25), SEXO],
+    compute=_cockcroft,
+    reference_cases=[({"edad": "60", "peso": "72", "creat": "1.0", "sexo": "masculino"}, {"valor": 80.0}),
+                     ({"edad": "60", "peso": "72", "creat": "1.0", "sexo": "femenino"}, {"valor": 68.0})])
+
+
+def _ca_corr(v):
+    c = v["ca"] + 0.8 * (4.0 - v["alb"])
+    return {"valor": round(c, 1), "texto": f"Calcio corregido {c:.1f} mg/dL",
+            "interpretacion": "Estimación del calcio total ajustado a una albúmina de 4 g/dL. Compare con el rango de referencia de su "
+                              "laboratorio; si hay duda (acidosis, insuficiencia renal, hipoalbuminemia grave) mida calcio iónico."}
+
+
+CA_CORR = Calculator(
+    code="calcio_corregido", name="Calcio corregido por albúmina", version="Payne-1973", group="Riñón y electrolitos",
+    source="Payne RB et al. Interpretation of serum calcium in patients with abnormal serum proteins. BMJ 1973;4:643-6.",
+    verified_against=["Fórmula de uso habitual: calcio + 0.8 × (4 − albúmina); casos calculados a mano"],
+    population="Adultos con hipoalbuminemia o hiperalbuminemia.",
+    formula="Calcio total (mg/dL) + 0.8 × (4.0 − albúmina g/dL).",
+    rounding="Un decimal.", missing="Calcio y albúmina obligatorios.",
+    limitations="Aproximación con exactitud limitada; el calcio iónico es la medida de referencia.",
+    fields=[Field("ca", "Calcio total", "mg/dL", min=2, max=20), Field("alb", "Albúmina", "g/dL", lab="alb", min=0.5, max=7)],
+    compute=_ca_corr,
+    reference_cases=[({"ca": "8.0", "alb": "2.0"}, {"valor": 9.6}), ({"ca": "10.0", "alb": "4.5"}, {"valor": 9.6})])
+
+
+def _anion_gap(v):
+    ag = v["na"] - (v["cl"] + v["hco3"])
+    return {"valor": round(ag, 1), "texto": f"Brecha aniónica {ag:g} mEq/L",
+            "interpretacion": "El rango normal depende del método de cada laboratorio (con electrodos selectivos suele ser más bajo que "
+                              "el clásico 12 ± 4). La hipoalbuminemia reduce la brecha y puede ocultar una acidosis con brecha elevada."}
+
+
+ANION_GAP = Calculator(
+    code="brecha_anionica", name="Brecha aniónica (anion gap)", version="AG-clasica", group="Riñón y electrolitos",
+    source="Kraut JA, Madias NE. Serum anion gap: its uses and limitations in clinical medicine. Clin J Am Soc Nephrol 2007;2:162-74.",
+    verified_against=["Fórmula publicada Na − (Cl + HCO3); caso calculado a mano 140 − (104 + 24) = 12"],
+    population="Adultos con trastorno ácido-base.", formula="Na − (Cl + HCO3), en mmol/L (equivale a mEq/L), sin potasio.",
+    rounding="Un decimal.", missing="Sodio, cloro y bicarbonato obligatorios.",
+    limitations="No corrige por albúmina. Use los valores de una misma muestra.",
+    fields=[Field("na", "Sodio", "mmol/L", lab="na", min=90, max=200), Field("cl", "Cloro", "mmol/L", min=50, max=160),
+            Field("hco3", "Bicarbonato", "mmol/L", min=1, max=60)],
+    compute=_anion_gap,
+    reference_cases=[({"na": "140", "cl": "104", "hco3": "24"}, {"valor": 12.0}), ({"na": "135", "cl": "100", "hco3": "10"}, {"valor": 25.0})])
+
+
+def _cha2ds2(v):
+    p = {"Insuficiencia cardiaca": 1 if v["icc"] else 0, "Hipertensión": 1 if v["hta"] else 0,
+         "Edad": 2 if v["edad"] >= 75 else 1 if v["edad"] >= 65 else 0, "Diabetes": 1 if v["dm"] else 0,
+         "Ictus/AIT/tromboembolia": 2 if v["ictus"] else 0, "Enfermedad vascular": 1 if v["vascular"] else 0,
+         "Sexo femenino": 1 if v["sexo"] == "femenino" else 0}
+    t = sum(p.values())
+    return {"valor": t, "texto": f"CHA₂DS₂-VASc {t} puntos", "detalle": p,
+            "interpretacion": "A mayor puntaje, mayor riesgo anual de ictus en fibrilación auricular no valvular. La decisión de "
+                              "anticoagular se toma según la guía vigente y el riesgo de sangrado (HAS-BLED), no solo con este puntaje."}
+
+
+CHA2DS2 = Calculator(
+    code="cha2ds2_vasc", name="CHA₂DS₂-VASc", version="Lip-2010", group="Cardiología",
+    source="Lip GYH et al. Refining clinical risk stratification for predicting stroke and thromboembolism in atrial fibrillation. "
+           "Chest 2010;137:263-72.",
+    verified_against=["Tabla de puntos publicada (Chest 2010) y MDCalc, consultado 1-nov-2026"],
+    population="Adultos con fibrilación auricular no valvular.",
+    formula="Insuficiencia cardiaca 1, hipertensión 1, edad ≥75 2, diabetes 1, ictus/AIT/tromboembolia 2, enfermedad vascular 1, "
+            "edad 65–74 1, sexo femenino 1 (máximo 9).",
+    rounding="Puntos enteros.", missing="Edad y sexo obligatorios; los demás se toman como «no» si no se marcan.",
+    limitations="No aplica a estenosis mitral moderada-grave ni prótesis mecánicas. La guía europea 2024 usa CHA₂DS₂-VA (sin el punto por sexo).",
+    fields=[EDAD, SEXO, Field("icc", "Insuficiencia cardiaca o disfunción del ventrículo izquierdo", kind="bool", required=False),
+            Field("hta", "Hipertensión", kind="bool", required=False), Field("dm", "Diabetes", kind="bool", required=False),
+            Field("ictus", "Ictus, AIT o tromboembolia previa", kind="bool", required=False),
+            Field("vascular", "Enfermedad vascular (infarto previo, enfermedad arterial periférica, placa aórtica)", kind="bool", required=False)],
+    compute=_cha2ds2,
+    reference_cases=[({"edad": "50", "sexo": "masculino"}, {"valor": 0}),
+                     ({"edad": "76", "sexo": "femenino", "hta": "1"}, {"valor": 4}),
+                     ({"edad": "80", "sexo": "femenino", "icc": "1", "hta": "1", "dm": "1", "ictus": "1", "vascular": "1"}, {"valor": 9})])
+
+
+def _hasbled(v):
+    keys = [("hta", "Hipertensión (sistólica >160)"), ("renal", "Función renal alterada"), ("hepatica", "Función hepática alterada"),
+            ("ictus", "Ictus previo"), ("sangrado", "Sangrado previo o predisposición"), ("inr", "INR lábil"),
+            ("mayor65", "Edad >65 años"), ("farmacos", "Antiagregantes o AINE"), ("alcohol", "Alcohol ≥8 bebidas/semana")]
+    p = {lab: 1 if v[k] else 0 for k, lab in keys}
+    t = sum(p.values())
+    cat = "alto" if t >= 3 else "no alto"
+    return {"valor": t, "categoria": cat, "texto": f"HAS-BLED {t} puntos" + (" · riesgo alto de sangrado" if t >= 3 else ""), "detalle": p,
+            "interpretacion": "≥3 indica riesgo alto de sangrado: obliga a vigilar y corregir los factores modificables, "
+                              "no contraindica por sí solo la anticoagulación."}
+
+
+HASBLED = Calculator(
+    code="has_bled", name="HAS-BLED (riesgo de sangrado)", version="Pisters-2010", group="Cardiología",
+    source="Pisters R et al. A novel user-friendly score (HAS-BLED) to assess 1-year risk of major bleeding in patients with atrial "
+           "fibrillation. Chest 2010;138:1093-100.",
+    verified_against=["Tabla de puntos publicada (Chest 2010), consultado 1-nov-2026"],
+    population="Adultos con fibrilación auricular en evaluación o tratamiento anticoagulante.",
+    formula="1 punto cada uno: hipertensión (sistólica >160), función renal alterada (diálisis, trasplante o Cr >2.26 mg/dL), función "
+            "hepática alterada (cirrosis o bilirrubina >2× y AST/ALT/FA >3× normal), ictus, sangrado, INR lábil (<60% en rango), "
+            "edad >65, fármacos (antiagregantes/AINE), alcohol (≥8 bebidas/semana). Máximo 9.",
+    rounding="Puntos enteros.", missing="Los elementos no marcados se toman como «no».",
+    limitations="«INR lábil» solo aplica a pacientes con warfarina/acenocumarol.",
+    fields=[Field("hta", "Hipertensión no controlada (sistólica >160 mmHg)", kind="bool", required=False),
+            Field("renal", "Función renal alterada (diálisis, trasplante o creatinina >2.26 mg/dL)", kind="bool", required=False),
+            Field("hepatica", "Función hepática alterada (cirrosis, o bilirrubina >2× y transaminasas/FA >3× lo normal)", kind="bool", required=False),
+            Field("ictus", "Ictus previo", kind="bool", required=False),
+            Field("sangrado", "Sangrado mayor previo o predisposición (anemia, trombocitopenia)", kind="bool", required=False),
+            Field("inr", "INR lábil (tiempo en rango <60%)", kind="bool", required=False),
+            Field("mayor65", "Edad >65 años", kind="bool", required=False),
+            Field("farmacos", "Antiagregantes o AINE", kind="bool", required=False),
+            Field("alcohol", "Alcohol ≥8 bebidas por semana", kind="bool", required=False)],
+    compute=_hasbled,
+    reference_cases=[({}, {"valor": 0, "categoria": "no alto"}),
+                     ({"hta": "1", "mayor65": "1", "farmacos": "1"}, {"valor": 3, "categoria": "alto"}),
+                     ({k: "1" for k in ("hta", "renal", "hepatica", "ictus", "sangrado", "inr", "mayor65", "farmacos", "alcohol")},
+                      {"valor": 9, "categoria": "alto"})])
+
+
+CURB_MORT = {0: "0.7", 1: "3.2", 2: "13", 3: "17", 4: "41.5", 5: "57"}
+
+
+def _curb65(v):
+    p = {"Confusión": 1 if v["confusion"] else 0, "BUN >19 mg/dL": 1 if v["bun"] > 19 else 0,
+         "Frecuencia respiratoria ≥30": 1 if v["fr"] >= 30 else 0,
+         "Sistólica <90 o diastólica ≤60": 1 if (v["pas"] < 90 or v["pad"] <= 60) else 0, "Edad ≥65": 1 if v["edad"] >= 65 else 0}
+    t = sum(p.values())
+    grupo = "bajo" if t <= 1 else "intermedio" if t == 2 else "alto"
+    return {"valor": t, "categoria": grupo, "texto": f"CURB-65 {t} puntos · riesgo {grupo}", "detalle": p,
+            "interpretacion": f"Mortalidad a 30 días en la cohorte de derivación: {CURB_MORT[t]} %. Orientativo: 0–1 suele manejarse "
+                              "en casa, 2 valorar ingreso corto o vigilancia estrecha, 3–5 hospitalización (considerar UCI con 4–5)."}
+
+
+CURB65 = Calculator(
+    code="curb65", name="CURB-65 (neumonía)", version="Lim-2003", group="Infección y urgencias",
+    source="Lim WS et al. Defining community acquired pneumonia severity on presentation to hospital. Thorax 2003;58:377-82.",
+    verified_against=["Criterios y mortalidad por puntaje publicados (Thorax 2003), consultado 1-nov-2026"],
+    population="Adultos con neumonía adquirida en la comunidad.",
+    formula="1 punto cada uno: confusión, urea >7 mmol/L (BUN >19 mg/dL), frecuencia respiratoria ≥30, sistólica <90 o diastólica ≤60, edad ≥65.",
+    rounding="Puntos enteros.", missing="BUN, frecuencia respiratoria, presión y edad obligatorios; la confusión se toma como «no» si no se marca.",
+    limitations="No considera hipoxemia, comorbilidades ni contexto social; complemente con el juicio clínico.",
+    fields=[Field("confusion", "Confusión de nueva aparición", kind="bool", required=False),
+            Field("bun", "BUN (nitrógeno ureico)", "mg/dL", lab="bun", min=1, max=300),
+            Field("fr", "Frecuencia respiratoria", "rpm", min=4, max=80),
+            Field("pas", "Presión sistólica", "mmHg", min=30, max=300), Field("pad", "Presión diastólica", "mmHg", min=10, max=200), EDAD],
+    compute=_curb65,
+    reference_cases=[({"bun": "10", "fr": "18", "pas": "120", "pad": "80", "edad": "40"}, {"valor": 0, "categoria": "bajo"}),
+                     ({"bun": "25", "fr": "32", "pas": "120", "pad": "70", "edad": "70"}, {"valor": 3, "categoria": "alto"}),
+                     ({"bun": "19", "fr": "29", "pas": "90", "pad": "61", "edad": "64"}, {"valor": 0, "categoria": "bajo"}),
+                     ({"confusion": "1", "bun": "30", "fr": "30", "pas": "85", "pad": "50", "edad": "80"}, {"valor": 5, "categoria": "alto"})])
+
+
+def _qsofa(v):
+    p = {"Sistólica ≤100": 1 if v["pas"] <= 100 else 0, "Frecuencia respiratoria ≥22": 1 if v["fr"] >= 22 else 0,
+         "Alteración del estado mental": 1 if v["mental"] else 0}
+    t = sum(p.values())
+    cat = "positivo" if t >= 2 else "negativo"
+    return {"valor": t, "categoria": cat, "texto": f"qSOFA {t} · {cat}", "detalle": p,
+            "interpretacion": "≥2 en sospecha de infección identifica mayor riesgo de mala evolución. No es un criterio diagnóstico de "
+                              "sepsis ni sirve para descartarla."}
+
+
+QSOFA = Calculator(
+    code="qsofa", name="qSOFA", version="Sepsis-3", group="Infección y urgencias",
+    source="Seymour CW et al. Assessment of clinical criteria for sepsis (Sepsis-3). JAMA 2016;315:762-74.",
+    verified_against=["Criterios publicados (JAMA 2016), consultado 1-nov-2026"],
+    population="Adultos con sospecha de infección fuera de la UCI.",
+    formula="1 punto cada uno: sistólica ≤100 mmHg, frecuencia respiratoria ≥22, alteración del estado mental (Glasgow <15).",
+    rounding="Puntos enteros.", missing="Presión y frecuencia obligatorias; el estado mental se toma como «normal» si no se marca.",
+    limitations="Baja sensibilidad: un qSOFA negativo no descarta sepsis.",
+    fields=[Field("pas", "Presión sistólica", "mmHg", min=30, max=300), Field("fr", "Frecuencia respiratoria", "rpm", min=4, max=80),
+            Field("mental", "Alteración del estado mental (Glasgow <15)", kind="bool", required=False)],
+    compute=_qsofa,
+    reference_cases=[({"pas": "120", "fr": "18"}, {"valor": 0, "categoria": "negativo"}),
+                     ({"pas": "100", "fr": "22"}, {"valor": 2, "categoria": "positivo"}),
+                     ({"pas": "101", "fr": "21", "mental": "1"}, {"valor": 1, "categoria": "negativo"})])
+
+
+def _gcs(v):
+    e, vb, m = int(v["ocular"]), int(v["verbal"]), int(v["motora"])
+    t = e + vb + m
+    cat = "grave" if t <= 8 else "moderado" if t <= 12 else "leve"
+    return {"valor": t, "categoria": cat, "texto": f"Glasgow {t}/15 (O{e} V{vb} M{m}) · {cat}",
+            "interpretacion": "Gravedad del deterioro de conciencia: 13–15 leve, 9–12 moderado, ≤8 grave. Registre los tres componentes."}
+
+
+GCS = Calculator(
+    code="glasgow_coma", name="Escala de coma de Glasgow", version="Teasdale-1974", group="Infección y urgencias",
+    source="Teasdale G, Jennett B. Assessment of coma and impaired consciousness. Lancet 1974;2:81-4.",
+    verified_against=["Escala publicada (Lancet 1974) con las descripciones de la versión actual (glasgowcomascale.org)"],
+    population="Adultos con alteración de la conciencia.",
+    formula="Apertura ocular (1–4) + respuesta verbal (1–5) + respuesta motora (1–6). Rango 3–15.",
+    rounding="Puntos enteros.", missing="Los tres componentes son obligatorios.",
+    limitations="La intubación, la sedación o la afasia impiden valorar la respuesta verbal; en ese caso anótelo en vez de puntuar.",
+    fields=[Field("ocular", "Apertura ocular", kind="select", options=[("4", "4 · Espontánea"), ("3", "3 · Al sonido/a la voz"),
+                                                                      ("2", "2 · A la presión/al dolor"), ("1", "1 · Ninguna")]),
+            Field("verbal", "Respuesta verbal", kind="select", options=[("5", "5 · Orientada"), ("4", "4 · Confusa"), ("3", "3 · Palabras"),
+                                                                       ("2", "2 · Sonidos"), ("1", "1 · Ninguna")]),
+            Field("motora", "Respuesta motora", kind="select", options=[("6", "6 · Obedece órdenes"), ("5", "5 · Localiza el dolor"),
+                                                                       ("4", "4 · Flexión normal (retirada)"), ("3", "3 · Flexión anormal"),
+                                                                       ("2", "2 · Extensión"), ("1", "1 · Ninguna")])],
+    compute=_gcs,
+    reference_cases=[({"ocular": "4", "verbal": "5", "motora": "6"}, {"valor": 15, "categoria": "leve"}),
+                     ({"ocular": "3", "verbal": "4", "motora": "5"}, {"valor": 12, "categoria": "moderado"}),
+                     ({"ocular": "2", "verbal": "2", "motora": "4"}, {"valor": 8, "categoria": "grave"}),
+                     ({"ocular": "1", "verbal": "1", "motora": "1"}, {"valor": 3, "categoria": "grave"})])
+
+
+def _qtc(v):
+    rr = 60 / v["fc"]
+    q = v["qt"] / math.sqrt(rr)
+    largo = q > (460 if v["sexo"] == "femenino" else 450)
+    return {"valor": round(q), "categoria": "prolongado" if largo else "no prolongado",
+            "texto": f"QTc (Bazett) {round(q)} ms" + (" · prolongado" if largo else ""),
+            "interpretacion": "Se considera prolongado >450 ms en hombres y >460 ms en mujeres; >500 ms se asocia a riesgo alto de "
+                              "arritmias. Revise fármacos que prolongan el QT (p. ej., algunos procinéticos y antieméticos)."}
+
+
+QTC = Calculator(
+    code="qtc_bazett", name="QT corregido (Bazett)", version="Bazett-1920", group="Cardiología",
+    source="Bazett HC. An analysis of the time-relations of electrocardiograms. Heart 1920;7:353-70. Umbrales: Rautaharju PM et al., "
+           "AHA/ACCF/HRS. J Am Coll Cardiol 2009;53:982-91.",
+    verified_against=["Fórmula publicada QT/√RR; casos calculados a mano (QT 400 ms a 60 lpm → 400)"],
+    population="Adultos con ECG en ritmo regular.",
+    formula="QTc = QT (ms) / √RR (s), con RR = 60 / frecuencia cardiaca.",
+    rounding="Milisegundos enteros.", missing="QT, frecuencia y sexo obligatorios.",
+    limitations="Bazett sobrecorrige con frecuencias altas (>90–100 lpm) y subcorrige con bajas. No válido con bloqueo de rama o ritmo irregular.",
+    fields=[Field("qt", "Intervalo QT medido", "ms", min=200, max=800), Field("fc", "Frecuencia cardiaca", "lpm", min=30, max=200), SEXO],
+    compute=_qtc,
+    reference_cases=[({"qt": "400", "fc": "60", "sexo": "masculino"}, {"valor": 400, "categoria": "no prolongado"}),
+                     ({"qt": "360", "fc": "100", "sexo": "masculino"}, {"valor": 465, "categoria": "prolongado"}),
+                     ({"qt": "360", "fc": "100", "sexo": "femenino"}, {"valor": 465, "categoria": "prolongado"})])
+
+
+def _bsa(v):
+    s = math.sqrt(v["talla"] * v["peso"] / 3600)
+    return {"valor": round(s, 2), "texto": f"Superficie corporal {s:.2f} m²",
+            "interpretacion": "Superficie corporal estimada (Mosteller), usada para dosis por m² y para índices ajustados."}
+
+
+BSA = Calculator(
+    code="superficie_corporal", name="Superficie corporal (Mosteller)", version="Mosteller-1987", group="General",
+    source="Mosteller RD. Simplified calculation of body-surface area. N Engl J Med 1987;317:1098.",
+    verified_against=["Fórmula publicada √(talla cm × peso kg / 3600); caso calculado a mano 170 cm y 70 kg → 1.82"],
+    population="Adultos y niños.", formula="√(talla (cm) × peso (kg) / 3600).",
+    rounding="Dos decimales.", missing="Peso y talla obligatorios.",
+    limitations="Con ascitis o edemas el peso real sobreestima la superficie.",
+    fields=[Field("peso", "Peso", "kg", min=1, max=400), Field("talla", "Talla", "cm", min=30, max=250)],
+    compute=_bsa,
+    reference_cases=[({"peso": "70", "talla": "170"}, {"valor": 1.82}), ({"peso": "100", "talla": "180"}, {"valor": 2.24})])
+
+
+ALL = [CHILD, MELD_NA, MELD3, FIB4, APRI, MADDREY, LILLE, GBS, ROCKALL, BISAP, BMI,
+       CKD_EPI, COCKCROFT, CA_CORR, ANION_GAP, CHA2DS2, HASBLED, QTC, CURB65, QSOFA, GCS, BSA]
+
 BY_CODE = {c.code: c for c in ALL}
 
 

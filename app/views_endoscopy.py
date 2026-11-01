@@ -129,9 +129,8 @@ def proc_view(proc_id):
                          " ORDER BY a.created_at", (pr["id"],)).fetchall()
     scope = db.execute("SELECT * FROM scopes WHERE id = ?", (pr["scope_id"],)).fetchone() if pr["scope_id"] else None
     audit("procedimiento_consultado", "procedimiento", pr["id"])
-    from .views_extras import with_dictation
     normal_sec, normal_concl = D.normal_texts(clinic_settings()["endo_normal_texts"])
-    return with_dictation(render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable,
+    return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable,
                            normal_sec=normal_sec, normal_concl=normal_concl, phrases_json=phrases_json(db) if editable else "[]",
                            dx_json=json.dumps(DX.for_kind(pr["kind"]), ensure_ascii=False), dx_source=DX.ICD_SOURCE,
                            EF_FINDINGS=EF.FINDINGS, recs_json=json.dumps(endo_recs(), ensure_ascii=False) if editable else "{}", allergies=allergies, meds=meds,
@@ -139,7 +138,7 @@ def proc_view(proc_id):
                            scope=scope, empty_finding=dict.fromkeys(["segment", "type", "desc", "classification", "size_mm", "prague_c",
                                                                      "prague_m", "removed", "jar"]),
                            empty_jar=dict.fromkeys(["jar", "site", "desc", "pieces"]), users=db.execute("SELECT id, full_name FROM users WHERE org_id = ? AND active = 1 ORDER BY full_name",
-                                                         (g.user["org_id"],)).fetchall()), editable)
+                                                         (g.user["org_id"],)).fetchall()))
 
 
 def _txt(src, k, n=4000):

@@ -1,4 +1,4 @@
-"""Etapa 7: recordatorios gratuitos (correo propio y WhatsApp manual), dictado, logo/firma, horarios y bloqueos."""
+"""Etapa 7: recordatorios gratuitos (correo propio y WhatsApp manual), logo/firma, horarios y bloqueos."""
 import io
 import re
 import socketserver
@@ -227,30 +227,17 @@ def test_whatsapp_link_and_consent(env):
     assert o.post(f"/agenda/cita/{a1}/whatsapp", data={"csrf_token": csrf(o)}).status_code == 404
 
 
-# ------------------------------------------------------------------ dictado
-def test_dictation_requires_ack_and_enables_microphone_only_when_editable(env):
+# ------------------------------------------------------------------ dictado (quitado en v0.17.0)
+def test_dictado_quitado(env):
     c = login(env["app"], "propietario")
     tok = csrf(c)
     pid = create_patient(c)
     from app.views_notes import TEMPLATES
-    r = c.post("/notas/nueva", data={"csrf_token": tok, "patient_id": pid, "kind": "primera", "template": next(iter(TEMPLATES))})
-    assert r.status_code == 302, r.get_data(as_text=True)[:300]
-    note = r.headers["Location"]
+    note = c.post("/notas/nueva", data={"csrf_token": tok, "patient_id": pid, "kind": "primera", "template": next(iter(TEMPLATES))}).headers["Location"]
     page = c.get(note)
-    assert "microphone=()" in page.headers["Permissions-Policy"] and "dictado.js" not in page.get_data(as_text=True)
-    c.post("/ajustes/dictado", data={"csrf_token": tok, "dictation_enabled": "1", "dictation_lang": "es-MX"})
-    assert env["db"].execute("SELECT dictation_enabled FROM clinic_settings WHERE org_id = ?", (env["org"]["org_id"],)).fetchone()[0] == 0
-    c.post("/ajustes/dictado", data={"csrf_token": tok, "dictation_enabled": "1", "dictation_lang": "es-419", "ack_privacy": "1"})
-    assert env["db"].execute("SELECT dictation_enabled, dictation_lang FROM clinic_settings WHERE org_id = ?", (env["org"]["org_id"],)).fetchone()[:] == (1, "es-419")
-    page = c.get(note)
-    html = page.get_data(as_text=True)
-    assert "microphone=(self)" in page.headers["Permissions-Policy"] and "dictado.js" in html and 'data-lang="es-419"' in html
-    assert c.get("/static/js/dictado.js").status_code == 200
-    # Otra persona (no autora) ve la nota sin poder editar → sin micrófono
-    m = login(env["app"], "medico")
-    other = m.get(note)
-    if other.status_code == 200:
-        assert "microphone=()" in other.headers["Permissions-Policy"] and "dictado.js" not in other.get_data(as_text=True)
+    assert "microphone=()" in page.headers["Permissions-Policy"] and "dictado" not in page.get_data(as_text=True)
+    assert c.post("/ajustes/dictado", data={"csrf_token": tok, "dictation_enabled": "1"}).status_code in (404, 405)
+    assert "Dictado" not in c.get("/ajustes/recordatorios").get_data(as_text=True)
 
 
 # ------------------------------------------------------------------ logo y firma

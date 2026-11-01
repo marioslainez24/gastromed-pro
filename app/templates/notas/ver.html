@@ -183,5 +183,4 @@
   {% for r in prescriptions %}<p><a href="{{ url_for('rx.view', rx_id=r.id) }}">Receta del {{ fmt_dt(r.issued_at) }}</a>{% if r.status == 'anulada' %} <span class="tag tag-danger">Anulada</span>{% endif %}</p>{% else %}<p class="muted small">Ninguna.</p>{% endfor %}
   {% if can('recetas.emitir') %}<a class="btn" href="{{ url_for('rx.new', patient_id=p.id, note_id=n.id) }}">Emitir receta</a>{% endif %}
 </section>
-{% include "_dictado.html" %}
 {% endblock %}

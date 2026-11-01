@@ -1,6 +1,6 @@
 # Matriz de requisitos y cobertura — GastroMed Pro
 
-Actualizada: 30 de octubre de 2026 · versión 0.16.0 (rama desarrollo) · ver también `COMPARATIVA.md`
+Actualizada: 1 de noviembre de 2026 · versión 0.17.0 (publicada) · ver también `COMPARATIVA.md`
 
 **Fuentes:** el documento de requisitos del Dr. Mario Lainez. Las páginas de Medilink (softwaremedilink.com y ayuda.softwaremedilink.com) **no fueron accesibles** desde el entorno de desarrollo (bloqueo de red). Por lo tanto **no se afirma haber revisado ninguna función de Medilink**; la comparación queda pendiente hasta que se puedan consultar (o el usuario envíe capturas/textos).
 
@@ -110,6 +110,8 @@ Actualizada: 30 de octubre de 2026 · versión 0.16.0 (rama desarrollo) · ver t
 | C.9 | Recall / vigilancia endoscópica automática | 3 | ⬜ |
 | C.10 | Notas de enfermería del procedimiento que alimentan el informe | 3 | ⬜ |
 | C.11 | Indicadores de calidad (tasa de detección de adenomas, etc.) | 3 | ⬜ |
+| C.12 | Calculadoras de otras especialidades (v0.17.0): CKD-EPI 2021, Cockcroft-Gault, calcio corregido, brecha aniónica, CHA₂DS₂-VASc, HAS-BLED, QTc Bazett, CURB-65, qSOFA, Glasgow, superficie corporal; con fuente y casos de referencia. Cada una requiere aprobación del propietario antes de guardarse en el expediente | 2 | ✅ (🟡 aprobación clínica) |
+| C.13 | Diario de síntomas: pantalla quitada en v0.17.0 a pedido del Dr. Lainez (los registros antiguos se conservan en la base) | 2 | — |
 
 ## Fases 2 a 5 (alcance conservado)
 
@@ -119,7 +121,7 @@ Actualizada: 30 de octubre de 2026 · versión 0.16.0 (rama desarrollo) · ver t
 | 3 | Informes de endoscopia alta, colonoscopia, rectosigmoidoscopia, CPRE, USE; clasificaciones (Los Ángeles, Praga, Boston, Forrest, París) tras verificar definiciones/licencias; imágenes y anotaciones; patología hasta cierre; pólipos y vigilancia; calidad de colonoscopia; trazabilidad de endoscopios; prueba de captura UVC con señal ficticia | ⬜ |
 | 3b | Módulos de hepatología, EII, H. pylori, páncreas/vías biliares y nutrición | ⬜ |
 | 4 | **DESCARTADA por decisión del Dr. Lainez (30-oct-2026).** Catálogo y tarifas, presupuestos, cuentas por cobrar, caja, gastos, comprobantes internos (≠ factura fiscal SAR), liquidaciones, inventario con lotes y vencimientos | ⬜ |
-| 5 | Solo lo solicitado (v0.7.0): recordatorios por correo propio y WhatsApp manual ✅, dictado por voz del navegador ✅. Portal, reserva online, teleconsulta y campañas: no solicitados | 🟡 |
+| 5 | Solo lo solicitado (v0.7.0): recordatorios por correo propio y WhatsApp manual ✅, dictado por voz: **quitado en v0.17.0 a pedido del Dr. Lainez**. Portal, reserva online, teleconsulta y campañas: no solicitados | 🟡 |
 
 ## Integraciones
 
@@ -130,7 +132,7 @@ Actualizada: 30 de octubre de 2026 · versión 0.16.0 (rama desarrollo) · ver t
 | Pagos en línea | Por elegir (sin guardar tarjetas) | 🔌 pendiente |
 | Firma electrónica | Por verificar requisitos en Honduras | 🔌 pendiente |
 | Videollamada | Por elegir | 🔌 pendiente |
-| Dictado (voz a texto) | Reconocimiento integrado de Chrome/Edge | ✅ gratis, desactivado por defecto, con aviso de privacidad |
+| Dictado (voz a texto) | — | Quitado en v0.17.0 a pedido del Dr. Lainez |
 | IA generativa | Ninguna (de pago) | ⬜ no incluida por decisión del usuario |
 | Vademécum | Por identificar fuente con licencia | 🔌 pendiente |
 | Facturación fiscal | Requisitos SAR por verificar | 🔌 pendiente |

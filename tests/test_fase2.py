@@ -110,7 +110,7 @@ def test_permisos_fase2(env):
     med = login(env["app"], "propietario")
     pid = create_patient(med)
     rec = login(env["app"], "recepcion")
-    for url in [f"/pacientes/{pid}/laboratorio", f"/pacientes/{pid}/diario", f"/pacientes/{pid}/calculos", "/pendientes", "/calculadoras",
+    for url in [f"/pacientes/{pid}/laboratorio", f"/pacientes/{pid}/calculos", "/pendientes", "/calculadoras",
                 f"/ordenes/nueva?patient_id={pid}"]:
         assert rec.get(url).status_code == 403, url
     enf = login(env["app"], "enfermeria")
@@ -168,15 +168,12 @@ def test_todos_los_formularios_cargan(env):
         assert med.get(f"/notas/{nid}/formulario/{code}").status_code == 200, code
 
 
-def test_diario(env):
+def test_diario_quitado(env):
+    """v0.17.0: el Dr. Lainez pidió quitar el diario de síntomas; la pantalla ya no existe (los datos viejos se conservan)."""
     med = login(env["app"], "propietario")
     pid = create_patient(med)
-    tok = csrf(med)
-    for d, n, pain in [("2026-10-01", "6", "5"), ("2026-10-02", "4", "3"), ("2026-10-03", "2", "1")]:
-        assert med.post(f"/pacientes/{pid}/diario", data={"csrf_token": tok, "entry_date": d, "stools": n, "bristol": "6", "pain": pain,
-                                                          "blood": "1"}).status_code == 302
-    html = med.get(f"/pacientes/{pid}/diario").get_data(as_text=True)
-    assert html.count('<svg class="trend"') == 2
+    assert med.get(f"/pacientes/{pid}/diario").status_code == 404
+    assert "Diario de síntomas" not in med.get(f"/pacientes/{pid}/laboratorio").get_data(as_text=True)
 
 
 # ------------------------------------------------------------------------------------------------ calculadora con expediente
