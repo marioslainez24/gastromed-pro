@@ -94,6 +94,7 @@ DIAGNOSES = [
     ("Colon y recto", LOWER, "Pólipo de recto", "K62.1", False),
     ("Colon y recto", LOWER, "Enfermedad diverticular de colon sigmoides", "K57.3", False),
     ("Colon y recto", LOWER, "Enfermedad diverticular de colon (pancolónica)", "K57.3", False),
+    ("Colon y recto", LOWER, "Enfermedad diverticular de colon", "K57.3", False),
     ("Colon y recto", LOWER, "Hemorroides internas grado I", "K64.0", False),
     ("Colon y recto", LOWER, "Hemorroides internas grado II", "K64.1", False),
     ("Colon y recto", LOWER, "Hemorroides internas grado III", "K64.2", False),

@@ -415,6 +415,62 @@
     });
   }
 
+  // ---- Endoscopia: hallazgos con clics y sugerencias de diagnóstico ----------
+  var efRoot = $("[data-efind-url]");
+  if (efRoot) {
+    var efUrl = efRoot.getAttribute("data-efind-url"), sugBox = $("[data-dx-suggest]"), concl = document.getElementById("conclusion");
+    function addSuggestion(d) {
+      if (!sugBox || !concl) return;
+      var label = d.t + (d.c ? " (CIE-10 " + d.c + (d.a ? "*" : "") + ")" : "");
+      if (concl.value.indexOf(d.t) >= 0) return;
+      if ($$("button", sugBox).some(function (b) { return b.getAttribute("data-t") === d.t; })) return;
+      var b = document.createElement("button"); b.type = "button"; b.className = "hea-chip dx-sug"; b.setAttribute("data-t", d.t);
+      b.textContent = "＋ " + label;
+      b.addEventListener("click", function () {
+        var codeOn = $("[data-dx-code]"); codeOn = codeOn ? codeOn.checked : true;
+        var line = d.t + (codeOn && d.c ? " (CIE-10 " + d.c + (d.a ? "*" : "") + ")" : "");
+        var v = concl.value.replace(/\s+$/, "");
+        concl.value = (v ? v + "\n" : "") + line; concl.dispatchEvent(new Event("input", { bubbles: true })); dirty = true;
+        b.remove(); if (!$$("button", sugBox).length) sugBox.hidden = true;
+      });
+      sugBox.appendChild(b); sugBox.hidden = false;
+    }
+    $$("[data-efind]").forEach(function (box) {
+      var sec = box.getAttribute("data-efind"), ta = document.getElementById("nar-" + sec);
+      $$("[data-efind-pick]", box).forEach(function (r) {
+        r.addEventListener("change", function () { $$("[data-efind-params]", box).forEach(function (g) { g.hidden = g.getAttribute("data-efind-params") !== r.value; }); });
+      });
+      $$("[data-efind-add]", box).forEach(function (btn) {
+        var fk = btn.getAttribute("data-efind-add"), grp = btn.closest("[data-efind-params]"), msg = $("[data-efind-msg]", grp);
+        btn.addEventListener("click", function () {
+          var fd = new FormData(), tok = csrf(), pre = "ef-" + sec + "-" + fk + "-";
+          fd.append("csrf_token", tok); fd.append("section", sec); fd.append("finding", fk);
+          $$("input", grp).forEach(function (i) {
+            if (!i.name || i.name.indexOf(pre) !== 0) return;
+            if ((i.type === "checkbox" || i.type === "radio") && !i.checked) return;
+            if (i.type !== "checkbox" && i.type !== "radio" && !i.value) return;
+            fd.append(i.name, i.value);
+          });
+          msg.textContent = "…"; msg.classList.remove("is-error");
+          fetch(efUrl, { method: "POST", body: fd, credentials: "same-origin", headers: { "X-Requested-With": "fetch", "X-CSRF-Token": tok, Accept: "application/json" } })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (res) {
+              if (!res.ok) { msg.textContent = res.d.error || res.d.detalle || "No se pudo agregar."; msg.classList.add("is-error"); return; }
+              var normalBtn = document.querySelector("[data-fill-normal='nar-" + sec + "']");
+              var normalTxt = normalBtn ? (normalBtn.getAttribute("data-normal") || "").trim() : "";
+              var v = ta.value.replace(/\s+$/, ""), replaced = false;
+              if (normalTxt && v === normalTxt) { v = ""; replaced = true; }
+              ta.value = (v ? v + " " : "") + res.d.texto; ta.dispatchEvent(new Event("input", { bubbles: true })); dirty = true;
+              (res.d.dx || []).forEach(addSuggestion);
+              $$("input", grp).forEach(function (i) { if (i.type === "checkbox" || i.type === "radio") i.checked = false; else i.value = ""; });
+              msg.textContent = replaced ? "Agregado (se reemplazó el texto normal de este segmento)." : "Agregado. Puede agregar otro.";
+            })
+            .catch(function () { msg.textContent = "Sin conexión con el programa."; msg.classList.add("is-error"); });
+        });
+      });
+    });
+  }
+
   // ---- Solicitud de laboratorio: perfiles, buscador y contador ---------------
   var sheet = $("[data-lab-sheet]");
   if (sheet) {

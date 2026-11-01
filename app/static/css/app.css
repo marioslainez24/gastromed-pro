@@ -451,3 +451,14 @@ fieldset.plain { border: 0; padding: 0; margin: 0; min-width: 0; }
 .exam-findings { padding: .2rem 0 .3rem .4rem; border-left: 3px solid var(--accent-soft); margin-top: .3rem; }
 .exam-findings[hidden] { display: none; }
 .dx-bar { margin: .2rem 0; align-items: center; }
+
+/* Endoscopia: hallazgos con clics (v0.13.0) */
+.efind { margin: .1rem 0 .3rem; }
+.efind > summary { list-style: none; cursor: pointer; display: inline-block; }
+.efind > summary::-webkit-details-marker { display: none; }
+.efind[open] { border: 1px solid var(--accent-soft); border-radius: 10px; padding: .4rem .6rem; }
+.efind-params { border-top: 1px dashed var(--line); margin-top: .3rem; padding-top: .2rem; }
+.efind-params[hidden], .dx-suggest[hidden] { display: none !important; }
+[data-efind-msg].is-error { color: var(--danger); font-weight: 600; }
+.dx-suggest { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; margin: .3rem 0; padding: .45rem; border-radius: 8px; background: var(--ok-soft); }
+.dx-sug { border-color: var(--ok); }

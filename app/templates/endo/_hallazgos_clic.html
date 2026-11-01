@@ -1,0 +1,23 @@
+{# Hallazgos con clics para un segmento (v0.13.0). Variables: key (segmento). Campos en el formulario #efind-form. #}
+{% set items = EF_FINDINGS.get(key, []) %}
+{% if items %}
+<details class="efind" data-efind="{{ key }}">
+  <summary class="link-btn small">＋ Hallazgo con clics ▾</summary>
+  <div class="hea-motivos">
+    {% for fk, flabel, params, _s, _d in items %}<label class="hea-chip"><input type="radio" name="efsel-{{ key }}" value="{{ fk }}" form="efind-form" data-efind-pick> {{ flabel }}</label>{% endfor %}
+  </div>
+  {% for fk, flabel, params, _s, _d in items %}
+  <div class="efind-params" data-efind-params="{{ fk }}" hidden>
+    {% for pa in params %}
+    <div class="hea-row"><span class="hea-lab">{{ pa.label }}{% if pa.unit %} ({{ pa.unit }}){% endif %}{% if not pa.required %} <span class="muted">· opcional</span>{% endif %}</span>
+      {% if pa.kind in ('select', 'multi') %}
+        {% for v, l in pa.options %}<label class="hea-chip"><input type="{{ 'checkbox' if pa.kind == 'multi' else 'radio' }}" name="ef-{{ key }}-{{ fk }}-{{ pa.name }}" value="{{ v }}" form="efind-form" {% if pa.kind == 'select' %}data-toggle-radio{% endif %}> {{ l }}</label>{% endfor %}
+      {% else %}<input name="ef-{{ key }}-{{ fk }}-{{ pa.name }}" form="efind-form" inputmode="decimal" class="w-num">{% endif %}
+    </div>
+    {% endfor %}
+    <div class="btn-row"><button type="button" class="btn btn-sm btn-primary" data-efind-add="{{ fk }}">Agregar al texto ↓</button>
+      <span class="small muted" data-efind-msg aria-live="polite">{% if not params %}Sin datos que completar.{% endif %}</span></div>
+  </div>
+  {% endfor %}
+</details>
+{% endif %}

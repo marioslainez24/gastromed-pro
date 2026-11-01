@@ -39,6 +39,7 @@
 {% endif %}
 
 {% if editable %}
+<form id="efind-form" hidden></form>
 <form method="post" action="{{ url_for('endo.proc_save', proc_id=pr.id) }}" class="stack proc-form" id="proc-form" data-dirty-guard>
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ pr.version }}">
 
@@ -103,7 +104,7 @@
   </fieldset>
 
   <div id="frases-data" data-frases="{{ phrases_json }}" data-admin="{{ url_for('texts.phrases') }}" hidden></div>
-  <fieldset class="card" id="hallazgos"><legend>Hallazgos por segmento</legend>
+  <fieldset class="card" id="hallazgos" data-efind-url="{{ url_for('endo.finding_compose', proc_id=pr.id) }}"><legend>Hallazgos por segmento</legend>
     <div class="row-between normal-bar">
       <p class="muted small">Describa lo que observa en cada segmento. El botón <b>Normal</b> escribe la descripción normal, que usted puede editar (<a href="{{ url_for('endo.normal_texts_edit') }}" target="_blank" rel="noopener">cambiar mis textos normales</a>).</p>
       <button type="button" class="btn btn-sm btn-normal" data-fill-all-normal>✓ Todo normal</button>
@@ -119,6 +120,7 @@
         <label class="field" data-zline-extra>Impronta diafragmática a (cm)<input name="hiatus_cm" inputmode="decimal" class="w-num" value="{{ '%g' % d.hiatus_cm if d.get('hiatus_cm') is not none else '' }}"></label>
       </div>
       {% endif %}
+      {% include "endo/_hallazgos_clic.html" %}
       <textarea id="nar-{{ key }}" data-phrase-field="endo:{{ key }}" name="nar-{{ key }}" rows="{{ 5 if D.NARRATIVE[pr.kind]|length == 1 else 3 }}" data-grow>{{ (d.narrative or {}).get(key) or '' }}</textarea>
     </div>
     {% endfor %}
@@ -203,6 +205,7 @@
     <div class="row-between"><label for="conclusion" class="narr-label">Conclusión <span class="req" aria-hidden="true">*</span></label>
       <span class="btn-row"><button type="button" class="btn btn-sm btn-primary" data-dx-open="conclusion" aria-expanded="false">＋ Diagnóstico ▾</button>
       <button type="button" class="btn btn-quiet btn-sm" data-fill-normal="conclusion" data-normal="{{ normal_concl[pr.kind] }}">Normal</button></span></div>
+    <div class="dx-suggest" data-dx-suggest hidden><span class="small"><b>Sugerencias según los hallazgos:</b></span></div>
     <div class="dx-panel card" data-dx-panel data-dx="{{ dx_json }}" data-source="{{ dx_source }}" hidden>
       <div class="dx-tools">
         <input type="search" placeholder="Buscar diagnóstico… (ej.: Los Ángeles, Forrest, várices, pólipo)" aria-label="Buscar diagnóstico" data-dx-search>

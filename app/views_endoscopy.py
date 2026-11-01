@@ -8,6 +8,7 @@ from flask import Blueprint, abort, current_app, flash, g, jsonify, make_respons
 
 from . import endoscopy_defs as D
 from . import endo_diagnoses as DX
+from . import endo_findings as EF
 from .db import get_db, new_id, utcnow, write_tx
 from .security import audit, can, require
 from .util import clinic_settings, local_today
@@ -132,7 +133,8 @@ def proc_view(proc_id):
     normal_sec, normal_concl = D.normal_texts(clinic_settings()["endo_normal_texts"])
     return with_dictation(render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable,
                            normal_sec=normal_sec, normal_concl=normal_concl, phrases_json=phrases_json(db) if editable else "[]",
-                           dx_json=json.dumps(DX.for_kind(pr["kind"]), ensure_ascii=False), dx_source=DX.ICD_SOURCE, allergies=allergies, meds=meds,
+                           dx_json=json.dumps(DX.for_kind(pr["kind"]), ensure_ascii=False), dx_source=DX.ICD_SOURCE,
+                           EF_FINDINGS=EF.FINDINGS, allergies=allergies, meds=meds,
                            images=_images(db, pr["id"]), specimens=specimens, stents=stents, addenda=addenda, scopes=scopes(),
                            scope=scope, empty_finding=dict.fromkeys(["segment", "type", "desc", "classification", "size_mm", "prague_c",
                                                                      "prague_m", "removed", "jar"]),
@@ -442,6 +444,27 @@ def capture(proc_id):
 
 
 # ------------------------------------------------------------------------------------------------ PDF
+@bp.route("/procedimientos/<proc_id>/hallazgo", methods=["POST"])
+@require("clinico.editar")
+def finding_compose(proc_id):
+    """Redacta la frase de un hallazgo marcado con clics y sugiere el diagnóstico para la conclusión."""
+    from werkzeug.datastructures import MultiDict
+    from . import endo_findings as EF
+    pr = _get_proc(proc_id)
+    if pr["status"] != "borrador" or pr["author_id"] != g.user["id"]:
+        abort(409, description="Solo el autor puede editar un informe en borrador.")
+    section, finding = request.form.get("section", ""), request.form.get("finding", "")
+    if section not in {k for k, _ in D.NARRATIVE[pr["kind"]]}:
+        return jsonify({"error": "Segmento no válido para este estudio."}), 422
+    prefix = f"ef-{section}-{finding}-"
+    src = MultiDict([(k[len(prefix):], v) for k, vs in request.form.lists() if k.startswith(prefix) for v in vs])
+    try:
+        text, dx = EF.compose(section, finding, src)
+    except EF.Invalid as e:
+        return jsonify({"error": str(e)}), 422
+    return jsonify({"texto": text, "dx": dx})
+
+
 @bp.route("/procedimientos/<proc_id>/etiquetas")
 @require("clinico.ver")
 def jar_labels(proc_id):

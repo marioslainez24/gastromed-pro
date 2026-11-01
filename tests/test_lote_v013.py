@@ -36,3 +36,58 @@ def test_etiquetas_de_frascos(env):
     t = pdf_text(r.data)
     assert r.status_code == 200 and "FRASCO 1" in t and "FRASCO 2" in t and "Recto, biopsias aleatorias" in t and "4 fragmento(s)" in t
     assert "Exp. GM-" in t
+
+
+def test_hallazgos_con_clics_frases_y_sugerencias_existen_en_catalogo():
+    import itertools
+    from werkzeug.datastructures import MultiDict
+    from app import endo_findings as EF
+    checked = 0
+    for section, items in EF.FINDINGS.items():
+        for key, label, params, _s, _d in items:
+            # combinaciones de todas las opciones de cada parámetro (números en 3)
+            choices = []
+            for p in params:
+                if p["kind"] == "number":
+                    choices.append([(p["name"], ["3"])])
+                elif p["kind"] == "multi":
+                    choices.append([(p["name"], [p["options"][0][0]]), (p["name"], [o[0] for o in p["options"]])])
+                else:
+                    choices.append([(p["name"], [o[0]]) for o in p["options"]])
+            for combo in itertools.product(*choices) if choices else [()]:
+                src = MultiDict([(n, v) for n, vs in combo for v in vs])
+                text, dx = EF.compose(section, key, src)
+                assert text.endswith(".") and "{" not in text and "None" not in text, (section, key, text)
+                for d in dx:
+                    assert d["t"] and "__" not in d["t"], (key, d)
+                checked += 1
+    assert checked > 100
+    t, dx = EF.compose("esofago", "esofagitis", MultiDict([("grado", "B")]))
+    assert t == "Erosiones de la mucosa del esófago distal compatibles con esofagitis grado B de Los Ángeles."
+    assert dx == [{"t": "Esofagitis erosiva grado B de Los Ángeles", "c": "K21.0", "a": False}]
+    t, dx = EF.compose("ueg", "hernia", MultiDict([("cm", "3")]))
+    assert t == "Hernia hiatal por deslizamiento de 3 cm." and dx[0] == {"t": "Hernia hiatal por deslizamiento de 3 cm", "c": "K44.9", "a": False}
+    t, dx = EF.compose("colon", "polipo", MultiDict([("mm", "6"), ("loc", "sigmoides"), ("paris", "0-Is"), ("nice", "2"),
+                                                      ("reseccion", "asa_fria"), ("recuperado", "si")]))
+    assert t == "Pólipo de 6 mm en sigmoides, París 0-Is, NICE 2, resecado con asa fría y recuperado."
+    assert dx[0]["t"] == "Pólipo de colon NICE 2 (aspecto adenomatoso)"
+    import pytest
+    with pytest.raises(EF.Invalid):
+        EF.compose("esofago", "esofagitis", MultiDict())          # falta el grado
+    with pytest.raises(EF.Invalid):
+        EF.compose("esofago", "inventado", MultiDict())
+
+
+def test_hallazgo_con_clics_en_el_informe(env):
+    med = login(env["app"], "propietario")
+    pid = create_patient(med)
+    tok = csrf(med)
+    proc = new_proc(med, pid, tok, "eda")
+    html = med.get(f"/procedimientos/{proc}").get_data(as_text=True)
+    assert "Hallazgo con clics" in html and 'id="efind-form"' in html and "data-dx-suggest" in html
+    r = med.post(f"/procedimientos/{proc}/hallazgo", data={"csrf_token": tok, "section": "estomago", "finding": "ulcera_g",
+                                                         "ef-estomago-ulcera_g-loc": "antro", "ef-estomago-ulcera_g-mm": "8",
+                                                         "ef-estomago-ulcera_g-forrest": "III"})
+    assert r.status_code == 200 and r.get_json()["texto"] == "Úlcera de 8 mm en antro, Forrest III (fondo limpio)."
+    assert r.get_json()["dx"][0]["c"] == "K25.9"
+    assert med.post(f"/procedimientos/{proc}/hallazgo", data={"csrf_token": tok, "section": "colon", "finding": "polipo"}).status_code == 422
