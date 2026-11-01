@@ -41,7 +41,7 @@ Flask 3 + Jinja2 + SQLite, con WAL, tablas STRICT y triggers de inmutabilidad y 
 El usuario pidió NO construir el .exe hasta que diga «ya». Trabajar en la rama `desarrollo` (empujarla para no perder el trabajo; no dispara la
 construcción). Cuando diga «ya»: `git checkout main && git merge --ff-only desarrollo && git push`, esperar la CI y avisarle.
 El 31-oct-2026 dijo «ya» y se publicó la v0.14.0 (todo lo acumulado). Para mejoras nuevas, seguir en `desarrollo` y esperar su «ya».
-v0.15.0 y v0.16.0 en `desarrollo`, sin publicar (esperando «ya»).
+El 31-oct-2026 (noche) dijo «ya» otra vez: se publicó la v0.16.0 (incluye v0.15). Lo siguiente, de nuevo en `desarrollo` hasta su «ya».
 Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó
