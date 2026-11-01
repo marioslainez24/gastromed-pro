@@ -40,6 +40,8 @@ Flask 3 + Jinja2 + SQLite, con WAL, tablas STRICT y triggers de inmutabilidad y 
 ## Publicación (instrucción del 31-oct-2026)
 El usuario pidió NO construir el .exe hasta que diga «ya». Trabajar en la rama `desarrollo` (empujarla para no perder el trabajo; no dispara la
 construcción). Cuando diga «ya»: `git checkout main && git merge --ff-only desarrollo && git push`, esperar la CI y avisarle.
+El 31-oct-2026 dijo «ya» y se publicó la v0.14.0 (todo lo acumulado). Para mejoras nuevas, seguir en `desarrollo` y esperar su «ya».
+Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó
 1. Crear tareas, programar y escribir pruebas pytest para cada función nueva. Ejemplo: un servidor SMTP falso en localhost; nunca simular un éxito.
