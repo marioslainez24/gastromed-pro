@@ -317,6 +317,7 @@
   </section>
 {% endif %}
 
+{% if pr.status == 'finalizado' %}{% set mail_kind, mail_id = 'informe', pr.id %}{% include "_enviar_correo.html" %}{% endif %}
 <section class="card" id="imagenes">
   <div class="row-between"><h2>Imágenes <span class="count">{{ images|length }}</span></h2>
     {% if editable %}

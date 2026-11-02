@@ -1,0 +1,17 @@
+{# Enviar al correo del paciente (v0.19.0). Variables: mail_kind ('informe'|'receta'|'documento'), mail_id, p (paciente). #}
+{% set mi = mail_info(mail_kind, mail_id) %}
+<details class="card send-mail" id="enviar-correo">
+  <summary>✉ Enviar al correo del paciente{% if mi.sent %} <span class="tag tag-ok">Enviado {{ fmt_dt(mi.sent) }}</span>{% endif %}</summary>
+  {% if not p.email %}
+    <p class="small">El paciente no tiene correo registrado. {% if can('pacientes.editar_admin') %}<a href="{{ url_for('patients.edit', patient_id=p.id) }}">Agregar el correo en sus datos</a>.{% endif %}</p>
+  {% elif not mi.ready %}
+    <p class="small">Falta configurar el correo del consultorio.{% if can('ajustes.editar') %} <a href="{{ url_for('extras.reminders_settings') }}">Ajustes → Recordatorios → cuenta de Gmail</a>.{% endif %}</p>
+  {% else %}
+  <form method="post" action="{{ url_for('mail.send', kind=mail_kind, obj_id=mail_id) }}" class="stack mt-s">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <p class="small">Se enviará el PDF a <b>{{ p.email }}</b> desde el correo del consultorio. El texto del correo no lleva datos clínicos; todo va en el PDF adjunto.</p>
+    <label class="check"><input type="checkbox" name="autoriza" value="1" required> El paciente autorizó recibir este documento en ese correo.</label>
+    <div><button class="btn btn-primary" type="submit">Enviar ahora</button></div>
+  </form>
+  {% endif %}
+</details>

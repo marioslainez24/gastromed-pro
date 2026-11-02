@@ -57,8 +57,9 @@ def create_app(config: Config | None = None) -> Flask:
     from .views_documents import bp as docs_bp
     from .views_stats import bp as stats_bp
     from .views_search import bp as search_bp
+    from .views_mail import bp as mail_bp
     for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp, record_bp, files_bp, account_bp, setup_bp, labs_bp, gi_bp,
-               endo_bp, extras_bp, texts_bp, docs_bp, stats_bp, search_bp):
+               endo_bp, extras_bp, texts_bp, docs_bp, stats_bp, search_bp, mail_bp):
         app.register_blueprint(bp)
 
     app.teardown_appcontext(close_db)

@@ -172,3 +172,73 @@ def test_esquema_anatomico_marcas_pantalla_y_pdf(env):
     # CPRE no tiene esquema
     cp = new_proc(med, pid, tok, "cpre")
     assert "Esquema anatómico" not in med.get(f"/procedimientos/{cp}").get_data(as_text=True)
+
+
+def test_enviar_al_correo_del_paciente(env):
+    import io
+    import socketserver
+    import threading
+    from email import message_from_bytes as _mfb
+    from email import policy
+
+    def message_from_bytes(b):
+        return _mfb(b, policy=policy.default)
+    from pypdf import PdfReader
+    from tests.test_fase3 import full_form, new_proc, version
+    from tests.test_fase5 import FakeSMTP, configure_mail
+    srv = socketserver.ThreadingTCPServer(("127.0.0.1", 0), FakeSMTP)
+    srv.daemon_threads, srv.messages, srv.accept_login = True, [], True
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        med = login(env["app"], "propietario")
+        tok = csrf(med)
+        pid = create_patient(med, email="paciente.ficticio@prueba.hn")
+        sin = create_patient(med, document_number="0801199000009", first_names="Sincorreo", phone="+504 9999-0009")
+        # receta emitida
+        med.post("/recetas/nueva", data={"csrf_token": tok, "patient_id": pid, "ack_allergies": "1", **ITEM})
+        rx = env["db"].execute("SELECT id FROM prescriptions WHERE patient_id = ?", (pid,)).fetchone()[0]
+        page = med.get(f"/recetas/{rx}").get_data(as_text=True)
+        assert "Enviar al correo del paciente" in page and "Falta configurar el correo del consultorio" in page
+        configure_mail(env, srv)
+        env["db"].commit()
+        page = med.get(f"/recetas/{rx}").get_data(as_text=True)
+        assert "paciente.ficticio@prueba.hn" in page and "Enviar ahora" in page
+        # sin autorización: no se envía
+        med.post(f"/enviar-correo/receta/{rx}", data={"csrf_token": tok})
+        assert srv.messages == []
+        r = med.post(f"/enviar-correo/receta/{rx}", data={"csrf_token": tok, "autoriza": "1"}, follow_redirects=True)
+        assert "Enviado al correo del paciente" in r.get_data(as_text=True) and len(srv.messages) == 1
+        msg = message_from_bytes(srv.messages[0])
+        assert msg["To"] == "paciente.ficticio@prueba.hn" and "receta" in msg["Subject"]
+        body = msg.get_body(preferencelist=("plain",)).get_content()
+        assert "omeprazol" not in body and "Paciente" in body                                  # sin datos clínicos en el texto
+        att = [p for p in msg.iter_attachments()][0]
+        assert att.get_filename() == f"receta-{rx[:8]}.pdf"
+        assert "omeprazol" in "".join(pg.extract_text() for pg in PdfReader(io.BytesIO(att.get_payload(decode=True))).pages)
+        assert "Enviado " in med.get(f"/recetas/{rx}").get_data(as_text=True)                  # queda la fecha del envío
+        # informe: solo finalizado
+        proc = new_proc(med, pid, tok, "colonoscopia")
+        assert med.post(f"/enviar-correo/informe/{proc}", data={"csrf_token": tok, "autoriza": "1"}).status_code == 409
+        med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), then="finalizar"))
+        med.post(f"/procedimientos/{proc}/finalizar", data={"csrf_token": tok, "version": version(env, proc)})
+        assert "Enviar al correo del paciente" in med.get(f"/procedimientos/{proc}").get_data(as_text=True)
+        med.post(f"/enviar-correo/informe/{proc}", data={"csrf_token": tok, "autoriza": "1"})
+        assert len(srv.messages) == 2 and "informe de endoscopia" in message_from_bytes(srv.messages[1])["Subject"]
+        # paciente sin correo
+        med.post("/recetas/nueva", data={"csrf_token": tok, "patient_id": sin, "ack_allergies": "1", **ITEM})
+        rx2 = env["db"].execute("SELECT id FROM prescriptions WHERE patient_id = ?", (sin,)).fetchone()[0]
+        r = med.post(f"/enviar-correo/receta/{rx2}", data={"csrf_token": tok, "autoriza": "1"}, follow_redirects=True)
+        assert "no tiene un correo válido" in r.get_data(as_text=True) and len(srv.messages) == 2
+        # falla del servidor: se informa, no se finge
+        srv.accept_login = False
+        r = med.post(f"/enviar-correo/informe/{proc}", data={"csrf_token": tok, "autoriza": "1"}, follow_redirects=True)
+        assert "No se pudo enviar" in r.get_data(as_text=True) and len(srv.messages) == 2
+        assert env["db"].execute("SELECT COUNT(*) FROM audit_log WHERE action = 'enviado_por_correo_al_paciente'").fetchone()[0] == 2
+        # receta anulada no se envía; otra clínica no puede
+        med.post(f"/recetas/{rx}/anular", data={"csrf_token": tok, "reason": "Error (prueba)"})
+        assert med.post(f"/enviar-correo/receta/{rx}", data={"csrf_token": tok, "autoriza": "1"}).status_code == 409
+        otra = login(env["app"], "otra", email="otra@prueba.hn")
+        assert otra.post(f"/enviar-correo/informe/{proc}", data={"csrf_token": csrf(otra), "autoriza": "1"}).status_code == 404
+    finally:
+        srv.shutdown()
+        srv.server_close()

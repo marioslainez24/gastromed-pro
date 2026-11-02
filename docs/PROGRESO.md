@@ -49,7 +49,12 @@ internet ni el atlas). Solo clasificaciones.
   elige el tipo (lesión, biopsia, resección/pólipo, otro) y hace clic en el dibujo; cada marca guarda segmento, tipo, nota y frasco
   (se valida contra la lista de frascos). Se ve en la vista del informe y sale en el PDF con su leyenda (misma geometría en SVG y ReportLab).
   «Partir del estudio anterior» también copia las marcas (sin frasco).
-**Cómo se comprobó**: 201 pruebas (`test_v019.py`, `test_v019b.py`; la prueba combinatoria recorre todas las opciones de cada hallazgo); navegador
+- **Enviar al correo del PACIENTE** (`app/views_mail.py`; pedido: al paciente, no al médico que refirió): botón «✉ Enviar al correo del
+  paciente» en el informe FINALIZADO, la receta EMITIDA y el documento EMITIDO. Usa el Gmail del consultorio (Ajustes → Recordatorios).
+  Exige correo registrado del paciente y confirmar que autorizó recibirlo; el cuerpo no lleva datos clínicos (todo en el PDF adjunto, cuyo
+  nombre no identifica al paciente); si falla se muestra el motivo (nunca se simula); auditoría con el correo enmascarado y fecha del
+  último envío visible.
+**Cómo se comprobó**: 202 pruebas (servidor SMTP falso en localhost para el envío) (`test_v019.py`, `test_v019b.py`; la prueba combinatoria recorre todas las opciones de cada hallazgo); navegador
 real PC y celular actualizando desde v0.18.0; prueba del ejecutable.
 
 ## Etapa 18 · 1-nov-2026 · Descartar borradores y hojas de preparación de colonoscopía y EDA (v0.18.0 · PUBLICADA 1-nov-2026)

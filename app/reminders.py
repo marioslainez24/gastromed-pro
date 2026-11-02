@@ -42,8 +42,9 @@ def whatsapp_link(phone: str, prefix: str, text: str) -> str | None:
     return f"https://wa.me/{digits}?text={urllib.parse.quote(text)}"
 
 
-def send_email(settings, password: str, to: str, subject: str, body: str, timeout=20):
-    """Envía un correo por SMTP con STARTTLS. Lanza excepción si falla: nunca se simula éxito."""
+def send_email(settings, password: str, to: str, subject: str, body: str, timeout=20, attachments=()):
+    """Envía un correo por SMTP con STARTTLS. Lanza excepción si falla: nunca se simula éxito.
+    attachments: [(nombre_de_archivo, bytes)] — se adjuntan como PDF."""
     if not settings["smtp_user"] or not password:
         raise RuntimeError("Falta configurar la cuenta de correo de la clínica.")
     msg = EmailMessage()
@@ -52,6 +53,8 @@ def send_email(settings, password: str, to: str, subject: str, body: str, timeou
     msg["To"] = to
     msg["Message-ID"] = make_msgid(domain="gastromed.local")
     msg.set_content(body)
+    for name, data in attachments:
+        msg.add_attachment(data, maintype="application", subtype="pdf", filename=name)
     port = int(settings["smtp_port"])
     ctx = ssl.create_default_context()
     if port == 465:

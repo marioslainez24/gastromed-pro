@@ -22,6 +22,7 @@
   </ol>
   {% if r.general_instructions %}<h3>Indicaciones generales</h3><p class="prewrap">{{ r.general_instructions }}</p>{% endif %}
 </section>
+{% if r.status == 'emitida' %}{% set mail_kind, mail_id = 'receta', r.id %}{% include "_enviar_correo.html" %}{% endif %}
 {% if can('recetas.emitir') %}
 <details class="card"><summary>☆ Guardar como receta frecuente</summary>
   <form method="post" action="{{ url_for('rx.save_as_template', rx_id=r.id) }}" class="inline-form">
