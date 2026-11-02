@@ -47,11 +47,14 @@ El 1-nov-2026 dijo «ya»: se publicó la v0.18.0 (descartar borradores; hojas d
 v0.19.0 (clasificaciones del consenso cubano; recetas frecuentes; partir del estudio anterior; estadísticas + Excel; búsqueda en expedientes; esquema anatómico; envío al correo del paciente) se publicó el 1-nov-2026 tras su «ya». Lo siguiente, en `desarrollo` hasta su «ya». El Dr. Lainez NO quiere atlas ni fotos de internet.
 v0.20.0 (personal de endoscopia: endoscopista y asistentes con menús) se publicó el 1-nov-2026 tras su «ya». Lo siguiente, en `desarrollo` hasta su «ya».
 v0.21.0 (hojas educativas y dietas; agenda en el calendario del celular) se publicó el 2-nov-2026 tras su «ya». Lo siguiente, en `desarrollo` hasta su «ya».
+v0.22.0 (versión para Mac: chip Apple en `macos-14` e Intel en `macos-15-intel`; `build/GastroMedPro-mac.spec`, `build/LEEME-mac.txt`;
+`adapt_paths` corrige rutas si se copia la carpeta datos de Windows a Mac) probada en CI desde `desarrollo` (workflow_dispatch, no publica); espera su «ya».
+La CI tiene trabajos windows, mac (matriz) y publicar (solo en main; sube el .exe y los .zip de Mac que salieron bien). `macos-latest` se quedó sin máquinas: usar `macos-14`.
 Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó
 1. Crear tareas, programar y escribir pruebas pytest para cada función nueva. Ejemplo: un servidor SMTP falso en localhost; nunca simular un éxito.
-2. Correr `python3 -m pytest -q` (206 pruebas en v0.21.0).
+2. Correr `python3 -m pytest -q` (211 pruebas en v0.22.0).
 3. Revisar en el navegador con Playwright y guardar capturas en `evidencia/capturas/`.
 4. Correr la prueba del exe en local: `build/smoke_exe.py` con un script que ejecute `python3 gastromed_exe.py`. Si waitress no está instalado, usar un sustituto con `werkzeug.make_server` en `PYTHONPATH`.
 5. Actualizar `docs/PROGRESO.md` y `docs/MATRIZ.md` (y `INSTALACION_WINDOWS.md` si cambia el uso). Copiarlos al Proyecto con `project_write`.

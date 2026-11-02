@@ -33,7 +33,9 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
   programa; luego un trabajo «publicar» (solo en `main`) sube el .exe y los .zip de Mac que hayan salido bien. Desde `desarrollo` se puede
   lanzar a mano (workflow_dispatch) para probar sin publicar.
 - Sin firma de Apple (cuesta 99 USD al año): la primera vez se abre con Ajustes del Sistema → Privacidad y seguridad → «Abrir igualmente».
-- Pruebas: `tests/test_v022.py` (209 en total).
+- Si se copia la carpeta `datos` de Windows a la Mac, `adapt_paths()` corrige las rutas guardadas sin tocar las claves.
+- Pruebas: `tests/test_v022.py` (211 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
+  y Mac Intel correctos (pruebas + prueba completa del programa). Falta probar en una Mac real.
 
 ## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · PUBLICADA 2-nov-2026)
 
