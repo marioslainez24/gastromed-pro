@@ -46,7 +46,7 @@ El 1-nov-2026 pidió publicar «de un solo» la v0.17.0 (sin dictado ni diario, 
 El 1-nov-2026 dijo «ya»: se publicó la v0.18.0 (descartar borradores; hojas de preparación de colonoscopía y EDA). Lo siguiente, en `desarrollo` hasta su «ya».
 v0.19.0 (clasificaciones del consenso cubano; recetas frecuentes; partir del estudio anterior; estadísticas + Excel; búsqueda en expedientes; esquema anatómico; envío al correo del paciente) se publicó el 1-nov-2026 tras su «ya». Lo siguiente, en `desarrollo` hasta su «ya». El Dr. Lainez NO quiere atlas ni fotos de internet.
 v0.20.0 (personal de endoscopia: endoscopista y asistentes con menús) se publicó el 1-nov-2026 tras su «ya». Lo siguiente, en `desarrollo` hasta su «ya».
-v0.21.0 (hojas educativas y dietas; agenda en el calendario del celular) está en `desarrollo` esperando su «ya».
+v0.21.0 (hojas educativas y dietas; agenda en el calendario del celular) se publicó el 2-nov-2026 tras su «ya». Lo siguiente, en `desarrollo` hasta su «ya».
 Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó

@@ -20,7 +20,7 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
-## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · rama `desarrollo`, SIN publicar)
+## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · PUBLICADA 2-nov-2026)
 
 **Pedido del Dr. Lainez** (tras la comparativa con 11 programas, ver COMPARATIVA.md): dos de las funciones que otros tienen.
 - **Hojas educativas y dietas** (`app/views_handouts.py`, migración 0017): el médico las escribe en «Mis hojas educativas» (enlace en
