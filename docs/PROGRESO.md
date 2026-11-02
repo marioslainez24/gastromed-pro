@@ -11,7 +11,7 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
-## Etapa 19 · 1-nov-2026 · Clasificaciones del consenso, recetas frecuentes, partir del estudio anterior, estadísticas y búsqueda (v0.19.0 · rama `desarrollo`, SIN publicar)
+## Etapa 19 · 1-nov-2026 · Clasificaciones del consenso, recetas frecuentes, partir del estudio anterior, estadísticas y búsqueda (v0.19.0 · PUBLICADA 1-nov-2026)
 
 **Pedido del Dr. Lainez:** incorporar a los diagnósticos endoscópicos las clasificaciones de su presentación «Taller: Consenso de
 Clasificaciones en Endoscopia Digestiva» (GASTRO 2019, Cuba). Se ofreció también un atlas con imágenes; **lo descartó** (no quiso fotos de

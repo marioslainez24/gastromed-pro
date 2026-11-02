@@ -1,6 +1,6 @@
 # Matriz de requisitos y cobertura — GastroMed Pro
 
-Actualizada: 1 de noviembre de 2026 · versión 0.19.0 (rama desarrollo; publicada la 0.18.0) · ver también `COMPARATIVA.md`
+Actualizada: 1 de noviembre de 2026 · versión 0.19.0 (publicada) · ver también `COMPARATIVA.md`
 
 **Fuentes:** el documento de requisitos del Dr. Mario Lainez. Las páginas de Medilink (softwaremedilink.com y ayuda.softwaremedilink.com) **no fueron accesibles** desde el entorno de desarrollo (bloqueo de red). Por lo tanto **no se afirma haber revisado ninguna función de Medilink**; la comparación queda pendiente hasta que se puedan consultar (o el usuario envíe capturas/textos).
 
