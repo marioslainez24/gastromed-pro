@@ -1,6 +1,8 @@
 """Fase 3: informes de endoscopia, imágenes y captura, patología, vigilancia, prótesis, calidad y reprocesamiento."""
 import hashlib
 import json
+
+from markupsafe import Markup
 import re
 from datetime import date
 
@@ -131,7 +133,9 @@ def proc_view(proc_id):
     audit("procedimiento_consultado", "procedimiento", pr["id"])
     normal_sec, normal_concl = D.normal_texts(clinic_settings()["endo_normal_texts"])
     prev = _previous_study(db, pr) if editable else None
-    return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, prev=prev,
+    from . import anatomy as A
+    return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, prev=prev, A=A,
+                           anat_svg=Markup(A.svg(pr["kind"], data.get("marks") or [], interactive=editable)),
                            prev_concl=[x for x in (json.loads(prev["data"]).get("conclusion") or "").splitlines() if x.strip()][:4] if prev else [],
                            normal_sec=normal_sec, normal_concl=normal_concl, phrases_json=phrases_json(db) if editable else "[]",
                            dx_json=json.dumps(DX.for_kind(pr["kind"]), ensure_ascii=False), dx_source=DX.ICD_SOURCE,
@@ -258,6 +262,12 @@ def parse_form(kind, f):
             errors.append("Fecha de revisión de prótesis no válida.")
             due = None
         data["stents"].append({"kind": kd, "desc": _txt(f, f"stent-{i}-desc", 300), "review_due": due})
+    from . import anatomy as A
+    data["marks"], merr = A.parse_marks(kind, f)
+    errors += merr
+    for m in data["marks"]:
+        if m["jar"] and m["jar"] not in numbers:
+            errors.append(f"La marca del esquema en «{m['seg']}» menciona el frasco {m['jar']}, que no está en la lista de frascos.")
     return cols, data, errors
 
 
@@ -315,6 +325,7 @@ def proc_copy_previous(proc_id):
         if k in old:
             cur[k] = old[k]
     cur["findings"] = [dict(fi, jar=None, removed=None) for fi in old.get("findings") or []]
+    cur["marks"] = [dict(m, jar=None) for m in old.get("marks") or []]
     cur["copied_from"] = {"id": prev["id"], "on": prev["performed_on"]}
     with write_tx(db):
         cur_ok = db.execute("UPDATE procedures SET data = ?, updated_at = ?, version = version + 1 WHERE id = ? AND status = 'borrador'",

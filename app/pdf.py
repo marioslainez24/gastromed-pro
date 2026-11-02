@@ -350,6 +350,16 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None) -> 
         t.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#c9d4d3")), ("VALIGN", (0, 0), (-1, -1), "TOP"),
                                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#eef4f3"))]))
         story += [t, Spacer(1, 2 * mm)]
+    if d.get("marks"):
+        from . import anatomy as A
+        dr = A.drawing(pr["kind"], d["marks"], width * 0.5)
+        if dr:
+            legend = [Paragraph(f"<b>{i}.</b> <font color='{A.KINDS_OF_MARK[m['kind']][1]}'>●</font> <b>{_e(m['seg'])}</b> · "
+                                f"{_e(A.KINDS_OF_MARK[m['kind']][0])}" + (f": {_e(m['label'])}" if m.get("label") else "")
+                                + (f" · frasco {m['jar']}" if m.get("jar") else ""), ST["small"]) for i, m in enumerate(d["marks"], 1)]
+            t = Table([[dr, legend]], colWidths=[dr.width + 4 * mm, width - dr.width - 4 * mm])
+            t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+            story += [KeepTogether([Paragraph("Esquema anatómico", ST["title"]), t]), Spacer(1, 2 * mm)]
     if d.get("jars"):
         sec("Muestras enviadas a patología", "\n".join(f"Frasco {j['jar']}: {j['site']}" + (f" — {j['desc']}" if j.get("desc") else "")
                                                       + (f" ({j['pieces']} fragmentos)" if j.get("pieces") else "") for j in d["jars"]))

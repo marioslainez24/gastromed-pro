@@ -45,7 +45,11 @@ internet ni el atlas). Solo clasificaciones.
 - **Buscar en todos los expedientes** (`/buscar-expedientes`, enlace en Pacientes): busca en problemas activos, antecedentes, diagnósticos
   de consultas finalizadas y conclusiones de estudios finalizados; sin tildes ni mayúsculas; todas las palabras. Muestra último estudio y
   control (vencidos primero). Solo personal clínico; queda en la auditoría.
-**Cómo se comprobó**: 200 pruebas (`test_v019.py`, `test_v019b.py`; la prueba combinatoria recorre todas las opciones de cada hallazgo); navegador
+- **Esquema anatómico** (`app/anatomy.py`, dibujo propio y esquemático): en informes de EDA, colonoscopia y rectosigmoidoscopia, el médico
+  elige el tipo (lesión, biopsia, resección/pólipo, otro) y hace clic en el dibujo; cada marca guarda segmento, tipo, nota y frasco
+  (se valida contra la lista de frascos). Se ve en la vista del informe y sale en el PDF con su leyenda (misma geometría en SVG y ReportLab).
+  «Partir del estudio anterior» también copia las marcas (sin frasco).
+**Cómo se comprobó**: 201 pruebas (`test_v019.py`, `test_v019b.py`; la prueba combinatoria recorre todas las opciones de cada hallazgo); navegador
 real PC y celular actualizando desde v0.18.0; prueba del ejecutable.
 
 ## Etapa 18 · 1-nov-2026 · Descartar borradores y hojas de preparación de colonoscopía y EDA (v0.18.0 · PUBLICADA 1-nov-2026)

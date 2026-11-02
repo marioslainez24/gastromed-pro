@@ -139,3 +139,36 @@ def test_buscar_en_todos_los_expedientes(env):
     assert login(env["app"], "recepcion").get("/buscar-expedientes?q=barrett").status_code == 403
     # otra clínica no ve nada
     assert "<b>0</b> paciente(s)" in login(env["app"], "otra", email="otra@prueba.hn").get("/buscar-expedientes?q=barrett").get_data(as_text=True)
+
+
+def test_esquema_anatomico_marcas_pantalla_y_pdf(env):
+    import io
+    from pypdf import PdfReader
+    from tests.test_fase3 import full_form, new_proc, version
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    proc = new_proc(med, pid, tok, "colonoscopia")
+    html = med.get(f"/procedimientos/{proc}").get_data(as_text=True)
+    assert "Esquema anatómico" in html and 'data-seg="Sigmoides"' in html and "data-anat" in html
+    marks = {"mark-0-x": "200", "mark-0-y": "252", "mark-0-seg": "Sigmoides", "mark-0-kind": "reseccion", "mark-0-label": "Pólipo 6 mm",
+             "mark-0-jar": "1",
+             "mark-1-x": "76", "mark-1-y": "200", "mark-1-seg": "Colon ascendente", "mark-1-kind": "biopsia",
+             "mark-2-x": "999", "mark-2-y": "10", "mark-2-seg": "Recto",                                     # fuera del dibujo: se ignora
+             "mark-3-x": "50", "mark-3-y": "50", "mark-3-seg": "Antro"}                                       # no es del colon: se ignora
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), **marks))
+    d = json.loads(env["db"].execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])
+    assert [(m["seg"], m["kind"], m["jar"]) for m in d["marks"]] == [("Sigmoides", "reseccion", 1), ("Colon ascendente", "biopsia", None)]
+    # frasco inexistente: aviso
+    r = med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), **{**marks, "mark-0-jar": "7"}), follow_redirects=True)
+    assert "menciona el frasco 7" in r.get_data(as_text=True)
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), **marks))
+    pdf = med.get(f"/procedimientos/{proc}/pdf?papel=carta")
+    text = "".join(pg.extract_text() for pg in PdfReader(io.BytesIO(pdf.data)).pages)
+    assert "Esquema anatómico" in text and "Pólipo 6 mm" in text and "Colon ascendente" in text
+    # rectosigmoidoscopia usa el nombre de su segmento
+    rs = new_proc(med, pid, tok, "rectosigmoidoscopia")
+    assert 'data-seg="Colon descendente distal"' in med.get(f"/procedimientos/{rs}").get_data(as_text=True)
+    # CPRE no tiene esquema
+    cp = new_proc(med, pid, tok, "cpre")
+    assert "Esquema anatómico" not in med.get(f"/procedimientos/{cp}").get_data(as_text=True)

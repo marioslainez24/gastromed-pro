@@ -516,3 +516,21 @@ button.hea-chip { font: inherit; font-size: .88rem; color: inherit; }
 .stats-filter { margin-top: 0; }
 ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15rem 0; }
 .nowrap { white-space: nowrap; }
+/* v0.19: esquema anatómico */
+.anat { width: 100%; max-width: 340px; height: auto; display: block; background: var(--surface); border-radius: 10px; }
+.anat-path, .anat-ellipse { fill: #f3d9d4; stroke: #b07c76; stroke-width: 1.2; }
+.anat-line { fill: none; stroke: #e6b3ab; stroke-linecap: round; stroke-linejoin: round; }
+[data-anat] .anat-reg { cursor: crosshair; }
+[data-anat] .anat-reg:hover { filter: brightness(0.92); }
+.anat-label { font: 9px system-ui, sans-serif; fill: var(--muted); pointer-events: none; }
+.anat-mark { pointer-events: none; } .anat-mark circle { stroke: #fff; stroke-width: 1.2; }
+.anat-mark text { font: bold 9px system-ui, sans-serif; fill: #fff; }
+.anat-wrap { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+.anat-draw { flex: 0 1 340px; }
+.anat-list, .anat-legend { flex: 1 1 260px; margin: 0; padding-left: 1.4rem; }
+.anat-list li { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; padding: .3rem 0; border-bottom: 1px dashed var(--line); }
+.anat-list input[data-f="label"], .anat-list input[name$="-label"] { flex: 1 1 140px; }
+.anat-seg { font-weight: 600; min-width: 7rem; }
+.anat-kinds { display: flex; flex-wrap: wrap; gap: .35rem; margin: .4rem 0 .6rem; }
+.anat-dot { display: inline-block; width: .8rem; height: .8rem; border-radius: 50%; vertical-align: -1px; }
+.anat-dot.k-lesion { background: #c62828; } .anat-dot.k-biopsia { background: #1565c0; } .anat-dot.k-reseccion { background: #2e7d32; } .anat-dot.k-otro { background: #6d4c41; }

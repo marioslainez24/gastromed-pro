@@ -175,6 +175,40 @@
   </fieldset>
   </details>
 
+  {% if A.diagram_for(pr.kind) %}
+  <fieldset class="card anat-box" id="esquema"><legend>Esquema anatómico</legend>
+    <p class="small muted">Elija el tipo y haga clic en el dibujo donde está la lesión o la biopsia. Cada marca lleva un número que sale en el
+      informe impreso. Para quitar una marca use «✕».</p>
+    <div class="anat-kinds" role="radiogroup" aria-label="Tipo de marca">
+      {% for k, (lab, color) in A.KINDS_OF_MARK.items() %}<label class="hea-chip"><input type="radio" name="anat-kind" value="{{ k }}" {% if loop.first %}checked{% endif %} form="efind-form">
+        <span class="anat-dot k-{{ k }}"></span> {{ lab }}</label>{% endfor %}
+    </div>
+    <div class="anat-wrap">
+      <div class="anat-draw">{{ anat_svg }}</div>
+      <ol class="anat-list" data-anat-list>
+        {% for m in d.marks or [] %}
+        <li data-anat-row data-x="{{ m.x }}" data-y="{{ m.y }}" data-kind="{{ m.kind }}">
+          <input type="hidden" name="mark-{{ loop.index0 }}-x" value="{{ m.x }}"><input type="hidden" name="mark-{{ loop.index0 }}-y" value="{{ m.y }}">
+          <input type="hidden" name="mark-{{ loop.index0 }}-seg" value="{{ m.seg }}">
+          <span class="anat-seg">{{ m.seg }}</span>
+          <select name="mark-{{ loop.index0 }}-kind" data-anat-kindsel>{% for k, (lab, c) in A.KINDS_OF_MARK.items() %}<option value="{{ k }}" {% if k == m.kind %}selected{% endif %}>{{ lab }}</option>{% endfor %}</select>
+          <input name="mark-{{ loop.index0 }}-label" value="{{ m.label or '' }}" maxlength="80" placeholder="Nota (ej.: pólipo 6 mm)">
+          <input name="mark-{{ loop.index0 }}-jar" value="{{ m.jar or '' }}" class="w-num" inputmode="numeric" placeholder="Frasco" aria-label="Frasco">
+          <button type="button" class="link-btn" data-anat-del aria-label="Quitar marca">✕</button></li>
+        {% endfor %}
+      </ol>
+    </div>
+    <template data-anat-tpl><li data-anat-row>
+      <input type="hidden" data-f="x"><input type="hidden" data-f="y"><input type="hidden" data-f="seg">
+      <span class="anat-seg"></span>
+      <select data-f="kind" data-anat-kindsel>{% for k, (lab, c) in A.KINDS_OF_MARK.items() %}<option value="{{ k }}">{{ lab }}</option>{% endfor %}</select>
+      <input data-f="label" maxlength="80" placeholder="Nota (ej.: pólipo 6 mm)">
+      <input data-f="jar" class="w-num" inputmode="numeric" placeholder="Frasco" aria-label="Frasco">
+      <button type="button" class="link-btn" data-anat-del aria-label="Quitar marca">✕</button></li></template>
+    <div class="anat-colors" hidden>{% for k, (lab, color) in A.KINDS_OF_MARK.items() %}<span data-k="{{ k }}" data-c="{{ color }}"></span>{% endfor %}</div>
+  </fieldset>
+  {% endif %}
+
   <fieldset class="card"><legend>Biopsias y frascos</legend>
     <div id="jars" data-rows="jar">
     {% set jrows = d.jars or [empty_jar] %}
@@ -271,6 +305,9 @@
       {% if f.classification %} · {{ D.CLASSIFICATIONS[D.CLASS_LOOKUP[f.classification][0]][0] }} {{ D.CLASS_LOOKUP[f.classification][1] }}{% endif %}
       {% if f.prague_c is not none or f.prague_m is not none %} · Praga C{{ '%g' % (f.prague_c or 0) }} M{{ '%g' % (f.prague_m or 0) }}{% endif %}
       {% if f.size_mm %} · {{ '%g' % f.size_mm }} mm{% endif %}{% if f.jar %} · frasco {{ f.jar }}{% endif %}</li>{% endfor %}</ul>{% endif %}
+    {% if d.marks %}<h2>Esquema anatómico</h2>
+      <div class="anat-wrap"><div class="anat-draw">{{ anat_svg }}</div>
+        <ol class="anat-legend">{% for m in d.marks %}<li><b>{{ m.seg }}</b> · {{ A.KINDS_OF_MARK[m.kind][0] }}{% if m.label %}: {{ m.label }}{% endif %}{% if m.jar %} · frasco {{ m.jar }}{% endif %}</li>{% endfor %}</ol></div>{% endif %}
     {% if d.interventions %}<h2>Intervenciones</h2><p class="prewrap">{{ d.interventions }}</p>{% endif %}
     <h2>Complicaciones</h2><p>{% if d.complications %}{% for c in d.complications %}{{ D.COMPLICATIONS[c] }}{% if not loop.last %}, {% endif %}{% endfor %}{% if d.complication_detail %} · {{ d.complication_detail }}{% endif %}{% else %}Ninguna registrada{% endif %}</p>
     <h2>Conclusión</h2><p class="prewrap">{{ d.conclusion or '' }}</p>

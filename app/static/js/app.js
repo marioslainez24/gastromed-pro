@@ -744,6 +744,51 @@
     }
   });
 
+  // ---- Esquema anatómico del informe (v0.19.0): clic en el dibujo = marca numerada --------
+  var anat = $("[data-anat]");
+  if (anat) {
+    var anatBox = anat.closest(".anat-box"), anatList = $("[data-anat-list]", anatBox), anatTpl = $("[data-anat-tpl]", anatBox);
+    var anatMarks = $(".anat-marks", anat), NS = "http://www.w3.org/2000/svg", anatSeq = $$("[data-anat-row]", anatList).length;
+    var anatColor = {};
+    $$(".anat-colors span", anatBox).forEach(function (sp) { anatColor[sp.getAttribute("data-k")] = sp.getAttribute("data-c"); });
+    function anatDraw() {
+      while (anatMarks.firstChild) anatMarks.removeChild(anatMarks.firstChild);
+      $$("[data-anat-row]", anatList).forEach(function (row, i) {
+        var x = parseFloat(row.getAttribute("data-x")), y = parseFloat(row.getAttribute("data-y"));
+        var kind = $("[data-anat-kindsel]", row).value;
+        var g = document.createElementNS(NS, "g"); g.setAttribute("class", "anat-mark");
+        var c = document.createElementNS(NS, "circle");
+        c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 8); c.setAttribute("fill", anatColor[kind] || "#6d4c41");
+        var t = document.createElementNS(NS, "text");
+        t.setAttribute("x", x); t.setAttribute("y", y + 3.5); t.setAttribute("text-anchor", "middle"); t.textContent = i + 1;
+        g.appendChild(c); g.appendChild(t); anatMarks.appendChild(g);
+      });
+    }
+    function anatChanged(el) { el.dispatchEvent(new Event("input", { bubbles: true })); }
+    anat.addEventListener("click", function (e) {
+      var reg = e.target.closest("[data-seg]");
+      if (!reg) return;
+      var pt = anat.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+      var p = pt.matrixTransform(anat.getScreenCTM().inverse());
+      var kindIn = $('input[name="anat-kind"]:checked');
+      var row = anatTpl.content.firstElementChild.cloneNode(true), n = anatSeq++;
+      row.setAttribute("data-x", p.x.toFixed(1)); row.setAttribute("data-y", p.y.toFixed(1));
+      $$("[data-f]", row).forEach(function (inp) { inp.name = "mark-" + n + "-" + inp.getAttribute("data-f"); });
+      $('[data-f="x"]', row).value = p.x.toFixed(1); $('[data-f="y"]', row).value = p.y.toFixed(1);
+      $('[data-f="seg"]', row).value = reg.getAttribute("data-seg");
+      $(".anat-seg", row).textContent = reg.getAttribute("data-seg");
+      $('[data-f="kind"]', row).value = kindIn ? kindIn.value : "lesion";
+      anatList.appendChild(row); anatDraw(); anatChanged($('[data-f="x"]', row));
+      $('[data-f="label"]', row).focus();
+    });
+    anatList.addEventListener("click", function (e) {
+      if (!e.target.matches("[data-anat-del]")) return;
+      var row = e.target.closest("[data-anat-row]"), prev = row.previousElementSibling || anatList;
+      row.remove(); anatDraw(); anatChanged(prev);
+    });
+    anatList.addEventListener("change", function (e) { if (e.target.matches("[data-anat-kindsel]")) anatDraw(); });
+  }
+
   // ---- PWA: registro del service worker (solo recursos estáticos) -----------
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(function () {});
