@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Personal de endoscopia{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Ajustes</h1></div>
+{% include "ajustes/_tabs.html" %}
+<p class="muted">Los nombres de esta lista aparecen en menús desplegables en cada informe de endoscopia: <b>Endoscopista</b> y
+  <b>Asistente 1, 2 y 3</b>. El primero de cada lista es el que aparece elegido al abrir un informe nuevo. En los informes se guarda el
+  nombre tal como estaba ese día: si después cambia o desactiva a alguien, los informes ya hechos no cambian.</p>
+<div class="grid2">
+{% for role, title in ROLES.items() %}
+<section class="card">
+  <h2>{{ title }}</h2>
+  {% set items = rows|selectattr('role', 'equalto', role)|list %}
+  {% if items %}<ol class="list staff-list">{% for r in items %}
+    <li class="row-between">
+      <form method="post" class="inline-form staff-edit"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="id" value="{{ r.id }}">
+        <input name="name" value="{{ r.name }}" maxlength="120" aria-label="Nombre" {% if not r.active %}disabled{% endif %}>
+        <input name="detail" value="{{ r.detail or '' }}" maxlength="120" placeholder="{{ 'Especialidad (opcional)' if role == 'medico' else 'Cargo (ej.: enfermera)' }}" aria-label="Detalle" {% if not r.active %}disabled{% endif %}>
+        {% if r.active %}<button class="btn btn-sm" name="action" value="editar">Guardar</button>
+          {% if not loop.first %}<button class="btn btn-sm btn-quiet" name="action" value="subir" title="Que aparezca elegido por defecto">↑ Primero</button>{% else %}<span class="tag tag-ok">Por defecto</span>{% endif %}
+          <button class="btn btn-sm btn-quiet" name="action" value="desactivar">Desactivar</button>
+        {% else %}<span class="tag">Desactivado</span> <button class="btn btn-sm btn-quiet" name="action" value="activar">Activar</button>{% endif %}
+      </form></li>{% endfor %}</ol>
+  {% else %}<p class="muted small">Aún no hay {{ title|lower }}.</p>{% endif %}
+  <form method="post" class="inline-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="role" value="{{ role }}">
+    <label class="field">{{ 'Nuevo médico' if role == 'medico' else 'Nuevo asistente' }}<input name="name" maxlength="120" required placeholder="{{ 'Dr. Nombre Apellido' if role == 'medico' else 'Nombre y apellido' }}"></label>
+    <label class="field">{{ 'Especialidad' if role == 'medico' else 'Cargo' }} <span class="muted">· opcional</span><input name="detail" maxlength="120"></label>
+    <button class="btn btn-primary" name="action" value="agregar">Agregar</button></form>
+</section>
+{% endfor %}
+</div>
+{% endblock %}

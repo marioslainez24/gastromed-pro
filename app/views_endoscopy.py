@@ -134,7 +134,13 @@ def proc_view(proc_id):
     normal_sec, normal_concl = D.normal_texts(clinic_settings()["endo_normal_texts"])
     prev = _previous_study(db, pr) if editable else None
     from . import anatomy as A
+    from .views_settings import endo_staff
+    staff_med = [r["name"] for r in endo_staff(db, g.user["org_id"], "medico")]
+    staff_asi = [r["name"] for r in endo_staff(db, g.user["org_id"], "asistente")]
+    asis = list(data.get("assistants_list") or ([data["assistants"]] if data.get("assistants") else []))
     return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, prev=prev, A=A,
+                           staff_med=staff_med, staff_asi=staff_asi, asis=(asis + ["", "", ""])[:3],
+                           endoscopist=data.get("endoscopist") or (staff_med[0] if staff_med else ""),
                            anat_svg=Markup(A.svg(pr["kind"], data.get("marks") or [], interactive=editable)),
                            prev_concl=[x for x in (json.loads(prev["data"]).get("conclusion") or "").splitlines() if x.strip()][:4] if prev else [],
                            normal_sec=normal_sec, normal_concl=normal_concl, phrases_json=phrases_json(db) if editable else "[]",
@@ -206,7 +212,9 @@ def parse_form(kind, f):
         "prep_product": _txt(f, "prep_product", 200), "prep_regimen": _txt(f, "prep_regimen", 300), "fasting_hours": _num(f, "fasting_hours", 0, 72),
         "sedation_type": f.get("sedation_type") if f.get("sedation_type") in D.SEDATION else None,
         "sedation_agents": _txt(f, "sedation_agents", 500), "sedation_by": _txt(f, "sedation_by", 200), "monitoring": _txt(f, "monitoring", 500),
-        "assistants": _txt(f, "assistants", 300), "start_time": _txt(f, "start_time", 5), "end_time": _txt(f, "end_time", 5),
+        "endoscopist": _txt(f, "endoscopist", 120),
+        "assistants_list": [a for a in (_txt(f, f"assistant_{i}", 120) for i in (1, 2, 3)) if a],
+        "start_time": _txt(f, "start_time", 5), "end_time": _txt(f, "end_time", 5),
         "incomplete_reason": _txt(f, "incomplete_reason", 300), "interventions": _txt(f, "interventions"), "materials": _txt(f, "materials"),
         "complications": comps, "complication_detail": _txt(f, "complication_detail"), "conclusion": _txt(f, "conclusion"),
         "recommendations": _txt(f, "recommendations"), "follow_up": _txt(f, "follow_up", 500),
@@ -262,6 +270,8 @@ def parse_form(kind, f):
             errors.append("Fecha de revisión de prótesis no válida.")
             due = None
         data["stents"].append({"kind": kd, "desc": _txt(f, f"stent-{i}-desc", 300), "review_due": due})
+    # v0.20.0: asistentes elegidos de la lista de Ajustes; «assistants» queda como texto para el PDF y los informes anteriores
+    data["assistants"] = ", ".join(dict.fromkeys(data["assistants_list"])) or None
     from . import anatomy as A
     data["marks"], merr = A.parse_marks(kind, f)
     errors += merr

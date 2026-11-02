@@ -534,3 +534,4 @@ ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15r
 .anat-kinds { display: flex; flex-wrap: wrap; gap: .35rem; margin: .4rem 0 .6rem; }
 .anat-dot { display: inline-block; width: .8rem; height: .8rem; border-radius: 50%; vertical-align: -1px; }
 .anat-dot.k-lesion { background: #c62828; } .anat-dot.k-biopsia { background: #1565c0; } .anat-dot.k-reseccion { background: #2e7d32; } .anat-dot.k-otro { background: #6d4c41; }
+.staff-edit { margin-top: 0; align-items: center; } .staff-edit input { flex: 1 1 140px; } .staff-list li { padding: .35rem 0; border-bottom: 1px dashed var(--line); }

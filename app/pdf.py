@@ -304,7 +304,8 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None) -> 
                (f" · administrada por {d['sedation_by']}" if d.get("sedation_by") else ""))
     if d.get("monitoring"):
         pre.append(f"Monitorización: {d['monitoring']}")
-    eq = [x for x in [f"Equipo: {scope['name']}" + (f" (serie {scope['serial']})" if scope and scope['serial'] else "") if scope else None,
+    eq = [x for x in [f"Endoscopista: {d['endoscopist']}" if d.get("endoscopist") else None,
+                      f"Equipo: {scope['name']}" + (f" (serie {scope['serial']})" if scope and scope['serial'] else "") if scope else None,
                       f"Asistentes: {d['assistants']}" if d.get("assistants") else None,
                       f"Horario: {d.get('start_time') or '?'}–{d.get('end_time') or '?'}" if d.get("start_time") else None] if x]
     sec("Evaluación previa, preparación y sedación", "\n".join(pre + eq))

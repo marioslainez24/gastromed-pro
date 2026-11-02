@@ -241,6 +241,76 @@ def backups():
                            sub=OFFSITE_SUBDIR)
 
 
+# ------------------------------------------------------------------------------------------------ personal de endoscopia (v0.20.0)
+STAFF_ROLES = {"medico": "Médicos endoscopistas", "asistente": "Asistentes"}
+
+
+def ensure_owner(db, org_id):
+    """Si la clínica aún no tiene ningún médico en la lista, agrega al dueño de la cuenta (nombre profesional de Ajustes)."""
+    if db.execute("SELECT 1 FROM endo_staff WHERE org_id = ? AND role = 'medico' LIMIT 1", (org_id,)).fetchone():
+        return
+    s = db.execute("SELECT doctor_display_name FROM clinic_settings WHERE org_id = ?", (org_id,)).fetchone()
+    if s and s[0]:
+        from .db import new_id
+        with write_tx(db):
+            db.execute("INSERT INTO endo_staff(id, org_id, role, name, position, created_at) VALUES (?,?,?,?,0,?)",
+                       (new_id(), org_id, "medico", s[0], utcnow()))
+
+
+def endo_staff(db, org_id, role=None, active_only=True):
+    if role in (None, "medico"):
+        ensure_owner(db, org_id)
+    q = "SELECT * FROM endo_staff WHERE org_id = ?" + (" AND role = ?" if role else "") + (" AND active = 1" if active_only else "")
+    return db.execute(q + " ORDER BY role, active DESC, position, name", (org_id, role) if role else (org_id,)).fetchall()
+
+
+@bp.route("/personal-endoscopia", methods=["GET", "POST"])
+@require("ajustes.editar")
+def endo_staff_page():
+    import re
+    from .db import new_id
+    db = get_db()
+    org = g.user["org_id"]
+    if request.method == "POST":
+        action = request.form.get("action")
+        sid = request.form.get("id") or ""
+        if action == "agregar":
+            role = request.form.get("role")
+            name = (request.form.get("name") or "").strip()[:120]
+            detail = (request.form.get("detail") or "").strip()[:120] or None
+            if role not in STAFF_ROLES or not name:
+                flash("Escriba el nombre.", "error")
+                return redirect(url_for("settings.endo_staff_page"))
+            if db.execute("SELECT 1 FROM endo_staff WHERE org_id = ? AND role = ? AND lower(name) = lower(?) AND active = 1",
+                          (org, role, name)).fetchone():
+                flash(f"«{name}» ya está en la lista.", "error")
+                return redirect(url_for("settings.endo_staff_page"))
+            pos = db.execute("SELECT COALESCE(MAX(position), 0) + 1 FROM endo_staff WHERE org_id = ? AND role = ?", (org, role)).fetchone()[0]
+            with write_tx(db):
+                db.execute("INSERT INTO endo_staff(id, org_id, role, name, detail, position, created_at) VALUES (?,?,?,?,?,?,?)",
+                           (new_id(), org, role, name, detail, pos, utcnow()))
+                audit("personal_endoscopia_agregado", "ajustes", org, {"rol": role, "nombre": name}, db=db)
+            flash(f"«{name}» agregado.", "ok")
+        elif re.fullmatch(r"[0-9a-f]{32}", sid) and action in ("desactivar", "activar", "subir", "editar"):
+            row = db.execute("SELECT * FROM endo_staff WHERE id = ? AND org_id = ?", (sid, org)).fetchone() or abort(404)
+            with write_tx(db):
+                if action in ("desactivar", "activar"):
+                    db.execute("UPDATE endo_staff SET active = ? WHERE id = ?", (1 if action == "activar" else 0, sid))
+                elif action == "subir":     # el primero de la lista es el que aparece elegido por defecto
+                    db.execute("UPDATE endo_staff SET position = position + 1 WHERE org_id = ? AND role = ?", (org, row["role"]))
+                    db.execute("UPDATE endo_staff SET position = 0 WHERE id = ?", (sid,))
+                else:
+                    name = (request.form.get("name") or "").strip()[:120]
+                    if name:
+                        db.execute("UPDATE endo_staff SET name = ?, detail = ? WHERE id = ?",
+                                   (name, (request.form.get("detail") or "").strip()[:120] or None, sid))
+                audit("personal_endoscopia_modificado", "ajustes", org, {"accion": action, "nombre": row["name"]}, db=db)
+            flash("Cambios guardados.", "ok")
+        return redirect(url_for("settings.endo_staff_page"))
+    rows = endo_staff(db, org, active_only=False)
+    return render_template("ajustes/personal_endoscopia.html", rows=rows, ROLES=STAFF_ROLES)
+
+
 @bp.route("/respaldos/drive", methods=["POST"])
 @require("ajustes.editar")
 def backups_drive():

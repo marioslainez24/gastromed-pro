@@ -11,6 +11,19 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 20 · 1-nov-2026 · Personal de endoscopia: endoscopista y asistentes con menús (v0.20.0 · rama `desarrollo`, SIN publicar)
+
+**Pedido del Dr. Lainez:** en «Equipo, personal y técnica», agregar desde Ajustes al médico (dueño de la cuenta = endoscopista) y a los
+asistentes, y elegirlos con menús desplegables (Asistente 1, 2 y 3).
+- **Ajustes → Personal de endoscopia** (migración 0016, tabla `endo_staff`): listas de médicos endoscopistas y de asistentes (nombre y
+  cargo opcional), editar, desactivar y «↑ Primero» (el primero sale elegido por defecto). El dueño de la cuenta (nombre profesional) se
+  agrega solo si la lista de médicos está vacía (migración para instalaciones existentes y `ensure_owner` para las nuevas).
+- **Informe**: menús «Endoscopista» (por defecto el primero de la lista) y «Asistente 1/2/3»; el campo de texto «Asistentes» se reemplazó.
+  Se guarda el NOMBRE (`endoscopist`, `assistants_list`, y `assistants` como texto para el PDF): desactivar o renombrar a alguien no
+  cambia informes hechos; si el valor guardado ya no está en la lista, sigue apareciendo elegido. El «Endoscopio (equipo)» sigue igual.
+- PDF y vista: «Endoscopista: …» y «Asistentes: …».
+**Cómo se comprobó**: 204 pruebas (`test_v020.py`); navegador PC y celular actualizando desde v0.19.0; prueba del ejecutable.
+
 ## Etapa 19 · 1-nov-2026 · Clasificaciones del consenso, recetas frecuentes, partir del estudio anterior, estadísticas y búsqueda (v0.19.0 · PUBLICADA 1-nov-2026)
 
 **Pedido del Dr. Lainez:** incorporar a los diagnósticos endoscópicos las clasificaciones de su presentación «Taller: Consenso de
