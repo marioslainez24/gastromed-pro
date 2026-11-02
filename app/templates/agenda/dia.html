@@ -6,7 +6,7 @@
 {% include "agenda/_nav.html" %}
 {% for b in blocks %}<div class="flash flash-warn">Agenda bloqueada{% if b.full_name %} para {{ b.full_name }}{% else %} (toda la clínica){% endif %}: {{ fmt_birth(b.start_date) }} – {{ fmt_birth(b.end_date) }}{% if b.reason %} · {{ b.reason }}{% endif %}</div>{% endfor %}
 <div class="row-between"><p class="type-legend" aria-label="Colores por tipo de cita"><span class="tl-primera_vez">Primera vez</span><span class="tl-seguimiento">Seguimiento</span><span class="tl-procedimiento">Procedimiento</span><span class="tl-teleconsulta">Teleconsulta</span></p>
-<p class="small"><a href="{{ url_for('extras.reminders_today') }}">Recordatorios de las próximas 48 horas →</a></p></div>
+<p class="small"><a href="{{ url_for('extras.reminders_today') }}">Recordatorios de las próximas 48 horas →</a> · <a href="{{ url_for('agenda.phone_calendar') }}">📅 Calendario del celular</a></p></div>
 
 <div class="cols">
   <section class="col-main card">

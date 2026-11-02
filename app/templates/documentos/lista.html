@@ -14,4 +14,18 @@
       <span class="tag {{ 'tag-danger' if d.status == 'anulado' else 'tag-ok' }}">{{ 'Anulado' if d.status == 'anulado' else 'Emitido' }}</span></li>{% endfor %}</ul>
   {% else %}<p class="muted small">Aún no hay documentos para este paciente.</p>{% endif %}
 </section>
+<section class="card" id="educativas"><div class="row-between"><h2>Hojas educativas y dietas</h2>
+  {% if can('clinico.editar') %}<a class="small" href="{{ url_for('edu.manage') }}">Mis hojas educativas</a>{% endif %}</div>
+  {% if handouts %}
+  <form method="post" action="{{ url_for('edu.give', patient_id=p.id) }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="field">Hoja<select name="handout_id" required>{% for h in handouts %}<option value="{{ h.id }}">{{ h.title }}{% if not h.reviewed %} (ejemplo sin revisar){% endif %}</option>{% endfor %}</select></label>
+    <div class="btn-row"><button class="btn btn-primary" name="accion" value="imprimir" formtarget="_blank">🖨 Imprimir</button>
+      {% if p.email %}<label class="check small"><input type="checkbox" name="autoriza" value="1"> El paciente autorizó recibirla en {{ p.email }}</label>
+      <button class="btn" name="accion" value="correo">✉ Enviar al correo</button>
+      {% else %}<span class="small muted">Para enviarla por correo, agregue el correo del paciente en «Editar datos».</span>{% endif %}</div>
+  </form>
+  {% else %}<p class="muted small">Aún no tiene hojas educativas. {% if can('clinico.editar') %}<a href="{{ url_for('edu.manage') }}">Crear mis hojas</a> (puede empezar con ejemplos).{% endif %}</p>{% endif %}
+  {% if given %}<h3>Entregadas a este paciente</h3><ul class="list small">{% for x in given %}<li>{{ fmt_dt(x.given_at) }} · <b>{{ x.title }}</b> · {{ 'por correo' if x.via == 'correo' else 'impresa' }} · {{ x.full_name }}</li>{% endfor %}</ul>{% endif %}
+</section>
 {% endblock %}

@@ -4,6 +4,7 @@
 <div class="page-head"><h1>Ajustes</h1></div>
 {% include "ajustes/_tabs.html" %}
 {% if can('recetas.emitir') %}<p class="small"><a href="{{ url_for('rx.templates') }}">Mis recetas frecuentes →</a> (esquemas de medicamentos que se cargan con un clic al recetar)</p>{% endif %}
+<p class="small"><a href="{{ url_for('edu.manage') }}">Mis hojas educativas y dietas →</a> (se imprimen o envían al paciente desde su pestaña Documentos)</p>
 
 <section class="card">
   <div class="row-between"><h2>Frases predefinidas <span class="count">{{ rows|selectattr('active')|list|length }}</span></h2>

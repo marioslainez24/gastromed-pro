@@ -1,6 +1,6 @@
 # Matriz de requisitos y cobertura — GastroMed Pro
 
-Actualizada: 1 de noviembre de 2026 · versión 0.20.0 (publicada) · ver también `COMPARATIVA.md`
+Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (rama desarrollo; publicada la 0.20.0) · ver también `COMPARATIVA.md`
 
 **Fuentes:** el documento de requisitos del Dr. Mario Lainez. Las páginas de Medilink (softwaremedilink.com y ayuda.softwaremedilink.com) **no fueron accesibles** desde el entorno de desarrollo (bloqueo de red). Por lo tanto **no se afirma haber revisado ninguna función de Medilink**; la comparación queda pendiente hasta que se puedan consultar (o el usuario envíe capturas/textos).
 
@@ -111,6 +111,7 @@ Actualizada: 1 de noviembre de 2026 · versión 0.20.0 (publicada) · ver tambi�
 | C.10 | Notas de enfermería del procedimiento que alimentan el informe | 3 | ⬜ |
 | C.11 | Indicadores de calidad (tasa de detección de adenomas, etc.) | 3 | ⬜ |
 | C.12 | Calculadoras de otras especialidades (v0.17.0): CKD-EPI 2021, Cockcroft-Gault, calcio corregido, brecha aniónica, CHA₂DS₂-VASc, HAS-BLED, QTc Bazett, CURB-65, qSOFA, Glasgow, superficie corporal; con fuente y casos de referencia. Cada una requiere aprobación del propietario antes de guardarse en el expediente | 2 | ✅ (🟡 aprobación clínica) |
+| C.18 | Hojas educativas y dietas (imprimir o enviar por correo, con registro) y agenda en el calendario del celular (.ics) — v0.21.0 | 2 | ✅ |
 | C.17 | Personal de endoscopia en Ajustes y menús de endoscopista y asistentes 1–3 en el informe — v0.20.0 | 3 | ✅ |
 | C.16 | Recetas frecuentes y repetir receta; partir del estudio anterior; estadísticas con gráficas y Excel; búsqueda en todos los expedientes; esquema anatómico con marcas en el informe y el PDF; enviar informe, receta o documento al correo del paciente — v0.19.0 | 2–3 | ✅ |
 | C.15 | Clasificaciones del consenso cubano en hallazgos con clics y conclusión con CIE-10 (Hill, Kodsi, Sídney, Lanza, Borrmann, DICA, Mayo, Rutgeerts…) — v0.19.0 | 3 | ✅ |

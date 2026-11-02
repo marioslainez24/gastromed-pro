@@ -347,3 +347,71 @@ def intake(appt_id):
             return redirect(back if back.startswith("/") and not back.startswith("//") else url_for("agenda.view", appt_id=a["id"]))
         data = {"vitales": {k[2:]: request.form.get(k) for k in request.form if k.startswith("v_")}, "motivo": request.form.get("motivo", "")}
     return render_template("agenda/preconsulta.html", a=a, p=p, data=data, errors=errors, vitals=VITALS), 422 if errors else 200
+
+
+# ------------------------------------------------------------------------------------------------ calendario del celular (v0.21.0)
+def _ics_escape(t):
+    return (t or "").replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+
+def _ics_fold(line):
+    """Líneas de máximo 75 bytes (norma iCalendar), cortando sin partir caracteres."""
+    out, cur = [], ""
+    for ch in line:
+        if len((cur + ch).encode()) > (75 if not out else 74):
+            out.append(cur)
+            cur = ch
+        else:
+            cur += ch
+    out.append(cur)
+    return "\r\n ".join(out)
+
+
+def build_ics(rows, with_names, clinic_name, address):
+    from datetime import timezone as _tz
+    stamp = datetime.now(_tz.utc).strftime("%Y%m%dT%H%M%SZ")
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//GastroMed Pro//Agenda//ES", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+             f"X-WR-CALNAME:{_ics_escape('Agenda ' + (clinic_name or 'GastroMed'))}"]
+    for a in rows:
+        title = "Cita · " + LABELS["appt_type"].get(a["appt_type"], a["appt_type"])
+        if with_names:
+            title += f" — {a['first_names']} {a['last_names']}"
+        st = parse_utc(a["starts_at"]).strftime("%Y%m%dT%H%M%SZ")
+        en = parse_utc(a["ends_at"]).strftime("%Y%m%dT%H%M%SZ")
+        lines += ["BEGIN:VEVENT", f"UID:{a['id']}@gastromed", f"DTSTAMP:{stamp}", f"DTSTART:{st}", f"DTEND:{en}",
+                  f"SUMMARY:{_ics_escape(title)}", "STATUS:" + ("CONFIRMED" if a["status"] in ("confirmada", "presente", "en_consulta", "atendida") else "TENTATIVE")]
+        if address:
+            lines.append(f"LOCATION:{_ics_escape(address)}")
+        lines.append("END:VEVENT")
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(_ics_fold(x) for x in lines) + "\r\n"
+
+
+@bp.route("/calendario", methods=["GET"])
+@require("agenda.ver")
+def phone_calendar():
+    return render_template("agenda/calendario.html", practitioners=practitioners(), me=g.user["id"])
+
+
+@bp.route("/calendario.ics", methods=["GET"])
+@require("agenda.ver")
+def phone_calendar_ics():
+    from flask import make_response
+    try:
+        days = max(1, min(int(request.args.get("dias", "30")), 180))
+    except ValueError:
+        abort(400)
+    prac = request.args.get("profesional") or None
+    if prac and prac not in {u["id"] for u in practitioners()}:
+        abort(400)
+    with_names = request.args.get("nombres") == "1"
+    start = datetime.combine(local_today(), time.min, clinic_tz())
+    rows = [a for a in _appointments_between(to_utc_str(start), to_utc_str(start + timedelta(days=days)), prac)
+            if a["status"] not in ("cancelada", "no_asistio")]
+    s = clinic_settings()
+    data = build_ics(rows, with_names, s["doctor_display_name"], s["address"])
+    audit("agenda_exportada_calendario", "agenda", None, {"dias": days, "citas": len(rows), "con_nombres": with_names})
+    resp = make_response(data)
+    resp.headers["Content-Type"] = "text/calendar; charset=utf-8"
+    resp.headers["Content-Disposition"] = f'attachment; filename="agenda-{local_today().isoformat()}.ics"'
+    return resp

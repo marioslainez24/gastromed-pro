@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Agenda en el calendario del celular{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Pasar la agenda al calendario del celular</h1><a class="btn btn-quiet" href="{{ url_for('agenda.day') }}">← Agenda</a></div>
+<p>Descarga sus próximas citas en un archivo de calendario. Al abrirlo en el celular, las citas se agregan al calendario del teléfono
+  (iPhone o Android) para verlas sin entrar al programa.</p>
+<div class="flash flash-info"><b>Importante:</b> es una <b>copia del momento</b>; no se actualiza sola. Si hay citas nuevas o cambios, vuelva a
+  descargarla (el teléfono reemplaza las citas que ya tenía con la misma cita). Para ver la agenda siempre al día, abra el programa en el
+  navegador del celular estando en el Wi-Fi del consultorio.</div>
+<form method="get" action="{{ url_for('agenda.phone_calendar_ics') }}" class="card stack">
+  <label class="field">Periodo<select name="dias"><option value="7">Próximos 7 días</option><option value="30" selected>Próximos 30 días</option><option value="90">Próximos 90 días</option></select></label>
+  {% if practitioners|length > 1 %}<label class="field">Profesional<select name="profesional"><option value="">Todos</option>
+    {% for u in practitioners %}<option value="{{ u.id }}" {% if u.id == me %}selected{% endif %}>{{ u.full_name }}</option>{% endfor %}</select></label>{% endif %}
+  <label class="check"><input type="checkbox" name="nombres" value="1"> Incluir el nombre del paciente en cada cita</label>
+  <p class="small muted">Sin esta casilla, cada cita dice solo el tipo (por ejemplo «Cita · Seguimiento»). Si la marca, recuerde que el calendario del
+    teléfono suele copiarse a la cuenta de Google o de Apple: los nombres de sus pacientes quedarían guardados también allí.</p>
+  <div><button class="btn btn-primary" type="submit">⬇ Descargar para el calendario</button></div>
+</form>
+<section class="card"><h2>Cómo abrirlo en el celular</h2>
+  <ol class="small">
+    <li>Con el celular en el Wi-Fi del consultorio, abra el programa en el navegador y entre a <b>Agenda → Calendario del celular</b>.</li>
+    <li>Pulse «Descargar para el calendario».</li>
+    <li><b>iPhone:</b> toque el archivo descargado y elija «Agregar todo». <b>Android:</b> abra el archivo descargado con la aplicación de
+      Calendario del teléfono y acepte importar.</li>
+  </ol>
+</section>
+{% endblock %}

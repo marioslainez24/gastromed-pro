@@ -11,6 +11,21 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · rama `desarrollo`, SIN publicar)
+
+**Pedido del Dr. Lainez** (tras la comparativa con 11 programas, ver COMPARATIVA.md): dos de las funciones que otros tienen.
+- **Hojas educativas y dietas** (`app/views_handouts.py`, migración 0017): el médico las escribe en «Mis hojas educativas» (enlace en
+  Ajustes → Frases y plantillas y en la pestaña Documentos). Botón «Agregar ejemplos para revisar» (medidas para el reflujo, dieta rica en
+  fibra, dieta baja en grasa: medidas generales, sin medicamentos ni dosis) que NO se pueden entregar hasta que el médico los guarde.
+  En Documentos del paciente: elegir hoja → «🖨 Imprimir» (PDF con encabezado, nombre del paciente y fecha) o «✉ Enviar al correo»
+  (con autorización; el correo dice solo «hoja de indicaciones», sin el título). Cada entrega queda registrada con el texto entregado
+  (tabla `patient_handouts`, inmutable; reimprimir el mismo día no duplica).
+- **Agenda en el calendario del celular** (Agenda → «📅 Calendario del celular»): descarga un archivo .ics con las citas de 7, 30 o 90 días
+  (sin canceladas ni «no asistió»), para importarlo en iPhone o Android. Sin nombres de pacientes por defecto (casilla opcional con aviso de
+  que el calendario se copia a Google/Apple). Es una copia del momento: no se actualiza sola (una suscripción automática no funcionaría
+  porque el servidor está solo en la red del consultorio y Google no puede alcanzarlo).
+**Cómo se comprobó**: 206 pruebas (`test_v021.py`, correo con servidor SMTP falso); navegador PC y celular; prueba del ejecutable.
+
 ## Etapa 20 · 1-nov-2026 · Personal de endoscopia: endoscopista y asistentes con menús (v0.20.0 · PUBLICADA 1-nov-2026)
 
 **Pedido del Dr. Lainez:** en «Equipo, personal y técnica», agregar desde Ajustes al médico (dueño de la cuenta = endoscopista) y a los

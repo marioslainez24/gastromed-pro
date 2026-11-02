@@ -9,7 +9,7 @@ from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.20.0"
+APP_VERSION = "0.21.0"
 
 
 def _loopback(addr) -> bool:
@@ -58,8 +58,9 @@ def create_app(config: Config | None = None) -> Flask:
     from .views_stats import bp as stats_bp
     from .views_search import bp as search_bp
     from .views_mail import bp as mail_bp
+    from .views_handouts import bp as edu_bp
     for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp, record_bp, files_bp, account_bp, setup_bp, labs_bp, gi_bp,
-               endo_bp, extras_bp, texts_bp, docs_bp, stats_bp, search_bp, mail_bp):
+               endo_bp, extras_bp, texts_bp, docs_bp, stats_bp, search_bp, mail_bp, edu_bp):
         app.register_blueprint(bp)
 
     app.teardown_appcontext(close_db)

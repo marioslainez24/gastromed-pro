@@ -146,7 +146,9 @@ def patient_docs(patient_id):
     p = get_patient_or_404(patient_id)
     rows = get_db().execute("SELECT d.*, u.full_name AS author FROM clinical_documents d JOIN users u ON u.id = d.author_id"
                             " WHERE d.patient_id = ? ORDER BY d.issued_at DESC", (p["id"],)).fetchall()
-    return render_template("documentos/lista.html", p=p, rows=rows, KINDS=KINDS)
+    from .views_handouts import given_to, handouts
+    db = get_db()
+    return render_template("documentos/lista.html", p=p, rows=rows, KINDS=KINDS, handouts=handouts(db), given=given_to(db, p["id"]))
 
 
 @bp.route("/pacientes/<patient_id>/documentos/nuevo", methods=["GET", "POST"])

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Mis hojas educativas{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Mis hojas educativas y dietas</h1>
+  <form method="post" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="btn btn-quiet" name="action" value="ejemplos">Agregar ejemplos para revisar</button></form></div>
+<p class="muted">Escriba una vez sus hojas para pacientes («Dieta para reflujo», «Dieta rica en fibra», cuidados, etc.). Luego, en la pestaña
+  <b>Documentos</b> de cada paciente, se imprimen o se envían a su correo con un clic, con su encabezado y el nombre del paciente. Los títulos en
+  MAYÚSCULAS salen en negrita. Los ejemplos son un punto de partida: no se pueden entregar hasta que usted los revise y guarde.</p>
+
+{% if rows %}<section class="card"><h2>Mis hojas <span class="count">{{ rows|selectattr('active')|list|length }}</span></h2>
+  <ul class="list">{% for r in rows %}
+    <li class="row-between"><span><b>{{ r.title }}</b>
+      {% if not r.active %}<span class="tag">Desactivada</span>{% elif not r.reviewed %}<span class="tag tag-warn">Ejemplo sin revisar</span>{% else %}<span class="tag tag-ok">Lista</span>{% endif %}</span>
+      <span class="btn-row"><a class="btn btn-sm" href="{{ url_for('edu.manage', id=r.id) }}#editar">{{ 'Revisar' if not r.reviewed else 'Editar' }}</a>
+        <form method="post" action="{{ url_for('edu.manage', id=r.id) }}" class="discard-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="btn btn-sm btn-quiet" name="action" value="{{ 'desactivar' if r.active else 'activar' }}">{{ 'Desactivar' if r.active else 'Activar' }}</button></form></span></li>
+  {% endfor %}</ul></section>{% endif %}
+
+<section class="card" id="editar"><h2>{{ ('Editar «' ~ edit.title ~ '»') if edit else 'Nueva hoja' }}</h2>
+  {% if edit and not edit.reviewed %}<div class="flash flash-info small">Ejemplo de medidas generales: revíselo y ajústelo a su práctica. Al guardar queda listo para entregar.</div>{% endif %}
+  <form method="post" class="stack" data-dirty-guard>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+    <label class="field">Título<input name="title" value="{{ edit.title if edit else '' }}" maxlength="100" required placeholder="Ej.: Dieta para reflujo"></label>
+    <label class="field">Texto<textarea name="body" rows="16" data-grow maxlength="12000" required>{{ edit.body if edit else '' }}</textarea></label>
+    <div class="actions"><button class="btn btn-primary" type="submit">Guardar</button>
+      {% if edit %}<a class="btn btn-quiet" href="{{ url_for('edu.manage') }}">Cancelar</a>{% endif %}</div>
+  </form>
+</section>
+{% endblock %}
