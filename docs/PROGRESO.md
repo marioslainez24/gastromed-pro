@@ -11,7 +11,7 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
-## Etapa 20 · 1-nov-2026 · Personal de endoscopia: endoscopista y asistentes con menús (v0.20.0 · rama `desarrollo`, SIN publicar)
+## Etapa 20 · 1-nov-2026 · Personal de endoscopia: endoscopista y asistentes con menús (v0.20.0 · PUBLICADA 1-nov-2026)
 
 **Pedido del Dr. Lainez:** en «Equipo, personal y técnica», agregar desde Ajustes al médico (dueño de la cuenta = endoscopista) y a los
 asistentes, y elegirlos con menús desplegables (Asistente 1, 2 y 3).
