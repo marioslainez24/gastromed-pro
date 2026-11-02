@@ -11,6 +11,29 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Etapa 19 · 1-nov-2026 · Clasificaciones del consenso en los hallazgos y diagnósticos endoscópicos (v0.19.0 · rama `desarrollo`, SIN publicar)
+
+**Pedido del Dr. Lainez:** incorporar a los diagnósticos endoscópicos las clasificaciones de su presentación «Taller: Consenso de
+Clasificaciones en Endoscopia Digestiva» (GASTRO 2019, Cuba). Se ofreció también un atlas con imágenes; **lo descartó** (no quiso fotos de
+internet ni el atlas). Solo clasificaciones.
+- **«Hallazgos con clics»** (`app/endo_findings.py`): cada grado muestra su descripción debajo de las opciones y la fuente al pie.
+  - Esófago: cambios mínimos grado M (no erosiva), Kodsi (cándida), herpes por estadios, signos de EoE (+ papel crepé y estrechez), Bernal
+    (estenosis), acalasia grados I–III, tipo macroscópico del cáncer avanzado, várices F1–F3 (además del tamaño de Baveno).
+  - Unión esofagogástrica: Hill I–IV (III–IV sugieren diagnóstico), hernia tipo I por deslizamiento y tipos II–IV.
+  - Estómago: Sistema Sídney (categoría, topografía, intensidad), Lanza, Paniagua, puntaje de Baveno de la gastropatía hipertensiva
+    (≤3 leve, ≥4 severa), Borrmann, Goitein (estenosis posbypass).
+  - Colon: DICA (puntos y DICA 1–3), Mayo endoscópico con extensión (código K51.x según extensión), Rutgeerts i0–i4 (i2a/i2b),
+    colitis actínica (puntaje del consenso), París 0-Isp, 0-IIa+IIc, 0-IIc+IIa y tipos avanzados 1–5.
+- **Conclusión** (`app/endo_diagnoses.py`): 60 diagnósticos nuevos con CIE-10. Códigos nuevos K21.9, K29.6, K50.8, K51.9 y K91.8,
+  verificados en classbrowser.nhs.uk.
+- **Verificación**: Kodsi, DICA, Goitein, Rutgeerts, Mayo, Hill, Sídney y Borrmann cotejados con la fuente original o una revisión que la
+  reproduce. Herpes, Bernal, acalasia, cáncer avanzado de esófago, F1–F3, Lanza (0–4), Paniagua, puntaje de Baveno y colitis actínica
+  se tomaron del consenso (se indica en la fuente de cada hallazgo).
+- **No incluidas** (requieren magnificación/NBI o son de patología): Barrett de Endo y con NBI, Dinis-Ribeiro, Score Z, SANO, Viena.
+  NICE y Kudo ya estaban.
+**Cómo se comprobó**: 196 pruebas (`test_v019.py`; la prueba combinatoria recorre todas las opciones de cada hallazgo); navegador
+real PC y celular actualizando desde v0.18.0; prueba del ejecutable.
+
 ## Etapa 18 · 1-nov-2026 · Descartar borradores y hojas de preparación de colonoscopía y EDA (v0.18.0 · PUBLICADA 1-nov-2026)
 
 **Pedido del Dr. Lainez:** una opción para quitar los informes que quedaron en «Borrador», y ponerla donde convenga en el programa.

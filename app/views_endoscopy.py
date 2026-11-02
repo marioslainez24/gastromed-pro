@@ -133,7 +133,7 @@ def proc_view(proc_id):
     return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable,
                            normal_sec=normal_sec, normal_concl=normal_concl, phrases_json=phrases_json(db) if editable else "[]",
                            dx_json=json.dumps(DX.for_kind(pr["kind"]), ensure_ascii=False), dx_source=DX.ICD_SOURCE,
-                           EF_FINDINGS=EF.FINDINGS, recs_json=json.dumps(endo_recs(), ensure_ascii=False) if editable else "{}", allergies=allergies, meds=meds,
+                           EF_FINDINGS=EF.FINDINGS, EF_SOURCES=EF.SOURCES, recs_json=json.dumps(endo_recs(), ensure_ascii=False) if editable else "{}", allergies=allergies, meds=meds,
                            images=_images(db, pr["id"]), specimens=specimens, stents=stents, addenda=addenda, scopes=scopes(),
                            scope=scope, empty_finding=dict.fromkeys(["segment", "type", "desc", "classification", "size_mm", "prague_c",
                                                                      "prague_m", "removed", "jar"]),

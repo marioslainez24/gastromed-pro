@@ -493,3 +493,8 @@ button.hea-chip { font: inherit; font-size: .88rem; color: inherit; }
 .discard-form { display: inline-block; margin: 0 0 0 .5rem; }
 .discard-form .btn { color: var(--danger); }
 .discard-bottom { display: block; margin: 1rem 0 0; }
+
+/* v0.19: guía de grados en hallazgos con clics */
+.efind-help { margin: .3rem 0 0 1.1rem; padding: 0; line-height: 1.35; flex-basis: 100%; }
+.efind-help li { margin: .1rem 0; }
+.efind-src { margin: .4rem 0 0; font-style: italic; }

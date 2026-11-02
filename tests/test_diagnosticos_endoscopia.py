@@ -11,7 +11,9 @@ from tests.test_fase3 import new_proc
 VERIFIED = {"K20", "K21.0", "K22.0", "K22.1", "K22.2", "K22.5", "K22.6", "K22.7", "K25.4", "K25.9", "K26.4", "K26.9", "K29.0", "K29.4",
             "K29.7", "K29.8", "K31.4", "K31.7", "K31.8", "K44.9", "I85.0", "I85.9", "I86.4", "K92.2", "K63.5", "K62.1", "K57.3",
             "K64.0", "K64.1", "K64.2", "K64.3", "K60.1", "K55.2", "K51.0", "K51.2", "K51.3", "K51.4", "K51.5", "K50.0", "K50.1",
-            "K52.9", "K62.7", "K62.6", "K62.3", "K63.8", "K80.2", "K80.3", "K80.5", "K83.0", "K83.1", "K83.5", "K86.1", "K86.2", "K86.3"}
+            "K52.9", "K62.7", "K62.6", "K62.3", "K63.8", "K80.2", "K80.3", "K80.5", "K83.0", "K83.1", "K83.5", "K86.1", "K86.2", "K86.3",
+            # v0.19.0, verificados el 1-nov-2026 en classbrowser.nhs.uk (bloques K20-K31, K50-K52, K90-K93)
+            "K21.9", "K29.6", "K50.8", "K51.9", "K91.8"}
 
 
 def test_catalogo_codigos_verificados_y_ejemplos_del_doctor():
@@ -25,8 +27,8 @@ def test_catalogo_codigos_verificados_y_ejemplos_del_doctor():
     for g, k, t, c, a in DX.DIAGNOSES:
         if "neoplásico" in t:
             assert c is None
-        if a:
-            assert c and c.endswith(".8")
+        if a:   # categorías «otras…»: .8, o K29.6 («Otras gastritis», v0.19.0)
+            assert c and (c.endswith(".8") or c == "K29.6")
     eda = {d["t"] for d in DX.for_kind("eda")}
     colo = {d["t"] for d in DX.for_kind("colonoscopia")}
     assert "Hemorroides internas grado II" in colo and "Hemorroides internas grado II" not in eda

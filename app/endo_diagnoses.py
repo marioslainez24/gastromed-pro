@@ -1,7 +1,9 @@
 """Diagnósticos endoscópicos frecuentes para la conclusión del informe (v0.11.0).
 
 Terminología habitual en gastroenterología, redactada en español para GastroMed Pro, con las clasificaciones ya verificadas
-en endoscopy_defs.py (Los Ángeles, Forrest, Praga, várices).
+en endoscopy_defs.py (Los Ángeles, Forrest, Praga, várices) y, desde v0.19.0, las del consenso que el Dr. Lainez aportó
+(fuentes en endo_findings.SOURCES). Códigos nuevos usados: K21.9, K29.0, K29.4, K29.6, K29.7, K44.9, K51.9, K50.8, K57.3,
+K62.7 y K91.8 (mismos bloques del navegador de la OMS citado abajo).
 
 Códigos CIE-10: versión de la OMS (5.ª edición, 2016), comprobados el 31-oct-2026 en el navegador oficial publicado por el NHS
 (classbrowser.nhs.uk/ICD-10-5TH-Edition): bloques C15-C26, D10-D36, I80-I89, K20-K31, K40-K46, K50-K52, K55-K64, K70-K77,
@@ -43,6 +45,17 @@ DIAGNOSES = [
     ("Esófago", UPPER, "Hallazgos compatibles con acalasia", "K22.0", False),
     ("Esófago", UPPER, "Lesión esofágica de aspecto neoplásico, pendiente de histología", None, False),
     ("Esófago", UPPER, "Lesión esofágica por cáusticos, grado __ de Zargar", None, False),
+    # v0.19.0: clasificaciones del consenso (ver endo_findings.SOURCES)
+    ("Esófago", UPPER, "Enfermedad por reflujo no erosiva con cambios mínimos (grado M)", "K21.9", False),
+    *[("Esófago", UPPER, f"Esofagitis candidiásica grado {g} de Kodsi", "K20", False) for g in ("I", "II", "III", "IV")],
+    *[("Esófago", UPPER, f"Esofagitis de aspecto herpético, estadio {g}, pendiente de histología", None, False) for g in ("1", "2", "3")],
+    *[("Esófago", UPPER, f"Estenosis esofágica tipo {g} de Bernal", "K22.2", False) for g in ("I", "II", "III", "IV")],
+    *[("Esófago", UPPER, f"Hallazgos compatibles con acalasia, grado endoscópico {g}", "K22.0", False) for g in ("I", "II", "III")],
+    *[("Esófago", UPPER, f"Várices esofágicas {f}", "I85.9", False) for f in ("F1", "F2", "F3")],
+    *[("Esófago", UPPER, f"Válvula gastroesofágica grado {g} de Hill", None, False) for g in ("III", "IV")],
+    ("Esófago", UPPER, "Hernia hiatal tipo II (paraesofágica)", "K44.9", False),
+    ("Esófago", UPPER, "Hernia hiatal tipo III (mixta)", "K44.9", False),
+    ("Esófago", UPPER, "Hernia hiatal tipo IV", "K44.9", False),
     # ---------------------------------------------------------------- estómago
     ("Estómago", UPPER, "Gastropatía eritematosa", "K29.7", False),
     ("Estómago", UPPER, "Gastropatía eritematosa de antro", "K29.7", False),
@@ -70,6 +83,19 @@ DIAGNOSES = [
     ("Estómago", UPPER, "Lesión gástrica de aspecto neoplásico, pendiente de histología", None, False),
     ("Estómago", UPPER, "Angiectasia gástrica", "K31.8", True),
     ("Estómago", UPPER, "Restos alimentarios en estómago (estudio limitado)", None, False),
+    # v0.19.0
+    ("Estómago", UPPER, "Gastritis endoscópica eritematosa/exudativa (Sistema Sídney)", "K29.7", False),
+    ("Estómago", UPPER, "Gastritis endoscópica erosiva plana (Sistema Sídney)", "K29.7", False),
+    ("Estómago", UPPER, "Gastritis endoscópica erosiva elevada (Sistema Sídney)", "K29.7", False),
+    ("Estómago", UPPER, "Gastritis endoscópica atrófica (Sistema Sídney), pendiente de histología", "K29.4", False),
+    ("Estómago", UPPER, "Gastritis endoscópica hemorrágica (Sistema Sídney)", "K29.0", False),
+    ("Estómago", UPPER, "Gastritis endoscópica por reflujo enterogástrico (Sistema Sídney)", "K29.6", True),
+    ("Estómago", UPPER, "Gastritis endoscópica con hiperplasia de pliegues (Sistema Sídney)", "K29.6", True),
+    *[("Estómago", UPPER, f"Gastropatía por AINE grado {g} de Lanza", "K29.7", False) for g in ("1", "2", "3", "4")],
+    *[("Estómago", UPPER, f"Gastritis por reflujo duodenogástrico grado {g} (Paniagua)", "K29.6", True) for g in ("I", "II", "III")],
+    *[("Estómago", UPPER, f"Lesión gástrica de aspecto neoplásico Borrmann {g}, pendiente de histología", None, False)
+      for g in ("I", "II", "III", "IV")],
+    *[("Estómago", UPPER, f"Estenosis de anastomosis gastroyeyunal grado {g} de Goitein", "K91.8", True) for g in ("I", "II", "III", "IV")],
     # ---------------------------------------------------------------- duodeno
     ("Duodeno", UPPER, "Duodenitis", "K29.8", False),
     ("Duodeno", UPPER, "Duodenitis erosiva de bulbo", "K29.8", False),
@@ -116,6 +142,13 @@ DIAGNOSES = [
     ("Colon y recto", LOWER, "Lesión de colon de aspecto neoplásico, pendiente de histología", None, False),
     ("Colon y recto", LOWER, "Lesión de recto de aspecto neoplásico, pendiente de histología", None, False),
     ("Colon y recto", LOWER, "Preparación intestinal inadecuada (estudio limitado)", None, False),
+    # v0.19.0
+    *[("Colon y recto", LOWER, f"Colitis ulcerosa, Mayo endoscópico {g}" + (" (remisión endoscópica)" if g == "0" else ""), "K51.9", False)
+      for g in ("0", "1", "2", "3")],
+    *[("Colon y recto", LOWER, f"Enfermedad de Crohn posquirúrgica, Rutgeerts {g}" + (" (sin recurrencia endoscópica)" if g == "i0" else ""),
+       "K50.8", True) for g in ("i0", "i1", "i2a", "i2b", "i3", "i4")],
+    *[("Colon y recto", LOWER, f"Enfermedad diverticular de colon DICA {g}", "K57.3", False) for g in ("1", "2", "3")],
+    *[("Colon y recto", LOWER, f"Proctitis actínica grado {g}", "K62.7", False) for g in ("A", "B", "C")],
     # ---------------------------------------------------------------- vía biliar y páncreas
     ("Vía biliar y páncreas", BILIO, "Coledocolitiasis", "K80.5", False),
     ("Vía biliar y páncreas", BILIO, "Coledocolitiasis con colangitis", "K80.3", False),

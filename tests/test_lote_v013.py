@@ -66,7 +66,7 @@ def test_hallazgos_con_clics_frases_y_sugerencias_existen_en_catalogo():
     assert t == "Erosiones de la mucosa del esófago distal compatibles con esofagitis grado B de Los Ángeles."
     assert dx == [{"t": "Esofagitis erosiva grado B de Los Ángeles", "c": "K21.0", "a": False}]
     t, dx = EF.compose("ueg", "hernia", MultiDict([("cm", "3")]))
-    assert t == "Hernia hiatal por deslizamiento de 3 cm." and dx[0] == {"t": "Hernia hiatal por deslizamiento de 3 cm", "c": "K44.9", "a": False}
+    assert t == "Hernia hiatal por deslizamiento (tipo I) de 3 cm." and dx[0] == {"t": "Hernia hiatal por deslizamiento de 3 cm", "c": "K44.9", "a": False}
     t, dx = EF.compose("colon", "polipo", MultiDict([("mm", "6"), ("loc", "sigmoides"), ("paris", "0-Is"), ("nice", "2"),
                                                       ("reseccion", "asa_fria"), ("recuperado", "si")]))
     assert t == "Pólipo de 6 mm en sigmoides, París 0-Is, NICE 2, resecado con asa fría y recuperado."
