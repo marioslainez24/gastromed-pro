@@ -75,6 +75,25 @@ def test_partir_del_estudio_anterior(env):
     assert otro.post(f"/procedimientos/{second}/copiar-anterior", data={"csrf_token": csrf(otro)}).status_code == 409
 
 
+def read_xlsx(data):
+    """Lee el .xlsx sin bibliotecas externas: {hoja: [[texto de cada celda]]} (en Windows de la CI no hay openpyxl)."""
+    import io
+    import re
+    import zipfile
+    from xml.etree import ElementTree as ET
+    ns = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+    z = zipfile.ZipFile(io.BytesIO(data))
+    names = [e.get("name") for e in ET.fromstring(z.read("xl/workbook.xml")).find("m:sheets", ns)]
+    out = {}
+    for i, n in enumerate(names, 1):
+        rows = []
+        for r in ET.fromstring(z.read(f"xl/worksheets/sheet{i}.xml")).iter(f"{{{ns['m']}}}row"):
+            rows.append(["".join(t.text or "" for t in c.iter(f"{{{ns['m']}}}t")) or (c.findtext("m:v", "", ns)) for c in r])
+        out[n] = rows
+    assert re.search(rb"<cellXfs", z.read("xl/styles.xml"))
+    return out
+
+
 def _finalize_note(env, med, tok, pid, dx, when="2026-10-15T15:00:00Z"):
     nid = med.post("/notas/nueva", data={"csrf_token": tok, "patient_id": pid, "kind": "primera", "template": "soap"}
                    ).headers["Location"].rsplit("/", 1)[-1]
@@ -88,8 +107,6 @@ def _finalize_note(env, med, tok, pid, dx, when="2026-10-15T15:00:00Z"):
 
 
 def test_estadisticas_y_excel(env):
-    import io
-    import openpyxl
     from tests.test_fase3 import full_form, new_proc, version
     med = login(env["app"], "propietario")
     tok = csrf(med)
@@ -105,11 +122,11 @@ def test_estadisticas_y_excel(env):
     assert "Tasa de detección de adenomas" in html
     r = med.get("/estadisticas/excel?desde=2026-01-01&hasta=2026-12-31")
     assert r.status_code == 200 and r.headers["Content-Type"].startswith("application/vnd.openxmlformats")
-    wb = openpyxl.load_workbook(io.BytesIO(r.data))
-    assert wb.sheetnames == ["Por mes", "Diagnósticos de consulta", "Diagnósticos endoscópicos", "Calidad colonoscopia", "Información"]
-    oct_row = [row for row in wb["Por mes"].iter_rows(values_only=True) if row[0] == "2026-10"][0]
-    assert oct_row[1] == 2 and oct_row[4] == 1                                  # 2 consultas y 1 colonoscopia en octubre
-    texto = " ".join(str(c) for ws in wb for row in ws.iter_rows(values_only=True) for c in row if c is not None)
+    wb = read_xlsx(r.data)
+    assert list(wb) == ["Por mes", "Diagnósticos de consulta", "Diagnósticos endoscópicos", "Calidad colonoscopia", "Información"]
+    oct_row = [row for row in wb["Por mes"] if row[0] == "2026-10"][0]
+    assert oct_row[1] == "2" and oct_row[4] == "1"                              # 2 consultas y 1 colonoscopia en octubre
+    texto = " ".join(c for rows in wb.values() for row in rows for c in row)
     assert "De Prueba" not in texto and "GM-" not in texto                        # sin datos de pacientes
     assert med.get("/estadisticas?desde=2026-12-31&hasta=2026-01-01").status_code == 400
     assert login(env["app"], "recepcion").get("/estadisticas").status_code == 403
