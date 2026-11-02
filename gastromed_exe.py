@@ -1,4 +1,7 @@
-"""Punto de entrada del programa GastroMedPro.exe (Windows).
+"""Punto de entrada del programa GastroMedPro.exe (Windows) y GastroMedPro para Mac (v0.22.0).
+
+En Mac los datos quedan en ~/GastroMed (carpeta del usuario), la ventana es la Terminal y, mientras el programa está abierto,
+se le pide a la Mac que no se duerma (caffeinate) para que el celular pueda conectarse.
 
 Doble clic → prepara la carpeta de datos (la primera vez crea las claves de cifrado), inicia el servidor
 para esta PC y el Wi-Fi del consultorio, abre el navegador y hace el respaldo diario en segundo plano.
@@ -201,6 +204,9 @@ def main():
             sys.stdout.reconfigure(encoding="utf-8")
         except Exception:  # noqa: BLE001
             pass
+    elif sys.platform == "darwin":
+        sys.stdout.write("\033]0;GastroMed Pro - NO CERRAR esta ventana\007")
+        sys.stdout.flush()
     no_browser = "--sin-navegador" in sys.argv
     if port_in_use(PORT):
         print("GastroMed Pro ya está abierto. Abriendo el navegador…")
@@ -245,9 +251,17 @@ def main():
         print("    avanzada» y luego «Continuar». Es normal: el certificado lo creó esta PC, no una empresa externa.")
     print(f"  Datos:             {Path(cfg.DATABASE_PATH).parent}")
     print(f"  Respaldos:         {cfg.BACKUP_DIR}  (automático cada 24 h)")
-    print("\n  NO CIERRE ESTA VENTANA mientras use el sistema. Para apagarlo, ciérrela.")
+    print("\n  NO CIERRE ESTA VENTANA mientras use el sistema. Para apagarlo, ciérrela"
+          + (" (o pulse Ctrl+C)." if sys.platform == "darwin" else "."))
     print("=" * 66, flush=True)
 
+    if sys.platform == "darwin":
+        # Que la Mac no se duerma mientras el programa está abierto (se suelta sola al cerrarlo).
+        try:
+            import subprocess
+            subprocess.Popen(["caffeinate", "-i", "-w", str(os.getpid())], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError:
+            pass
     threading.Thread(target=backup_loop, args=(app,), daemon=True).start()
     threading.Thread(target=reminder_loop, args=(app,), daemon=True).start()
     if not no_browser:

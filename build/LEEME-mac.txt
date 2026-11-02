@@ -1,0 +1,14 @@
+GastroMed Pro para Mac
+======================
+
+1. Descomprima el archivo .zip (doble clic). Aparece «GastroMedPro».
+2. Mueva «GastroMedPro» a la carpeta Aplicaciones o al Escritorio.
+3. La primera vez, haga doble clic. La Mac dirá que no puede comprobar el desarrollador
+   (el programa no tiene la firma de Apple, que es de pago). Entonces:
+   Ajustes del Sistema → Privacidad y seguridad → baje hasta «GastroMedPro» → «Abrir igualmente»,
+   y confirme con su contraseña. Esto se hace solo una vez.
+4. Se abre una ventana de la Terminal (el servidor) y el navegador con la configuración inicial.
+   NO cierre esa ventana mientras use el programa. Para apagarlo, ciérrela.
+
+Sus datos quedan en la carpeta «GastroMed» de su usuario (Finder → Ir → Inicio).
+Las claves para abrir los respaldos se guardan en el Escritorio: cópielas a una USB y bórrelas del Escritorio.

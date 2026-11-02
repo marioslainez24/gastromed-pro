@@ -1,0 +1,16 @@
+# -*- mode: python ; coding: utf-8 -*-
+# Construcción de GastroMed Pro para Mac (un solo archivo que se abre en la Terminal, sin instalar Python). Se ejecuta en macOS:
+#   pyinstaller build/GastroMedPro-mac.spec
+from PyInstaller.utils.hooks import collect_all, collect_submodules
+
+datas = [("../app/templates", "app/templates"), ("../app/static", "app/static"), ("../migrations", "migrations")]
+binaries, hiddenimports = [], []
+for pkg in ("reportlab", "tzdata"):
+    d, b, h = collect_all(pkg)
+    datas += d; binaries += b; hiddenimports += h
+hiddenimports += collect_submodules("app") + collect_submodules("waitress") + collect_submodules("pypdf") + ["PIL.Image", "PIL.ImageDraw", "PIL.JpegImagePlugin", "PIL.PngImagePlugin", "PIL.BmpImagePlugin", "PIL.TiffImagePlugin", "PIL.WebPImagePlugin", "PIL.GifImagePlugin"]
+
+a = Analysis(["../gastromed_exe.py"], pathex=[".."], binaries=binaries, datas=datas, hiddenimports=hiddenimports,
+             excludes=["tkinter", "pytest"], noarchive=False)
+pyz = PYZ(a.pure)
+exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], name="GastroMedPro", console=True, upx=False)

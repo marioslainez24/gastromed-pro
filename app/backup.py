@@ -213,6 +213,15 @@ def drive_candidates() -> list[str]:
                 except OSError:
                     pass
     home = Path(os.environ.get("USERPROFILE") or Path.home())
+    # Mac: Google Drive para computadora monta la unidad en ~/Library/CloudStorage/GoogleDrive-<cuenta>/Mi unidad
+    cloud = home / "Library" / "CloudStorage"
+    try:
+        for acct in sorted(cloud.glob("GoogleDrive-*")) if cloud.is_dir() else []:
+            for name in ("Mi unidad", "My Drive"):
+                if (acct / name).is_dir():
+                    out.append(str(acct / name))
+    except OSError:
+        pass
     for name in ("Google Drive/Mi unidad", "Google Drive/My Drive", "Google Drive", "My Drive", "OneDrive"):
         p = home / name
         if p.is_dir() and str(p) not in out:
