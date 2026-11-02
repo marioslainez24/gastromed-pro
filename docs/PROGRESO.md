@@ -11,6 +11,15 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
+## Ideas conversadas y dejadas para más adelante (2-nov-2026, a pedido del Dr. Lainez)
+- **Acceso desde fuera del consultorio:** recomendado Tailscale (red privada, sin publicar el servidor; confirmar condiciones del plan
+  gratuito) + PC siempre encendida (sin suspensión, arranque automático, encendido al volver la luz, UPS). Opcional: que el programa
+  impida la suspensión mientras está abierto y se agregue al inicio de Windows; mostrar la dirección de Tailscale en la ventana negra; MFA.
+- **App Android:** opción A (app liviana que encuentra la PC, confía en su certificado y abre GastroMed; .apk armado en la CI) aceptable;
+  opción B (programa completo sin PC) desaconsejada (dos copias, riesgo de pérdida, requiere nube).
+- De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
+  paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
+
 ## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · rama `desarrollo`, SIN publicar)
 
 **Pedido del Dr. Lainez** (tras la comparativa con 11 programas, ver COMPARATIVA.md): dos de las funciones que otros tienen.
