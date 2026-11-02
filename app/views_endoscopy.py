@@ -130,7 +130,9 @@ def proc_view(proc_id):
     scope = db.execute("SELECT * FROM scopes WHERE id = ?", (pr["scope_id"],)).fetchone() if pr["scope_id"] else None
     audit("procedimiento_consultado", "procedimiento", pr["id"])
     normal_sec, normal_concl = D.normal_texts(clinic_settings()["endo_normal_texts"])
-    return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable,
+    prev = _previous_study(db, pr) if editable else None
+    return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, prev=prev,
+                           prev_concl=[x for x in (json.loads(prev["data"]).get("conclusion") or "").splitlines() if x.strip()][:4] if prev else [],
                            normal_sec=normal_sec, normal_concl=normal_concl, phrases_json=phrases_json(db) if editable else "[]",
                            dx_json=json.dumps(DX.for_kind(pr["kind"]), ensure_ascii=False), dx_source=DX.ICD_SOURCE,
                            EF_FINDINGS=EF.FINDINGS, EF_SOURCES=EF.SOURCES, recs_json=json.dumps(endo_recs(), ensure_ascii=False) if editable else "{}", allergies=allergies, meds=meds,
@@ -282,6 +284,46 @@ def proc_save(proc_id):
         return redirect(url_for("endo.proc_view", proc_id=pr["id"], confirmar=1))
     else:
         flash("Informe guardado.", "ok")
+    return redirect(url_for("endo.proc_view", proc_id=pr["id"]))
+
+
+def _previous_study(db, pr):
+    """Último estudio FINALIZADO del mismo tipo y paciente, anterior a este informe."""
+    return db.execute("SELECT * FROM procedures WHERE patient_id = ? AND kind = ? AND status = 'finalizado' AND id <> ? AND discarded_at IS NULL"
+                      " AND performed_on <= ? ORDER BY performed_on DESC, finalized_at DESC LIMIT 1",
+                      (pr["patient_id"], pr["kind"], pr["id"], pr["performed_on"])).fetchone()
+
+
+# Lo que se copia del estudio anterior (v0.19.0). No se copian fecha, indicación, consentimiento, sedación, horarios, imágenes, frascos
+# ni prótesis: son propios de cada estudio.
+COPY_KEYS = ("narrative", "zline", "zline_cm", "hiatus_cm", "conclusion", "recommendations", "comorbidities", "anticoagulation", "relevant_meds")
+
+
+@bp.route("/procedimientos/<proc_id>/copiar-anterior", methods=["POST"])
+@require("clinico.editar")
+def proc_copy_previous(proc_id):
+    """Pacientes en control (várices, Barrett, pólipos…): parte de los hallazgos del último estudio para cambiar solo lo distinto."""
+    pr = _get_proc(proc_id)
+    if pr["status"] != "borrador" or pr["author_id"] != g.user["id"]:
+        abort(409, description="Solo el autor puede modificar un informe en borrador.")
+    db = get_db()
+    prev = _previous_study(db, pr)
+    if not prev:
+        abort(404, description="Este paciente no tiene un estudio anterior finalizado del mismo tipo.")
+    old, cur = json.loads(prev["data"]), json.loads(pr["data"])
+    for k in COPY_KEYS:
+        if k in old:
+            cur[k] = old[k]
+    cur["findings"] = [dict(fi, jar=None, removed=None) for fi in old.get("findings") or []]
+    cur["copied_from"] = {"id": prev["id"], "on": prev["performed_on"]}
+    with write_tx(db):
+        cur_ok = db.execute("UPDATE procedures SET data = ?, updated_at = ?, version = version + 1 WHERE id = ? AND status = 'borrador'",
+                            (json.dumps(cur, ensure_ascii=False), utcnow(), pr["id"]))
+        if cur_ok.rowcount == 0:
+            abort(409)
+        audit("procedimiento_copiado_de_anterior", "procedimiento", pr["id"], {"desde": prev["id"]}, db=db)
+    flash(f"Se copiaron los hallazgos y la conclusión del estudio del {prev['performed_on'][8:10]}/{prev['performed_on'][5:7]}/"
+          f"{prev['performed_on'][:4]}. Revise cada segmento y cambie lo que sea distinto hoy.", "ok")
     return redirect(url_for("endo.proc_view", proc_id=pr["id"]))
 
 

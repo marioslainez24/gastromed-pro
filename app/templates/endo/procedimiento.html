@@ -39,6 +39,22 @@
 </section>
 {% endif %}
 
+{% if editable and prev %}
+<section class="card prev-study">
+  <div class="row-between"><h2>Estudio anterior: {{ fmt_birth(prev.performed_on) }}</h2>
+    <a class="small" href="{{ url_for('endo.proc_view', proc_id=prev.id) }}" target="_blank" rel="noopener">Ver el informe completo ↗</a></div>
+  {% if prev_concl %}<ul class="small">{% for c in prev_concl %}<li>{{ c }}</li>{% endfor %}</ul>{% endif %}
+  {% if d.copied_from and d.copied_from.id == prev.id %}<p class="small muted">✓ Este borrador ya parte de ese estudio. Revise cada segmento y cambie lo que sea distinto hoy.</p>
+  {% else %}
+  <form method="post" action="{{ url_for('endo.proc_copy_previous', proc_id=pr.id) }}" data-discard
+    data-confirm="Se copiarán del estudio del {{ fmt_birth(prev.performed_on) }} la descripción por segmento{{ ', la línea Z' if pr.kind == 'eda' }}, los hallazgos, la conclusión y las recomendaciones, y REEMPLAZARÁN lo escrito en este borrador. No se copian fecha, indicación, consentimiento, sedación, imágenes ni frascos. ¿Continuar?">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="btn" type="submit">↻ Partir del estudio anterior</button>
+    <span class="small muted">Útil en controles (várices, Barrett, pólipos): trae lo descrito antes para que solo cambie lo distinto.</span></form>
+  {% endif %}
+</section>
+{% endif %}
+
 {% if editable %}
 <form id="efind-form" hidden></form>
 <form method="post" action="{{ url_for('endo.proc_save', proc_id=pr.id) }}" class="stack proc-form" id="proc-form" data-dirty-guard>

@@ -40,3 +40,38 @@ def trend_svg(points, ref_low=None, ref_high=None, unit="", width=640, height=22
             parts.append(f'<text class="trend-axis" x="{x(i):.1f}" y="{height - 10}" text-anchor="middle">{escape(d)}</text>')
     parts.append("</svg>")
     return "".join(parts)
+
+
+def bars_svg(labels, series, width=760, height=260, title=""):
+    """Barras agrupadas por mes. series: [(nombre, [valores], clase_css)]. Devuelve SVG accesible (sin JavaScript)."""
+    if not labels or not series:
+        return ""
+    pad_l, pad_r, pad_t, pad_b = 40, 10, 28, 30
+    w, h = width - pad_l - pad_r, height - pad_t - pad_b
+    top = max([max(v) for _, v, _ in series] + [1])
+    step = 1 if top <= 5 else 2 if top <= 10 else 5 if top <= 25 else 10 if top <= 50 else 20 if top <= 100 else 50
+    top = ((top + step - 1) // step) * step
+    group = w / len(labels)
+    bw = max(2.0, min(18.0, (group - 6) / len(series)))
+    desc = "; ".join(f"{lab}: " + ", ".join(f"{n} {v[i]}" for n, v, _ in series) for i, lab in enumerate(labels))
+    parts = [f'<svg class="bars" viewBox="0 0 {width} {height}" role="img" aria-label="{escape(title)}. {escape(desc)}">']
+    for k in range(0, int(top) + 1, step):
+        y = pad_t + h - k / top * h
+        parts.append(f'<line class="trend-grid" x1="{pad_l}" x2="{pad_l + w}" y1="{y:.1f}" y2="{y:.1f}"/>'
+                     f'<text class="trend-axis" x="{pad_l - 6}" y="{y + 4:.1f}" text-anchor="end">{k}</text>')
+    x0 = pad_l
+    for li, (name, _, cls) in enumerate(series):
+        parts.append(f'<rect class="bar {cls}" x="{x0}" y="6" width="10" height="10" rx="2"/>'
+                     f'<text class="trend-axis" x="{x0 + 14}" y="15">{escape(name)}</text>')
+        x0 += 22 + 7 * len(name)
+    for i, lab in enumerate(labels):
+        gx = pad_l + i * group + (group - bw * len(series)) / 2
+        for si, (name, vals, cls) in enumerate(series):
+            v = vals[i]
+            bh = v / top * h
+            parts.append(f'<rect class="bar {cls}" x="{gx + si * bw:.1f}" y="{pad_t + h - bh:.1f}" width="{bw - 1:.1f}" height="{bh:.1f}" rx="1.5">'
+                         f'<title>{escape(lab)} · {escape(name)}: {v}</title></rect>')
+        if len(labels) <= 12 or i % 2 == 0:
+            parts.append(f'<text class="trend-axis" x="{pad_l + i * group + group / 2:.1f}" y="{height - 10}" text-anchor="middle">{escape(lab)}</text>')
+    parts.append("</svg>")
+    return "".join(parts)

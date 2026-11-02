@@ -22,6 +22,15 @@
   </ol>
   {% if r.general_instructions %}<h3>Indicaciones generales</h3><p class="prewrap">{{ r.general_instructions }}</p>{% endif %}
 </section>
+{% if can('recetas.emitir') %}
+<details class="card"><summary>☆ Guardar como receta frecuente</summary>
+  <form method="post" action="{{ url_for('rx.save_as_template', rx_id=r.id) }}" class="inline-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label class="field">Nombre<input name="name" required maxlength="80" placeholder="Ej.: IBP 8 semanas"></label>
+    <button class="btn" type="submit">Guardar</button></form>
+  <p class="small muted">Se guardan los medicamentos y las indicaciones de esta receta para usarlos con otros pacientes.</p>
+</details>
+{% endif %}
 {% if r.status == 'emitida' and can('recetas.anular') %}
 <details class="card"><summary>Anular receta</summary>
   <form method="post" action="{{ url_for('rx.void', rx_id=r.id) }}" class="stack mt" data-confirm="¿Anular esta receta? Quedará marcada como ANULADA en el historial.">

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Mis recetas frecuentes{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Mis recetas frecuentes</h1></div>
+<p class="muted">Guarde aquí sus esquemas de siempre (por ejemplo «IBP 8 semanas» o «Erradicación de H. pylori»). Al hacer una receta nueva aparecen
+  como botones y se cargan con un clic; usted revisa y ajusta antes de emitir. Las dosis son las que usted escribe aquí.</p>
+
+{% if rows %}<section class="card"><h2>Guardadas</h2>
+  <ul class="list">{% for r in rows %}
+    <li class="row-between"><span><b>{{ r.name }}</b>{% if not r.active %} <span class="tag">Desactivada</span>{% endif %}<br>
+      <span class="small muted">{{ parsed[r.id]|map(attribute='active_ingredient')|join(', ') }}</span></span>
+      <span class="btn-row"><a class="btn btn-sm" href="{{ url_for('rx.templates', id=r.id) }}#editar">Editar</a>
+      <form method="post" action="{{ url_for('rx.templates', id=r.id) }}" class="discard-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="btn btn-sm btn-quiet" name="action" value="{{ 'desactivar' if r.active else 'activar' }}">{{ 'Desactivar' if r.active else 'Activar' }}</button></form></span></li>
+  {% endfor %}</ul></section>{% endif %}
+
+<h2 id="editar">{{ 'Editar «' ~ edit.name ~ '»' if edit else 'Nueva receta frecuente' }}</h2>
+{% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+<form method="post" class="rx-form" data-dirty-guard>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% if edit %}<input type="hidden" name="id" value="{{ edit.id }}">{% endif %}
+  <section class="card"><label class="field">Nombre<input name="name" value="{{ name }}" maxlength="80" required placeholder="Ej.: Erradicación de H. pylori"></label></section>
+  {% include "recetas/_items.html" %}
+  <datalist id="routes">{% for r in routes %}<option value="{{ r }}">{% endfor %}</datalist>
+  <datalist id="units">{% for u in ['mg','g','mcg','mL','gotas','UI','sobre','tableta','cápsula','aplicación'] %}<option value="{{ u }}">{% endfor %}</datalist>
+  <p><button type="button" class="btn btn-quiet" data-rx-add>＋ Agregar otro medicamento</button></p>
+  <section class="card"><label class="field">Indicaciones generales<textarea name="general_instructions" rows="3" maxlength="1000">{{ general }}</textarea></label></section>
+  <div class="actions"><button class="btn btn-primary" type="submit">Guardar receta frecuente</button>
+    {% if edit %}<a class="btn btn-quiet" href="{{ url_for('rx.templates') }}">Cancelar</a>{% endif %}</div>
+</form>
+{% endblock %}

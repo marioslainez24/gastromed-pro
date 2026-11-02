@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Buscar en expedientes{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Buscar en todos los expedientes</h1></div>
+<form class="search-row" method="get" action="{{ url_for('search.index') }}" role="search">
+  <label for="q" class="sr-only">Diagnóstico o palabra</label>
+  <input id="q" type="search" name="q" value="{{ q }}" minlength="3" maxlength="80" placeholder="Diagnóstico o palabra: Barrett, colitis ulcerosa, cirrosis…" autofocus>
+  <button class="btn btn-primary" type="submit">Buscar</button>
+</form>
+<p class="muted small">Busca en la lista de problemas, los antecedentes, los diagnósticos de consultas finalizadas y las conclusiones de los estudios
+  endoscópicos finalizados. No distingue mayúsculas ni tildes; si escribe varias palabras, deben aparecer todas. Primero salen los pacientes con
+  control vencido.</p>
+{% if rows is not none %}
+  <p class="small"><b>{{ rows|length }}</b> paciente(s) para «{{ q }}»{% if rows|length == MAX %} (se muestran los primeros {{ MAX }}; afine la búsqueda){% endif %}.</p>
+  {% if rows %}
+  <div class="table-wrap"><table class="table search-results">
+    <thead><tr><th>Paciente</th><th>Dónde aparece</th><th>Último estudio</th><th>Control</th></tr></thead>
+    <tbody>{% for r in rows %}
+      <tr><td><a class="strong" href="{{ url_for('patients.view', patient_id=r.p.id) }}">{{ r.p.last_names }}, {{ r.p.first_names }}</a><br>
+            <span class="muted small mono">{{ r.p.mrn }}</span>{% if r.p.birth_date %} <span class="muted small">· {{ age(r.p.birth_date) }}</span>{% endif %}</td>
+        <td><ul class="small plain">{% for h in r.hits[:3] %}<li><span class="muted">{{ h.source }} · {{ fmt_birth(h.on) }}:</span>
+              {% if h.link %}<a href="{{ url_for(h.link[0], **h.link[1]) }}">{{ h.text }}</a>{% else %}{{ h.text }}{% endif %}</li>{% endfor %}
+            {% if r.hits|length > 3 %}<li class="muted">y {{ r.hits|length - 3 }} más</li>{% endif %}</ul></td>
+        <td class="small">{% if r.last %}<a href="{{ url_for('endo.proc_view', proc_id=r.last.id) }}">{{ KINDS[r.last.kind] }}</a><br>{{ fmt_birth(r.last.performed_on) }}{% else %}<span class="muted">Sin estudios</span>{% endif %}</td>
+        <td class="small">{% if r.due %}<span class="tag {{ 'tag-danger' if r.overdue else '' }}">{{ 'Vencido ' if r.overdue else '' }}{{ fmt_birth(r.due) }}</span>{% else %}<span class="muted">—</span>{% endif %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="muted">No se encontró «{{ q }}» en ningún expediente. Pruebe con otra palabra (por ejemplo, solo «Barrett»).</p>{% endif %}
+{% elif q %}<p class="muted">Escriba al menos 3 letras.</p>{% endif %}
+{% endblock %}

@@ -11,7 +11,7 @@ Siguiente fase disponible: Fase 5 (portal del paciente, recordatorios, teleconsu
 El Dr. Lainez pidió solo recordatorios de citas (correo o WhatsApp) y dictado de notas, **sin ningún servicio de pago**: si algo cuesta,
 se sustituye por una opción gratuita. Portal del paciente, reserva en línea, teleconsulta y campañas: no solicitados.
 
-## Etapa 19 · 1-nov-2026 · Clasificaciones del consenso en los hallazgos y diagnósticos endoscópicos (v0.19.0 · rama `desarrollo`, SIN publicar)
+## Etapa 19 · 1-nov-2026 · Clasificaciones del consenso, recetas frecuentes, partir del estudio anterior, estadísticas y búsqueda (v0.19.0 · rama `desarrollo`, SIN publicar)
 
 **Pedido del Dr. Lainez:** incorporar a los diagnósticos endoscópicos las clasificaciones de su presentación «Taller: Consenso de
 Clasificaciones en Endoscopia Digestiva» (GASTRO 2019, Cuba). Se ofreció también un atlas con imágenes; **lo descartó** (no quiso fotos de
@@ -31,7 +31,21 @@ internet ni el atlas). Solo clasificaciones.
   se tomaron del consenso (se indica en la fuente de cada hallazgo).
 - **No incluidas** (requieren magnificación/NBI o son de patología): Barrett de Endo y con NBI, Dinis-Ribeiro, Score Z, SANO, Viena.
   NICE y Kudo ya estaban.
-**Cómo se comprobó**: 196 pruebas (`test_v019.py`; la prueba combinatoria recorre todas las opciones de cada hallazgo); navegador
+- **Recetas frecuentes y «Repetir receta»** (migración 0015, `rx_templates`): el médico guarda sus esquemas (pantalla «Mis recetas
+  frecuentes» o «☆ Guardar como receta frecuente» desde una receta emitida); en Nueva receta aparecen como botones y se cargan para revisar.
+  «↻ Repetir la receta anterior» copia la última receta emitida (no anulada) del paciente. Se pueden editar y desactivar.
+- **Partir del estudio anterior**: en un informe en borrador, si el paciente tiene un estudio FINALIZADO previo del mismo tipo, aparece su
+  fecha y conclusión y el botón «↻ Partir del estudio anterior» (con confirmación): copia descripción por segmento, línea Z, hallazgos (sin
+  frasco), conclusión, recomendaciones, comorbilidades y anticoagulación. No copia fecha, indicación, consentimiento, sedación, imágenes,
+  frascos ni prótesis. Queda `copied_from` y auditoría.
+- **Estadísticas** (menú «Estadísticas», `app/views_stats.py`): consultas y estudios finalizados por mes (gráfica de barras SVG propia y
+  tabla), pacientes nuevos, diagnósticos más frecuentes de consulta y de endoscopia (texto agrupado sin mayúsculas ni viñetas), indicadores
+  de calidad de colonoscopia (los mismos de Endoscopia → Calidad). Filtro por periodo y profesional. **Excel** con un escritor .xlsx
+  propio (`app/xlsx.py`, sin dependencias): 5 hojas, solo números agregados, sin datos de pacientes.
+- **Buscar en todos los expedientes** (`/buscar-expedientes`, enlace en Pacientes): busca en problemas activos, antecedentes, diagnósticos
+  de consultas finalizadas y conclusiones de estudios finalizados; sin tildes ni mayúsculas; todas las palabras. Muestra último estudio y
+  control (vencidos primero). Solo personal clínico; queda en la auditoría.
+**Cómo se comprobó**: 200 pruebas (`test_v019.py`, `test_v019b.py`; la prueba combinatoria recorre todas las opciones de cada hallazgo); navegador
 real PC y celular actualizando desde v0.18.0; prueba del ejecutable.
 
 ## Etapa 18 · 1-nov-2026 · Descartar borradores y hojas de preparación de colonoscopía y EDA (v0.18.0 · PUBLICADA 1-nov-2026)

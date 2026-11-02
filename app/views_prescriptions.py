@@ -1,4 +1,9 @@
-"""Recetas: emisión, PDF (carta/A4), anulación trazable."""
+"""Recetas: emisión, PDF (carta/A4), anulación trazable.
+
+v0.19.0: recetas frecuentes (esquemas del médico que se aplican con un clic) y «Repetir la receta anterior». Las dosis las escribe
+el médico; el programa solo copia lo que él guardó o emitió antes, y la receta nueva siempre se revisa antes de emitir.
+"""
+import json
 import re
 
 from flask import Blueprint, abort, flash, g, make_response, redirect, render_template, request, url_for
@@ -51,6 +56,24 @@ def parse_items(form) -> tuple[list[dict], list[str]]:
     return items, errors
 
 
+def rx_templates(db, active_only=True):
+    return db.execute("SELECT * FROM rx_templates WHERE org_id = ?" + (" AND active = 1" if active_only else "") + " ORDER BY active DESC, name",
+                      (g.user["org_id"],)).fetchall()
+
+
+def last_prescription(db, patient_id):
+    r = db.execute("SELECT * FROM prescriptions WHERE patient_id = ? AND org_id = ? AND status = 'emitida' ORDER BY issued_at DESC LIMIT 1",
+                   (patient_id, g.user["org_id"])).fetchone()
+    if not r:
+        return None, []
+    items = db.execute("SELECT * FROM prescription_items WHERE prescription_id = ? ORDER BY position", (r["id"],)).fetchall()
+    return r, [{f: (it[f] or "") for f in ITEM_FIELDS} for it in items]
+
+
+def _id_ok(x):
+    return bool(re.fullmatch(r"[0-9a-f]{32}", x or ""))
+
+
 @bp.route("/nueva", methods=["GET", "POST"])
 @require("clinico.ver", "recetas.emitir")
 def new():
@@ -64,6 +87,16 @@ def new():
     allergies = db.execute("SELECT * FROM patient_allergies WHERE patient_id = ? AND active = 1", (p["id"],)).fetchall()
     items, errors = [], []
     general = ""
+    loaded = None
+    if request.method == "GET" and _id_ok(request.args.get("frecuente")):
+        t = db.execute("SELECT * FROM rx_templates WHERE id = ? AND org_id = ? AND active = 1",
+                       (request.args["frecuente"], g.user["org_id"])).fetchone() or abort(404)
+        items, general, loaded = json.loads(t["items"]), t["general_instructions"] or "", f"Receta frecuente «{t['name']}»"
+    elif request.method == "GET" and request.args.get("repetir") == "1":
+        prev, items = last_prescription(db, p["id"])
+        if not prev:
+            abort(404)
+        general, loaded = prev["general_instructions"] or "", "Receta anterior del paciente"
     if request.method == "POST":
         items, errors = parse_items(request.form)
         general = (request.form.get("general_instructions") or "").strip()[:1000]
@@ -81,8 +114,81 @@ def new():
                 audit("receta_emitida", "receta", rid, {"paciente": p["id"], "items": len(items)}, db=db)
             flash("Receta emitida. Puede imprimirla o descargar el PDF.", "ok")
             return redirect(url_for("rx.view", rx_id=rid))
+    prev, prev_items = last_prescription(db, p["id"])
     return render_template("recetas/nueva.html", p=p, note_id=note_id, allergies=allergies, items=items or [{}],
-                           errors=errors, general=general, fields=ITEM_FIELDS, routes=ROUTES), 422 if errors else 200
+                           errors=errors, general=general, fields=ITEM_FIELDS, routes=ROUTES, loaded=loaded,
+                           templates=rx_templates(db), prev=prev, prev_items=prev_items), 422 if errors else 200
+
+
+# ------------------------------------------------------------------------------------------------ recetas frecuentes
+@bp.route("/frecuentes", methods=["GET", "POST"])
+@require("clinico.ver", "recetas.emitir")
+def templates():
+    db = get_db()
+    items, errors, name, general, edit = [{}], [], "", "", None
+    tid = request.values.get("id")
+    if tid:
+        edit = db.execute("SELECT * FROM rx_templates WHERE id = ? AND org_id = ?", (tid, g.user["org_id"])).fetchone() if _id_ok(tid) else None
+        if not edit:
+            abort(404)
+        items, name, general = json.loads(edit["items"]), edit["name"], edit["general_instructions"] or ""
+    if request.method == "POST":
+        action = request.form.get("action")
+        if edit and action in ("desactivar", "activar"):
+            with write_tx(db):
+                db.execute("UPDATE rx_templates SET active = ?, updated_at = ? WHERE id = ?", (1 if action == "activar" else 0, utcnow(), edit["id"]))
+                audit("receta_frecuente_" + ("activada" if action == "activar" else "desactivada"), "receta_frecuente", edit["id"], db=db)
+            flash("Receta frecuente " + ("activada." if action == "activar" else "desactivada: ya no aparece al recetar."), "ok")
+            return redirect(url_for("rx.templates"))
+        name = (request.form.get("name") or "").strip()[:80]
+        general = (request.form.get("general_instructions") or "").strip()[:1000]
+        items, errors = parse_items(request.form)
+        if not name:
+            errors.insert(0, "Escriba un nombre corto para la receta frecuente (ej.: «IBP 8 semanas»).")
+        dup = db.execute("SELECT id FROM rx_templates WHERE org_id = ? AND lower(name) = lower(?) AND active = 1", (g.user["org_id"], name)).fetchone()
+        if dup and (not edit or dup["id"] != edit["id"]):
+            errors.insert(0, f"Ya existe una receta frecuente llamada «{name}».")
+        if not errors:
+            with write_tx(db):
+                if edit:
+                    db.execute("UPDATE rx_templates SET name = ?, items = ?, general_instructions = ?, updated_at = ? WHERE id = ?",
+                               (name, json.dumps(items, ensure_ascii=False), general or None, utcnow(), edit["id"]))
+                    audit("receta_frecuente_modificada", "receta_frecuente", edit["id"], {"nombre": name}, db=db)
+                else:
+                    new = new_id()
+                    db.execute("INSERT INTO rx_templates(id, org_id, name, items, general_instructions, created_by, created_at, updated_at)"
+                               " VALUES (?,?,?,?,?,?,?,?)", (new, g.user["org_id"], name, json.dumps(items, ensure_ascii=False), general or None,
+                                                             g.user["id"], utcnow(), utcnow()))
+                    audit("receta_frecuente_creada", "receta_frecuente", new, {"nombre": name}, db=db)
+            flash(f"Receta frecuente «{name}» guardada. Aparecerá como botón al hacer una receta nueva.", "ok")
+            return redirect(url_for("rx.templates"))
+    return render_template("recetas/frecuentes.html", rows=rx_templates(db, active_only=False), items=items or [{}], errors=errors,
+                           name=name, general=general, edit=edit, fields=ITEM_FIELDS, routes=ROUTES,
+                           parsed={r["id"]: json.loads(r["items"]) for r in rx_templates(db, active_only=False)}), 422 if errors else 200
+
+
+@bp.route("/<rx_id>/guardar-frecuente", methods=["POST"])
+@require("clinico.ver", "recetas.emitir")
+def save_as_template(rx_id):
+    r = _get_rx(rx_id)
+    db = get_db()
+    name = (request.form.get("name") or "").strip()[:80]
+    if not name:
+        flash("Escriba un nombre para la receta frecuente.", "error")
+        return redirect(url_for("rx.view", rx_id=r["id"]))
+    if db.execute("SELECT 1 FROM rx_templates WHERE org_id = ? AND lower(name) = lower(?) AND active = 1", (g.user["org_id"], name)).fetchone():
+        flash(f"Ya existe una receta frecuente llamada «{name}». Use otro nombre.", "error")
+        return redirect(url_for("rx.view", rx_id=r["id"]))
+    items = [{f: (it[f] or "") for f in ITEM_FIELDS} for it in
+             db.execute("SELECT * FROM prescription_items WHERE prescription_id = ? ORDER BY position", (r["id"],))]
+    with write_tx(db):
+        new = new_id()
+        db.execute("INSERT INTO rx_templates(id, org_id, name, items, general_instructions, created_by, created_at, updated_at)"
+                   " VALUES (?,?,?,?,?,?,?,?)", (new, g.user["org_id"], name, json.dumps(items, ensure_ascii=False), r["general_instructions"],
+                                                 g.user["id"], utcnow(), utcnow()))
+        audit("receta_frecuente_creada", "receta_frecuente", new, {"nombre": name, "desde_receta": r["id"]}, db=db)
+    flash(f"Guardada como receta frecuente «{name}».", "ok")
+    return redirect(url_for("rx.view", rx_id=r["id"]))
 
 
 @bp.route("/<rx_id>")

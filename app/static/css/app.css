@@ -498,3 +498,21 @@ button.hea-chip { font: inherit; font-size: .88rem; color: inherit; }
 .efind-help { margin: .3rem 0 0 1.1rem; padding: 0; line-height: 1.35; flex-basis: 100%; }
 .efind-help li { margin: .1rem 0; }
 .efind-src { margin: .4rem 0 0; font-style: italic; }
+.mt-s { margin-top: .6rem; }
+/* v0.19: estadísticas y búsqueda en expedientes */
+.stat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .75rem; margin: 1rem 0; }
+.stat { background: var(--surface, var(--bg)); border: 1px solid var(--line); border-radius: 12px; padding: .8rem 1rem; display: flex; flex-direction: column; }
+.stat-n { font-size: 1.9rem; font-weight: 700; color: var(--accent); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat-l { color: var(--muted); font-size: .9rem; }
+.chart-wrap { overflow-x: auto; }
+.bars { width: 100%; min-width: 520px; height: auto; display: block; }
+.bar { stroke: none; }
+.bar-1 { fill: var(--accent); }
+.bar-2 { fill: #c9772b; }
+.bar-3 { fill: #5b6fd6; }
+.table.num td, .table.num th { text-align: right; } .table.num td:first-child, .table.num th:first-child { text-align: left; }
+.dx-rank { padding-left: 1.4rem; margin: 0; } .dx-rank li { display: flex; justify-content: space-between; gap: 1rem; padding: .25rem 0; border-bottom: 1px dashed var(--line); }
+.dx-rank b { font-variant-numeric: tabular-nums; }
+.stats-filter { margin-top: 0; }
+ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15rem 0; }
+.nowrap { white-space: nowrap; }

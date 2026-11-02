@@ -10,6 +10,7 @@
   <input id="q" type="search" name="q" value="{{ q }}" placeholder="Nombre, apellidos, expediente (GM-…), DNI o teléfono">
   <button class="btn" type="submit">Buscar</button>
 </form>
+{% if can('clinico.ver') %}<p class="small"><a href="{{ url_for('search.index') }}">🔎 Buscar por diagnóstico en todos los expedientes</a> (ej.: Barrett, colitis ulcerosa)</p>{% endif %}
 <p class="muted small">{% if q %}{{ rows|length }} resultado(s) para «{{ q }}»{% if rows|length == 50 %} (se muestran los primeros 50; afine la búsqueda){% endif %}.{% else %}Pacientes modificados recientemente.{% endif %}</p>
 {% if rows %}
 <div class="table-wrap">

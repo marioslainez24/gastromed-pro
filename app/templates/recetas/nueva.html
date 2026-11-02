@@ -10,34 +10,23 @@
   <div class="small">Verificación de interacciones y alertas farmacológicas: <b>no disponible</b> (no hay vademécum con licencia configurado). La revisión es responsabilidad del médico.</div>
 </section>
 
+<section class="card rx-quick">
+  <div class="row-between"><h2>Recetar rápido</h2><a class="small" href="{{ url_for('rx.templates') }}">Administrar mis recetas frecuentes</a></div>
+  {% if templates %}<p class="small muted">Mis recetas frecuentes (se cargan para revisar antes de emitir):</p>
+  <div class="btn-row">{% for t in templates %}<a class="btn btn-sm" href="{{ url_for('rx.new', patient_id=p.id, note_id=note_id, frecuente=t.id) }}">{{ t.name }}</a>{% endfor %}</div>
+  {% else %}<p class="small muted">Aún no tiene recetas frecuentes. Créelas en «Administrar mis recetas frecuentes» o, después de emitir una receta, con «Guardar como receta frecuente».</p>{% endif %}
+  {% if prev %}<p class="mt-s"><a class="btn btn-sm btn-quiet" href="{{ url_for('rx.new', patient_id=p.id, note_id=note_id, repetir=1) }}">↻ Repetir la receta anterior</a>
+    <span class="small muted">del {{ fmt_dt(prev.issued_at) }}: {{ prev_items|map(attribute='active_ingredient')|join(', ') }}</span></p>{% endif %}
+</section>
+{% if loaded %}<div class="flash flash-info">Se cargó: <b>{{ loaded }}</b>. Revise dosis, duración y cantidad para este paciente antes de emitir.</div>{% endif %}
+
 {% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
 
 <form method="post" class="rx-form" data-dirty-guard>
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   <input type="hidden" name="patient_id" value="{{ p.id }}">
   {% if note_id %}<input type="hidden" name="note_id" value="{{ note_id }}">{% endif %}
-  <div id="rx-items">
-  {% for it in items %}
-    {% set i = loop.index0 %}
-    <fieldset class="card rx-item" data-rx-item>
-      <legend>Medicamento <span data-rx-num>{{ loop.index }}</span></legend>
-      <div class="grid-rx">
-        <label class="field span2"><span>Principio activo <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-active_ingredient" value="{{ it.get('active_ingredient', '') }}" maxlength="160" required placeholder="Ej.: omeprazol"></label>
-        <label class="field span2">Presentación<input name="item-{{ i }}-presentation" value="{{ it.get('presentation', '') }}" maxlength="160" placeholder="Ej.: cápsulas de 20 mg"></label>
-        <label class="field"><span>Dosis <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-dose" value="{{ it.get('dose', '') }}" maxlength="40" required inputmode="decimal"></label>
-        <label class="field"><span>Unidad <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-dose_unit" value="{{ it.get('dose_unit', '') }}" maxlength="40" required list="units"></label>
-        <label class="field"><span>Vía <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-route" value="{{ it.get('route', 'oral') }}" maxlength="60" required list="routes"></label>
-        <label class="field"><span>Frecuencia <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-frequency" value="{{ it.get('frequency', '') }}" maxlength="120" required placeholder="Ej.: cada 24 horas"></label>
-        <label class="field"><span>Duración <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-duration" value="{{ it.get('duration', '') }}" maxlength="120" required placeholder="Ej.: 8 semanas"></label>
-        <label class="field"><span>Cantidad <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-quantity" value="{{ it.get('quantity', '') }}" maxlength="120" required placeholder="Ej.: 56 cápsulas"></label>
-        <label class="field span4">Indicaciones adicionales<input name="item-{{ i }}-instructions" value="{{ it.get('instructions', '') }}" maxlength="600" placeholder="Ej.: 30 minutos antes del desayuno"></label>
-      </div>
-      <button type="button" class="link-btn small" data-rx-remove>Quitar medicamento</button>
-    </fieldset>
-  {% endfor %}
-  </div>
-  <datalist id="routes">{% for r in routes %}<option value="{{ r }}">{% endfor %}</datalist>
-  <datalist id="units">{% for u in ['mg','g','mcg','mL','gotas','UI','sobre','tableta','cápsula','aplicación'] %}<option value="{{ u }}">{% endfor %}</datalist>
+  {% include "recetas/_items.html" %}
   <p><button type="button" class="btn btn-quiet" data-rx-add>＋ Agregar otro medicamento</button></p>
   <section class="card">
     <label class="field">Indicaciones generales<textarea name="general_instructions" rows="3" maxlength="1000">{{ general }}</textarea></label>

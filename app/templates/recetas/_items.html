@@ -1,0 +1,23 @@
+{# Medicamentos de una receta (se usa en Nueva receta y en Recetas frecuentes). Variables: items, routes. #}
+  <div id="rx-items">
+  {% for it in items %}
+    {% set i = loop.index0 %}
+    <fieldset class="card rx-item" data-rx-item>
+      <legend>Medicamento <span data-rx-num>{{ loop.index }}</span></legend>
+      <div class="grid-rx">
+        <label class="field span2"><span>Principio activo <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-active_ingredient" value="{{ it.get('active_ingredient', '') }}" maxlength="160" required placeholder="Ej.: omeprazol"></label>
+        <label class="field span2">Presentación<input name="item-{{ i }}-presentation" value="{{ it.get('presentation', '') }}" maxlength="160" placeholder="Ej.: cápsulas de 20 mg"></label>
+        <label class="field"><span>Dosis <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-dose" value="{{ it.get('dose', '') }}" maxlength="40" required inputmode="decimal"></label>
+        <label class="field"><span>Unidad <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-dose_unit" value="{{ it.get('dose_unit', '') }}" maxlength="40" required list="units"></label>
+        <label class="field"><span>Vía <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-route" value="{{ it.get('route', 'oral') }}" maxlength="60" required list="routes"></label>
+        <label class="field"><span>Frecuencia <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-frequency" value="{{ it.get('frequency', '') }}" maxlength="120" required placeholder="Ej.: cada 24 horas"></label>
+        <label class="field"><span>Duración <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-duration" value="{{ it.get('duration', '') }}" maxlength="120" required placeholder="Ej.: 8 semanas"></label>
+        <label class="field"><span>Cantidad <span class="req" aria-hidden="true">*</span></span><input name="item-{{ i }}-quantity" value="{{ it.get('quantity', '') }}" maxlength="120" required placeholder="Ej.: 56 cápsulas"></label>
+        <label class="field span4">Indicaciones adicionales<input name="item-{{ i }}-instructions" value="{{ it.get('instructions', '') }}" maxlength="600" placeholder="Ej.: 30 minutos antes del desayuno"></label>
+      </div>
+      <button type="button" class="link-btn small" data-rx-remove>Quitar medicamento</button>
+    </fieldset>
+  {% endfor %}
+  </div>
+  <datalist id="routes">{% for r in routes %}<option value="{{ r }}">{% endfor %}</datalist>
+  <datalist id="units">{% for u in ['mg','g','mcg','mL','gotas','UI','sobre','tableta','cápsula','aplicación'] %}<option value="{{ u }}">{% endfor %}</datalist>
