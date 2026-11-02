@@ -47,7 +47,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-latest       # Mac con chip Apple (M1, M2, M3, M4…)
+          - runner: macos-14           # Mac con chip Apple (M1, M2, M3, M4…); hecho en macOS 14 sirve también para 15 y 26
             nombre: GastroMedPro-Mac-chip-Apple
           - runner: macos-15-intel     # Mac con procesador Intel
             nombre: GastroMedPro-Mac-Intel

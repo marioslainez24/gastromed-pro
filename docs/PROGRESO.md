@@ -29,7 +29,7 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
   duerma mientras el programa está abierto. Datos en `~/GastroMed/datos` y respaldos en `~/GastroMed/respaldos`; claves al Escritorio.
 - Respaldos a Google Drive: `app/backup.drive_candidates()` reconoce `~/Library/CloudStorage/GoogleDrive-*/Mi unidad|My Drive`.
 - Construcción: `build/GastroMedPro-mac.spec` (un archivo, consola). La CI (`construir-exe.yml`) ahora tiene tres trabajos —Windows,
-  Mac chip Apple (`macos-latest`) y Mac Intel (`macos-15-intel`)—, cada uno corre las pruebas, construye y hace la prueba completa del
+  Mac chip Apple (`macos-14`; `macos-latest` se quedaba sin máquinas libres) y Mac Intel (`macos-15-intel`)—, cada uno corre las pruebas, construye y hace la prueba completa del
   programa; luego un trabajo «publicar» (solo en `main`) sube el .exe y los .zip de Mac que hayan salido bien. Desde `desarrollo` se puede
   lanzar a mano (workflow_dispatch) para probar sin publicar.
 - Sin firma de Apple (cuesta 99 USD al año): la primera vez se abre con Ajustes del Sistema → Privacidad y seguridad → «Abrir igualmente».
