@@ -93,3 +93,24 @@ En la nota, encima de *Historia de la enfermedad actual*, abra **✍ Asistente d
 - Solo funciona dentro del Wi-Fi del consultorio (fuera de él no se puede entrar, por seguridad).
 - El dictado envía el audio a Google o Microsoft para convertirlo en texto; no dicte nombres, DNI ni teléfonos.
 - Si algo falla, la ventana negra muestra el error: tome una foto y compártala.
+
+
+## Usar GastroMed Pro en una Mac (v0.22.0)
+
+1. En la página de descargas baje **GastroMedPro-Mac-chip-Apple.zip** si su Mac tiene chip M1, M2, M3 o M4, o
+   **GastroMedPro-Mac-Intel.zip** si es Intel (menú Apple  → «Acerca de esta Mac» lo dice).
+2. Doble clic en el .zip: aparece una carpeta con **GastroMedPro** y **LEEME.txt**. Muévala al Escritorio o a Aplicaciones.
+3. Doble clic en **GastroMedPro**. La primera vez la Mac avisa que no puede comprobar el desarrollador (el programa no tiene la firma de
+   Apple, que es de pago). Vaya a **Ajustes del Sistema → Privacidad y seguridad**, baje hasta el aviso de «GastroMedPro» y pulse
+   **«Abrir igualmente»**; confirme con su contraseña. Solo se hace una vez.
+4. Se abre una ventana de la **Terminal** (es el servidor, como la ventana negra de Windows) y el navegador con la configuración inicial.
+   No cierre la Terminal mientras use el programa; mientras está abierto, la Mac no se duerme.
+5. Sus datos quedan en la carpeta **GastroMed** de su usuario (Finder → Ir → Inicio). Las claves de los respaldos se dejan en el Escritorio:
+   cópielas a una USB y bórrelas del Escritorio.
+6. El celular se conecta igual que con Windows: misma red Wi-Fi y la dirección https que muestra la Terminal. La primera vez, macOS puede
+   preguntar si permite conexiones entrantes: pulse «Permitir».
+
+Importante: los datos de la Mac y los de la PC con Windows son **independientes** (cada computadora es su propio servidor). Para pasar a
+la Mac lo que ya tiene en Windows: cierre el programa en ambas, copie con una USB la carpeta `C:\GastroMed\datos` completa a la
+Mac como `GastroMed/datos` (en su carpeta de usuario, reemplazando la que esté) y abra el programa en la Mac. Desde entonces use solo una
+de las dos para no tener datos distintos en cada una.

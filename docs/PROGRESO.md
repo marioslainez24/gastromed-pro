@@ -20,6 +20,21 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
+## Etapa 22 · 2-nov-2026 · Versión para Mac (v0.22.0 · en «desarrollo», falta su «ya»)
+
+**Pedido del Dr. Lainez:** «hazme una versión para que se pueda ejecutar en Mac».
+- Mismo programa, sin cambios en las pantallas. Dos paquetes: **GastroMedPro-Mac-chip-Apple.zip** (M1–M4) y **GastroMedPro-Mac-Intel.zip**,
+  cada uno con el programa y `LEEME.txt` (`build/LEEME-mac.txt`).
+- Lanzador (`gastromed_exe.py`): en Mac pone título a la ventana de la Terminal y ejecuta `caffeinate -i -w <pid>` para que la Mac no se
+  duerma mientras el programa está abierto. Datos en `~/GastroMed/datos` y respaldos en `~/GastroMed/respaldos`; claves al Escritorio.
+- Respaldos a Google Drive: `app/backup.drive_candidates()` reconoce `~/Library/CloudStorage/GoogleDrive-*/Mi unidad|My Drive`.
+- Construcción: `build/GastroMedPro-mac.spec` (un archivo, consola). La CI (`construir-exe.yml`) ahora tiene tres trabajos —Windows,
+  Mac chip Apple (`macos-latest`) y Mac Intel (`macos-15-intel`)—, cada uno corre las pruebas, construye y hace la prueba completa del
+  programa; luego un trabajo «publicar» (solo en `main`) sube el .exe y los .zip de Mac que hayan salido bien. Desde `desarrollo` se puede
+  lanzar a mano (workflow_dispatch) para probar sin publicar.
+- Sin firma de Apple (cuesta 99 USD al año): la primera vez se abre con Ajustes del Sistema → Privacidad y seguridad → «Abrir igualmente».
+- Pruebas: `tests/test_v022.py` (209 en total).
+
 ## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · PUBLICADA 2-nov-2026)
 
 **Pedido del Dr. Lainez** (tras la comparativa con 11 programas, ver COMPARATIVA.md): dos de las funciones que otros tienen.

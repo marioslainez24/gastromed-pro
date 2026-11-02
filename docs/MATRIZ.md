@@ -161,3 +161,4 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | Exportación con información clínica y archivos | ✅ |
 | No hay secretos expuestos | ✅ |
 | Flujos principales en PC y celular | 🟡 capturas en navegador real a 1366 px y 390 px; falta prueba en su equipo |
+| Versión para Mac (chip Apple e Intel), construida y probada en GitHub | ⬜ v0.22.0 en «desarrollo»; se publica con su «ya» |

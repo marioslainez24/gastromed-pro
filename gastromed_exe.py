@@ -48,6 +48,34 @@ def desktop() -> Path:
     return d
 
 
+def _foreign_path(value: str) -> bool:
+    """Ruta escrita en otra computadora: C:\\... vista desde la Mac, o /Users/... vista desde Windows."""
+    import re
+    if not value:
+        return False
+    if os.name == "nt":
+        return value.startswith("/")
+    return bool(re.match(r"^[A-Za-z]:[\\/]", value)) or "\\" in value
+
+
+def adapt_paths(env_file: Path, datos: Path, respaldos: Path) -> bool:
+    """Si la carpeta «datos» se copió desde otra computadora (p. ej. de Windows a la Mac), corrige las rutas guardadas.
+
+    Las claves NO se tocan: solo se reescriben las líneas de rutas que apuntan a la otra computadora."""
+    fixes = {"GASTROMED_DATABASE_PATH": str(datos / "gastromed.sqlite3"), "GASTROMED_FILES_DIR": str(datos / "archivos"),
+             "GASTROMED_BACKUP_DIR": str(respaldos), "GASTROMED_BACKUP_COPY_DIR": ""}
+    lines, changed = env_file.read_text(encoding="utf-8-sig").splitlines(), False
+    for i, line in enumerate(lines):
+        key, sep, value = line.partition("=")
+        if sep and key.strip() in fixes and _foreign_path(value.strip().strip('"').strip("'")):
+            lines[i] = f"{key.strip()}={fixes[key.strip()]}"
+            changed = True
+    if changed:
+        env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        print("  Se adaptaron las carpetas de datos copiados desde otra computadora.")
+    return changed
+
+
 def first_run_config(root: Path) -> Path:
     """Crea gastromed.env con claves nuevas solo si no existe. Nunca reemplaza claves existentes."""
     from cryptography.fernet import Fernet
@@ -56,6 +84,7 @@ def first_run_config(root: Path) -> Path:
         d.mkdir(parents=True, exist_ok=True)
     env_file = datos / "gastromed.env"
     if env_file.exists():
+        adapt_paths(env_file, datos, respaldos)
         return env_file
     lines = [
         "# Configuración de GastroMed Pro en esta PC. NO COMPARTA ESTE ARCHIVO.",
