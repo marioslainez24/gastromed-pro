@@ -20,7 +20,7 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
-## Etapa 22 · 2/3-nov-2026 · Mejoras tras usarlo con un paciente real + Mac preparada (v0.22.0 · en «desarrollo», falta su «ya»)
+## Etapa 22 · 2/3-nov-2026 · Mejoras tras usarlo con un paciente real + Mac preparada (v0.22.0 · PUBLICADA 3-nov-2026 como v0.22.0-28, solo Windows)
 
 **Pedido del Dr. Lainez:** «hazme una versión para que se pueda ejecutar en Mac».
 - Mismo programa, sin cambios en las pantallas. Dos paquetes: **GastroMedPro-Mac-chip-Apple.zip** (M1–M4) y **GastroMedPro-Mac-Intel.zip**,

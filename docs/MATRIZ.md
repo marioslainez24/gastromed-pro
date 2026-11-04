@@ -162,9 +162,9 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | No hay secretos expuestos | ✅ |
 | Flujos principales en PC y celular | 🟡 capturas en navegador real a 1366 px y 390 px; falta prueba en su equipo |
 | Versión para Mac (chip Apple e Intel), construida y probada en GitHub | ✅ construida y probada en GitHub (Mac chip Apple y Mac Intel); ⬜ NO se publica por ahora (pidió solo Windows); se hace cuando la pida |
-| Letra 12 en los PDF; informe de endoscopia con el nombre del endoscopista en encabezado y firma | ✅ probado (pruebas automáticas + revisión del PDF); se publica con su «ya» |
-| Estudios y archivos agrupados por estudio y fecha, con visor de imágenes en grande (PC y celular) | ✅ probado (pruebas + navegador); se publica con su «ya» |
-| Informe de endoscopia con DNI, fecha de nacimiento, edad y demás datos del paciente | ✅ probado; se publica con su «ya» |
-| Tipo de atención en el informe (consulta externa / sala / emergencia, sala y cama, hospital) para usarlo también en hospitales | ✅ probado (pruebas + navegador); se publica con su «ya» |
-| Endoscopista 1 y Endoscopista 2 (dos firmas) + Asistentes 1 a 3 en el informe | ✅ probado (pruebas + navegador + PDF); se publica con su «ya» |
-| Tres estilos del informe de endoscopia (Clásico, Formal, Moderno) elegibles en Ajustes, con ejemplo ficticio | ✅ probado (pruebas + navegador + PDF); se publica con su «ya» |
+| Letra 12 en los PDF; informe de endoscopia con el nombre del endoscopista en encabezado y firma | ✅ probado (pruebas automáticas + revisión del PDF); publicado en v0.22.0 |
+| Estudios y archivos agrupados por estudio y fecha, con visor de imágenes en grande (PC y celular) | ✅ probado (pruebas + navegador); publicado en v0.22.0 |
+| Informe de endoscopia con DNI, fecha de nacimiento, edad y demás datos del paciente | ✅ probado; publicado en v0.22.0 |
+| Tipo de atención en el informe (consulta externa / sala / emergencia, sala y cama, hospital) para usarlo también en hospitales | ✅ probado (pruebas + navegador); publicado en v0.22.0 |
+| Endoscopista 1 y Endoscopista 2 (dos firmas) + Asistentes 1 a 3 en el informe | ✅ probado (pruebas + navegador + PDF); publicado en v0.22.0 |
+| Tres estilos del informe de endoscopia (Clásico, Formal, Moderno) elegibles en Ajustes, con ejemplo ficticio | ✅ probado (pruebas + navegador + PDF); publicado en v0.22.0 |
