@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-head">
   <div><h1>Captura de imágenes</h1>
-  <p class="muted small">{{ D.KINDS[pr.kind] }} · {{ fmt_birth(pr.performed_on) }} · Folio {{ pr.id[:8]|upper }}</p></div>
+  <p class="muted small">{{ D.KINDS[pr.kind] }} · {{ fmt_birth(pr.performed_on) }}</p></div>
   <a class="btn btn-quiet" href="{{ url_for('endo.proc_view', proc_id=pr.id) }}#imagenes" data-capture-exit>Terminar y volver al informe</a>
 </div>
 

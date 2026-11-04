@@ -7,7 +7,7 @@
 <div class="page-head">
   <div>
     <h1>{{ D.KINDS[pr.kind] }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
-    <p class="muted small">{{ p.mrn }} · {{ age(p.birth_date) }} · {{ label('sex', p.sex) }} · Endoscopista: {{ d.endoscopist or endoscopist or pr.author }} · Folio <span class="mono">{{ pr.id[:8]|upper }}</span></p>
+    <p class="muted small">{{ p.mrn }} · {{ age(p.birth_date) }} · {{ label('sex', p.sex) }} · Endoscopista: {{ d.endoscopist or endoscopist or pr.author }}</p>
   </div>
   <span class="tag big {{ 'tag-ok' if pr.status == 'finalizado' else 'tag-warn' }}">{{ 'Finalizado' if pr.status == 'finalizado' else 'Borrador' }}</span>
 </div>

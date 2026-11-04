@@ -49,7 +49,7 @@ v0.20.0 (personal de endoscopia: endoscopista y asistentes con menús) se public
 v0.21.0 (hojas educativas y dietas; agenda en el calendario del celular) se publicó el 2-nov-2026 tras su «ya». Lo siguiente, en `desarrollo` hasta su «ya».
 v0.22.0 (versión para Mac preparada pero NO publicada: chip Apple en `macos-14` e Intel en `macos-15-intel`; `build/GastroMedPro-mac.spec`, `build/LEEME-mac.txt`;
 `adapt_paths` corrige rutas si se copia la carpeta datos de Windows a Mac) probada en CI desde `desarrollo` (workflow_dispatch, no publica); además letra 12 en todos los PDF y el informe de endoscopia
-firmado por el endoscopista elegido (no por el usuario); estudios agrupados por fecha con visor en grande; DNI, nacimiento y más datos del paciente en el informe; tipo de atención (consulta externa/sala/emergencia, cama, hospital). Espera su «ya».
+firmado por el endoscopista elegido (no por el usuario); estudios agrupados por fecha con visor en grande; DNI, nacimiento y más datos del paciente en el informe; tipo de atención (consulta externa/sala/emergencia, cama, hospital); informe sin folio. Espera su «ya».
 La CI tiene trabajos windows, mac (matriz) y publicar (solo en main; sube el .exe y los .zip de Mac que salieron bien). `macos-latest` se quedó sin máquinas: usar `macos-14`.
 **Mac SOLO CUANDO ÉL LO PIDA (3-nov-2026):** primero pidió Mac una vez y luego dijo «no hagas para Mac en este momento, solo Windows».
 El trabajo mac corre solo si el último commit que llega a main tiene «[mac]» en el mensaje (o workflow_dispatch con mac=true). Hoy NO
@@ -58,7 +58,7 @@ Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó
 1. Crear tareas, programar y escribir pruebas pytest para cada función nueva. Ejemplo: un servidor SMTP falso en localhost; nunca simular un éxito.
-2. Correr `python3 -m pytest -q` (218 pruebas en v0.22.0).
+2. Correr `python3 -m pytest -q` (219 pruebas en v0.22.0).
 3. Revisar en el navegador con Playwright y guardar capturas en `evidencia/capturas/`.
 4. Correr la prueba del exe en local: `build/smoke_exe.py` con un script que ejecute `python3 gastromed_exe.py`. Si waitress no está instalado, usar un sustituto con `werkzeug.make_server` en `PYTHONPATH`.
 5. Actualizar `docs/PROGRESO.md` y `docs/MATRIZ.md` (y `INSTALACION_WINDOWS.md` si cambia el uso). Copiarlos al Proyecto con `project_write`.

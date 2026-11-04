@@ -189,3 +189,13 @@ def test_estadisticas_por_atencion_y_lugar(env):
     assert ("Sala (hospitalizado)", "Hospital Ficticio", 1) in st["by_care"] and ("Consulta externa", "Su clínica", 1) in st["by_care"]
     html = med.get("/estadisticas?desde=2026-01-01&hasta=2026-12-31").get_data(as_text=True)
     assert "Estudios por tipo de atención y lugar" in html and "Hospital Ficticio" in html
+
+
+def test_informe_sin_folio(env):
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import new_proc
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    proc = new_proc(med, create_patient(med), tok, "eda")
+    assert "Folio" not in _pdf_text(med.get(f"/procedimientos/{proc}/pdf").data)
+    assert "Folio" not in med.get(f"/procedimientos/{proc}").get_data(as_text=True)

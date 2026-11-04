@@ -274,7 +274,7 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
         story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
     story = _with_logo(story, assets, width)
     head = Table([[Paragraph(f"INFORME DE {_e(title.upper())}", ST["title"]),
-                   Paragraph(f"Fecha: {fmt_birth(pr['performed_on'])}<br/>Folio: {pr['id'][:8].upper()}"
+                   Paragraph(f"Fecha: {fmt_birth(pr['performed_on'])}"   # sin folio (pedido del Dr. Lainez, 3-nov-2026)
                              + ("" if pr["status"] == "finalizado" else "<br/><b>BORRADOR</b>"), ST["subr"])]],
                  colWidths=[width * 0.6, width * 0.4])
     head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
