@@ -124,7 +124,7 @@ def test_flujo_completo_cita_nota_receta_pdf(env):
         assert abs(float(box.width) - w) < 1 and abs(float(box.height) - h) < 1, papel
         text = " ".join(pdf.pages[0].extract_text().split())   # la letra más grande puede partir líneas
         for expected in ["Dr. Mario Lainez", "RECETA MÉDICA", "Omeprazol", "cada 24 horas", "8 semanas", "56 cápsulas",
-                         "Alginato de sodio", "GM-000001", "Alergias no investigadas", "Firma y sello"]:
+                         "Alginato de sodio", "0801-1980-00001", "Alergias no investigadas", "Firma y sello"]:
             assert expected in text, (papel, expected)
 
 

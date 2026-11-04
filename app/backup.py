@@ -168,7 +168,8 @@ def export_all(db_path: str, files_dir: str, data_key: bytes, out_zip: str) -> P
         for r in conn.execute("SELECT f.*, p.mrn FROM files f JOIN patients p ON p.id = f.patient_id"):
             data = f.decrypt((Path(files_dir) / r["storage_name"]).read_bytes())
             safe = "".join(c if c.isalnum() or c in "-_ " else "_" for c in r["title"])[:60]
-            z.writestr(f"adjuntos/{r['mrn']}/{(r['study_date'] or r['uploaded_at'][:10])}_{safe}_{r['id'][:8]}.{ext[r['mime']]}", data)
+            mrn = "".join(c if c.isalnum() or c in "-_" else "_" for c in r["mrn"])   # el expediente puede ser el DNI (v0.25)
+            z.writestr(f"adjuntos/{mrn}/{(r['study_date'] or r['uploaded_at'][:10])}_{safe}_{r['id'][:8]}.{ext[r['mime']]}", data)
         z.writestr("LEAME.txt", "Exportación completa de GastroMed Pro.\n"
                    "datos/: un CSV por tabla (UTF-8). Las notas clínicas están en clinical_notes.csv (columna fields, JSON).\n"
                    "adjuntos/: estudios descifrados, agrupados por número de expediente.\n"

@@ -79,7 +79,8 @@ def test_exportacion_completa(env, tmp_path):
     names = z.namelist()
     assert "datos/patients.csv" in names and "datos/clinical_notes.csv" in names and "LEAME.txt" in names
     assert "Texto que debe sobrevivir" in z.read("datos/clinical_notes.csv").decode("utf-8-sig")
-    pdfs = [n for n in names if n.startswith("adjuntos/GM-000001/") and n.endswith(".pdf")]
+    pdfs = [n for n in names if n.startswith("adjuntos/0801-1980-00001/") and n.endswith(".pdf")]
+    assert pdfs, [n for n in names if n.startswith("adjuntos")]
     assert len(pdfs) == 1 and z.read(pdfs[0]) == PDF_OK
     users_csv = z.read("datos/users.csv").decode("utf-8-sig")
     assert "password_hash" not in users_csv and "mfa_secret" not in users_csv

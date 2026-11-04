@@ -20,6 +20,17 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
+## Etapa 25 · 4-nov-2026 · Número de expediente = DNI (v0.25.0 · en «desarrollo», falta su «ya»; incluye v0.24.1)
+
+**Pedido del Dr. Lainez:** «que el número de expediente sea el mismo que el DNI».
+- Paciente nuevo con DNI → `mrn` = DNI tal como queda guardado (formato 0801-1980-12345). Sin DNI (pasaporte, otro, sin documento) →
+  número automático GM-000001 como antes. Si otro paciente ya tiene ese número como expediente, se usa el automático.
+- Al editar y agregar/corregir el DNI, el expediente pasa a ser el DNI (auditoría `paciente_editado` con campo «mrn»).
+- Pacientes que ya existían con DNI: al abrir el programa, `sync_mrn_with_dni()` (en `create_app`) cambia su expediente al DNI una sola
+  vez, con auditoría `expediente_numero_dni` (antes/ahora). El número viejo GM-… sigue sirviendo para BUSCAR al paciente (queda en
+  `search_text`). Los documentos ya impresos con el número viejo no cambian.
+- Exportación: carpeta de adjuntos con el expediente saneado. Texto de ayuda en el formulario. Pruebas `tests/test_v025.py` (238).
+
 ## Etapa 24.1 · 4-nov-2026 · Documentos sin pie de programa (v0.24.1 · en «desarrollo», falta su «ya»)
 
 **Pedido del Dr. Lainez** (con captura del pie del informe): que en el informe de endoscopia y en cualquier documento generado NO salgan

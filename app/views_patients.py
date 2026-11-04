@@ -31,6 +31,35 @@ def get_patient_or_404(patient_id: str):
     return p
 
 
+def mrn_from_dni(db, org_id, data, current_id=None):
+    """v0.25.0 (pedido del Dr. Lainez): el número de expediente es el DNI. Devuelve el DNI si se puede usar (otro paciente no lo
+    tiene ya como expediente); si el paciente no tiene DNI devuelve None y se usa el número automático GM-000001."""
+    num = (data.get("document_number") or "").strip()
+    if data.get("document_type") != "dni" or not num:
+        return None
+    taken = db.execute("SELECT 1 FROM patients WHERE org_id = ? AND mrn = ? AND id <> ?", (org_id, num, current_id or "")).fetchone()
+    return None if taken else num
+
+
+def sync_mrn_with_dni(db) -> int:
+    """Pasa a los pacientes que YA existían con DNI a usar el DNI como número de expediente (se hace solo una vez por paciente;
+    el número anterior sigue sirviendo para buscarlo). Devuelve cuántos cambió."""
+    from .security import audit
+    rows = db.execute("SELECT id, org_id, mrn, document_number, search_text FROM patients WHERE document_type = 'dni'"
+                      " AND merged_into IS NULL AND COALESCE(trim(document_number), '') <> '' AND mrn <> trim(document_number)").fetchall()
+    changed = 0
+    for r in rows:
+        num = r["document_number"].strip()
+        if db.execute("SELECT 1 FROM patients WHERE org_id = ? AND mrn = ?", (r["org_id"], num)).fetchone():
+            continue
+        with write_tx(db):
+            db.execute("UPDATE patients SET mrn = ?, search_text = ? WHERE id = ?",
+                       (num, ((r["search_text"] or "") + " " + r["mrn"].lower()).strip(), r["id"]))
+            audit("expediente_numero_dni", "paciente", r["id"], {"antes": r["mrn"], "ahora": num}, db=db, org_id=r["org_id"])
+        changed += 1
+    return changed
+
+
 def _search_text(d) -> str:
     return " ".join(filter(None, [normalize(d.get("first_names")), normalize(d.get("last_names")), (d.get("mrn") or "").lower(),
                                   digits(d.get("document_number")), digits(d.get("phone"))]))
@@ -158,8 +187,10 @@ def new():
             pid = new_id()
             now = utcnow()
             with write_tx(db):
-                n = next_counter(db, g.user["org_id"], "mrn")
-                mrn = f"GM-{n:06d}"
+                mrn = mrn_from_dni(db, g.user["org_id"], data)
+                if not mrn:
+                    n = next_counter(db, g.user["org_id"], "mrn")
+                    mrn = f"GM-{n:06d}"
                 data_full = dict(data, mrn=mrn)
                 db.execute(
                     "INSERT INTO patients(id, org_id, mrn, first_names, last_names, birth_date, sex, document_type, document_number,"
@@ -171,7 +202,7 @@ def new():
                      _search_text(data_full), now, g.user["id"], now, g.user["id"]))
                 _set_reminder(db, pid, data["reminder_channel"], None)
                 audit("paciente_creado", "paciente", pid, {"mrn": mrn, "posible_duplicado_confirmado": bool(dups)}, db=db)
-            flash(f"Paciente registrado con el identificador {mrn}.", "ok")
+            flash(f"Paciente registrado. Número de expediente: {mrn}.", "ok")
             return redirect(url_for("patients.view", patient_id=pid))
     return render_template("pacientes/form.html", data=data, errors=errors, dups=dups, mode="new"), 422 if errors else 200
 
@@ -235,12 +266,17 @@ def edit(patient_id):
                 errors["document_number"] = f"Ya existe un expediente con este documento ({dup_doc['mrn']})."
         if not errors:
             changed = [f for f in ADMIN_FIELDS if (p[f] or None) != data[f]]
+            # si se agrega o corrige el DNI, el número de expediente pasa a ser el DNI (el anterior se puede seguir buscando)
+            new_mrn = mrn_from_dni(db, g.user["org_id"], data, p["id"]) or p["mrn"]
+            stext = _search_text(dict(data, mrn=new_mrn)) + ("" if new_mrn == p["mrn"] else " " + p["mrn"].lower())
+            if new_mrn != p["mrn"]:
+                changed.append("mrn")
             with write_tx(db):
                 cur = db.execute(
                     "UPDATE patients SET " + ", ".join(f"{f} = ?" for f in ADMIN_FIELDS) +
-                    ", search_text = ?, updated_at = ?, updated_by = ?, version = version + 1"
+                    ", mrn = ?, search_text = ?, updated_at = ?, updated_by = ?, version = version + 1"
                     " WHERE id = ? AND org_id = ? AND version = ?",
-                    [data[f] for f in ADMIN_FIELDS] + [_search_text(dict(data, mrn=p["mrn"])), utcnow(), g.user["id"],
+                    [data[f] for f in ADMIN_FIELDS] + [new_mrn, stext, utcnow(), g.user["id"],
                                                         p["id"], g.user["org_id"], version])
                 if cur.rowcount == 0:
                     abort(409, description="Otro usuario modificó este expediente mientras usted lo editaba. "

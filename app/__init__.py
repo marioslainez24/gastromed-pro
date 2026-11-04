@@ -10,7 +10,7 @@ from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.24.1"
+APP_VERSION = "0.25.0"
 
 
 def _loopback(addr) -> bool:
@@ -143,4 +143,12 @@ def create_app(config: Config | None = None) -> Flask:
     app.jinja_env.globals["dict"] = dict
     app.jinja_env.filters["zip_self"] = lambda seq: [(x, x) for x in seq]
     app.jinja_env.globals["SESSION_COOKIE"] = SESSION_COOKIE
+    # v0.25.0: pacientes ya registrados con DNI pasan a tener el DNI como número de expediente (solo cambia los que faltan)
+    with app.app_context():
+        from .db import get_db as _gdb
+        from .views_patients import sync_mrn_with_dni
+        try:
+            sync_mrn_with_dni(_gdb())
+        except Exception as e:  # noqa: BLE001  (nunca impide abrir el programa)
+            app.logger.warning("No se pudo actualizar el número de expediente con el DNI: %s", type(e).__name__)
     return app

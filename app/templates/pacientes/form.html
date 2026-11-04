@@ -37,7 +37,8 @@
       </label>
       {{ field('document_number', 'Número de documento', attrs='maxlength="40" inputmode="text" placeholder="0801-1990-12345" data-doc-number') }}
     </div>
-    <p class="muted small">El sistema asigna un número de expediente interno (GM-…) independiente del documento. Se admiten pacientes sin documento.</p>
+    <p class="muted small">Si el paciente tiene <b>DNI</b>, ese será su <b>número de expediente</b>. Sin DNI (pasaporte, otro documento o sin
+      documento) el programa le asigna un número automático (GM-…).</p>
   </fieldset>
   <fieldset>
     <legend>Contacto</legend>

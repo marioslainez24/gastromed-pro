@@ -35,7 +35,7 @@ def test_etiquetas_de_frascos(env):
     r = med.get(f"/procedimientos/{proc}/etiquetas?papel=carta")
     t = pdf_text(r.data)
     assert r.status_code == 200 and "FRASCO 1" in t and "FRASCO 2" in t and "Recto, biopsias aleatorias" in t and "4 fragmento(s)" in t
-    assert "Exp. GM-" in t
+    assert "Exp. 0801" in t          # v0.25: el expediente es el DNI
 
 
 def test_hallazgos_con_clics_frases_y_sugerencias_existen_en_catalogo():
