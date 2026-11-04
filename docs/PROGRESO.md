@@ -20,7 +20,7 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
-## Etapa 23 · 3-nov-2026 · Descartar informes de endoscopia finalizados (v0.23.0 · en «desarrollo», falta su «ya»)
+## Etapa 23 · 3-nov-2026 · Descartar informes de endoscopia finalizados (v0.23.0 · PUBLICADA 3-nov-2026 como v0.23.0-29, solo Windows)
 
 **Pedido del Dr. Lainez:** poder descartar un informe ya finalizado desde la lista de procedimientos del paciente.
 - Botón «✕ Descartar» en cada informe FINALIZADO (lista del paciente y al final del informe). Pide el **motivo** (mínimo 3 letras) y
