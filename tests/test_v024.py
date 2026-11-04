@@ -86,7 +86,7 @@ def test_activar_y_reiniciar(env, keys, tmp_path):
     assert c.get("/pacientes").headers["Location"].endswith("/activar")
 
 
-def test_titular_en_el_programa_y_en_los_pdf(env, keys, tmp_path):
+def test_titular_en_el_programa_y_no_en_los_pdf(env, keys, tmp_path):
     from pypdf import PdfReader
     from tests.test_fase3 import full_form, new_proc, version
     f = tmp_path / "licencia.txt"
@@ -99,10 +99,19 @@ def test_titular_en_el_programa_y_en_los_pdf(env, keys, tmp_path):
     proc = new_proc(med, pid, tok, "eda")
     med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc)))
     txt = PdfReader(io.BytesIO(med.get(f"/procedimientos/{proc}/pdf").data)).pages[0].extract_text()
-    assert "Licencia de uso: Dr. Mario Lainez" in txt
+    # v0.24.1: el titular se ve en el programa, pero los documentos no llevan ese pie (pedido del Dr. Lainez)
+    assert "Licencia de uso" not in txt and "Generado con GastroMed" not in txt
 
 
 def test_en_pruebas_y_desarrollo_no_se_exige(env):
     L.configure(None)
     assert L.active() and L.holder() == ""
     assert env["app"].test_client().get("/ingresar").status_code == 200
+
+
+def test_ningun_documento_lleva_pie_de_programa():
+    import inspect
+    from app import pdf
+    src = inspect.getsource(pdf)
+    assert "Generado con GastroMed" not in src.replace("NO llevan pie con «Generado con GastroMed Pro»", "")
+    assert "Licencia de uso" not in src

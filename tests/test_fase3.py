@@ -103,8 +103,9 @@ def test_informe_completo_imagenes_pdf_patologia(env):
     pdf = PdfReader(io.BytesIO(r.data))
     text = "\n".join(pg.extract_text() for pg in pdf.pages)
     for t in ["INFORME DE COLONOSCOPIA", "Sigmoides", "París 0-Is", "Boston", "total 8/9", "Frasco 1", "Pólipo sésil de 6 mm",
-              "1: pólipo", "Informe finalizado"]:
+              "1: pólipo"]:
         assert t in text, t
+    assert "BORRADOR" not in text          # finalizado (v0.24.1: sin pie «Informe finalizado»)
     assert sum(len(pg.images) for pg in pdf.pages) == 1
     # Patología: enviar → resultado → comunicar y cerrar
     sid = db.execute("SELECT id FROM specimens").fetchone()[0]

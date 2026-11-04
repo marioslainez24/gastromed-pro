@@ -171,4 +171,4 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | Descartar informes de endoscopia finalizados (con motivo; no se borran; fuera de listas y estadísticas) | ✅ probado (pruebas + navegador); publicado en v0.23.0 |
 | Repositorio privado (código y descargas solo para el titular) | ⬜ lo hace el Dr. Lainez en GitHub (Settings → Change visibility) |
 | Activación por computadora con clave firmada; generador en GitHub Actions | ✅ probado (pruebas + prueba completa del programa + navegador); publicado en v0.24.0 (secreto creado) |
-| Titular de la licencia visible en el programa y en todos los PDF | ✅ probado; publicado en v0.24.0 |
+| Titular de la licencia visible en el programa (los PDF ya no llevan pie, a pedido, v0.24.1) | ✅ probado |

@@ -20,6 +20,13 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
+## Etapa 24.1 · 4-nov-2026 · Documentos sin pie de programa (v0.24.1 · en «desarrollo», falta su «ya»)
+
+**Pedido del Dr. Lainez** (con captura del pie del informe): que en el informe de endoscopia y en cualquier documento generado NO salgan
+«Licencia de uso: …» ni «Generado con GastroMed Pro. Informe finalizado; requiere firma manuscrita.». Se quitaron de TODOS los PDF
+(informe, receta, órdenes, documentos, hojas). Queda solo «Página N» y la marca de agua BORRADOR en los borradores. El titular de la
+licencia sigue visible en el pie del PROGRAMA (pantalla), no en los documentos. 234 pruebas.
+
 ## Etapa 24 · 4-nov-2026 · Protección contra copia: licencia por computadora (v0.24.0 · PUBLICADA 4-nov-2026 como v0.24.0-30, solo Windows)
 
 **Pedido del Dr. Lainez:** «que tenga más seguridad para que nadie me lo robe y pueda usarlo en su clínica». Eligió las tres medidas:

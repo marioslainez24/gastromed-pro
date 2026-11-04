@@ -54,17 +54,7 @@ def _sig_img(assets):
     return _img_flowable(assets["firma"], 60 * mm, 15 * mm)
 
 
-def _gen() -> str:
-    """Inicio del pie de los documentos."""
-    from . import license as L
-    return "Generado con GastroMed Pro"
-
-
-def _draw_license(canvas, x, y):
-    """Línea con el titular de la licencia, justo encima del pie (v0.24.0)."""
-    from . import license as L
-    if L.holder():
-        canvas.drawString(x, y, f"Licencia de uso: {L.holder()}")
+# v0.24.1: los documentos NO llevan pie con «Generado con GastroMed Pro» ni el titular de la licencia (pedido del Dr. Lainez).
 
 
 def _e(s) -> str:
@@ -144,9 +134,6 @@ def prescription_pdf(r, items, p, s, size: str, allergies, assets=None) -> bytes
         canvas.saveState()
         canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(MUTED)
-        _draw_license(canvas, 18 * mm, 12 * mm + 3.6 * mm)
-        canvas.drawString(18 * mm, 12 * mm, _gen() + ". Requiere firma manuscrita del médico; "
-                                           "este documento no contiene firma electrónica verificable.")
         canvas.drawRightString(pagesize[0] - 18 * mm, 12 * mm, f"Página {d.page}")
         if voided:
             canvas.setFont("Helvetica-Bold", 64)
@@ -237,8 +224,6 @@ def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str, a
         canvas.saveState()
         canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(MUTED)
-        _draw_license(canvas, 18 * mm, 12 * mm + 3.6 * mm)
-        canvas.drawString(18 * mm, 12 * mm, _gen() + ". Requiere firma manuscrita del médico.")
         canvas.drawRightString(pagesize[0] - 18 * mm, 12 * mm, f"Página {d.page}")
         if voided:
             canvas.setFont("Helvetica-Bold", 64)
@@ -568,9 +553,6 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
         canvas.saveState()
         canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(MUTED)
-        _draw_license(canvas, 16 * mm, 11 * mm + 3.6 * mm)
-        canvas.drawString(16 * mm, 11 * mm, _gen() + ". " + ("Informe finalizado; requiere firma manuscrita." if signed
-                                                                            else "BORRADOR: no válido como informe definitivo."))
         canvas.drawRightString(pagesize[0] - 16 * mm, 11 * mm, f"Página {dd.page}")
         if not signed:
             canvas.setFont("Helvetica-Bold", 60)
@@ -624,8 +606,6 @@ def document_pdf(d, p, s, size, assets=None) -> bytes:
         canvas.saveState()
         canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(MUTED)
-        _draw_license(canvas, 22 * mm, 12 * mm + 3.6 * mm)
-        canvas.drawString(22 * mm, 12 * mm, _gen() + ". Válido solo con firma manuscrita y sello del médico.")
         if voided:
             canvas.setFont("Helvetica-Bold", 60)
             canvas.setFillColor(colors.Color(0.7, 0.1, 0.1, alpha=0.25))
@@ -717,7 +697,6 @@ def sheet_pdf(title, body, s, size, assets=None) -> bytes:
         canvas.saveState()
         canvas.setFont("Helvetica", 7.5)
         canvas.setFillColor(MUTED)
-        _draw_license(canvas, 15 * mm, 5 * mm)
         canvas.restoreState()
 
     doc.build(story, onFirstPage=on_page, onLaterPages=on_page)
