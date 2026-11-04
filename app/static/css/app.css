@@ -570,3 +570,9 @@ ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15r
 .style-card.is-current { border-color: var(--accent); }
 .style-card input[type=radio] { width: 1.15rem; height: 1.15rem; min-height: 0; margin: 0 .45rem 0 0; padding: 0; vertical-align: -3px; accent-color: var(--accent); }
 .style-card .row-between > span:first-child { display: inline-flex; align-items: center; }
+.btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.void-details { display: inline-block; vertical-align: middle; }
+.void-details > summary { list-style: none; display: inline-flex; }
+.void-details > summary::-webkit-details-marker { display: none; }
+.void-details[open] { display: block; margin-top: .4rem; }
+.void-form input { min-width: 16rem; }

@@ -11,7 +11,8 @@
       <span class="tag {{ 'tag-ok' if r.status == 'finalizado' else 'tag-warn' }}">{{ 'Finalizado' if r.status == 'finalizado' else 'Borrador' }}</span>
       {% if r.status == 'borrador' and r.author_id == current_user.id and can('clinico.editar') %}<form method="post" class="discard-form" action="{{ url_for('endo.proc_discard', proc_id=r.id) }}"
         data-confirm="¿Descartar este borrador de {{ D.KINDS[r.kind]|lower }} del {{ fmt_birth(r.performed_on) }}? Dejará de aparecer en las listas y no se podrá recuperar desde el programa.">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-quiet btn-sm" type="submit">✕ Descartar</button></form>{% endif %}</span></li>{% endfor %}</ul>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="btn btn-quiet btn-sm" type="submit">✕ Descartar</button></form>{% endif %}
+      {% if can_void(r) %}{% include "endo/_anular.html" %}{% endif %}</span></li>{% endfor %}</ul>
   {% else %}<p class="muted small">Sin procedimientos.</p>{% endif %}
 </section>
 {% if stents %}<section class="card"><h2>Prótesis</h2><ul class="list">{% for s in stents %}<li>{{ s.kind }}{% if s.description %} · {{ s.description }}{% endif %} · {{ fmt_birth(s.placed_on) }}{% if s.review_due %} · revisión {{ fmt_birth(s.review_due) }}{% endif %} · <b>{{ s.status }}</b></li>{% endfor %}</ul></section>{% endif %}

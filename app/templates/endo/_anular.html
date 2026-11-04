@@ -1,0 +1,10 @@
+{# Descartar un informe FINALIZADO: pide el motivo; el informe no se borra (queda en la base y en la auditoría) #}
+<details class="inline-details void-details"><summary class="btn btn-quiet btn-sm btn-danger-quiet">✕ Descartar</summary>
+  <form method="post" action="{{ url_for('endo.proc_void', proc_id=r.id) }}" class="stack mt void-form"
+    data-confirm="¿Descartar el informe FINALIZADO de {{ D.KINDS[r.kind]|lower }} del {{ fmt_birth(r.performed_on) }}? Dejará de aparecer en las listas, búsquedas y estadísticas. No se borra: queda guardado con el motivo en la auditoría.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
+    <input name="reason" required minlength="3" maxlength="300" placeholder="Motivo (ej.: duplicado, paciente equivocado)" aria-label="Motivo para descartar">
+    <button class="btn btn-sm btn-danger" type="submit">Descartar informe</button>
+  </form>
+</details>

@@ -457,5 +457,11 @@
     <button class="btn" type="submit">Agregar adenda</button></form>
   {% endif %}
 </section>
+{% if can_void(pr) %}{% set r = pr %}
+<section class="card"><h2>Descartar este informe</h2>
+  <p class="muted small">Use esta opción solo si el informe está duplicado o se hizo por error. No se borra: deja de aparecer en las listas,
+    búsquedas y estadísticas, y queda guardado en la auditoría con el motivo.</p>
+  {% include "endo/_anular.html" %}
+</section>{% endif %}
 {% endif %}
 {% endblock %}

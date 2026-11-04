@@ -168,3 +168,4 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | Tipo de atención en el informe (consulta externa / sala / emergencia, sala y cama, hospital) para usarlo también en hospitales | ✅ probado (pruebas + navegador); publicado en v0.22.0 |
 | Endoscopista 1 y Endoscopista 2 (dos firmas) + Asistentes 1 a 3 en el informe | ✅ probado (pruebas + navegador + PDF); publicado en v0.22.0 |
 | Tres estilos del informe de endoscopia (Clásico, Formal, Moderno) elegibles en Ajustes, con ejemplo ficticio | ✅ probado (pruebas + navegador + PDF); publicado en v0.22.0 |
+| Descartar informes de endoscopia finalizados (con motivo; no se borran; fuera de listas y estadísticas) | ✅ probado (pruebas + navegador); se publica con su «ya» |

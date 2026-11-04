@@ -24,7 +24,7 @@ def summary(db, p, approved=None):
     # Último estudio endoscópico finalizado de cada tipo
     procs = []
     for r in db.execute("SELECT id, kind, performed_on, data, surveillance_due FROM procedures WHERE patient_id = ? AND status = 'finalizado'"
-                        " ORDER BY performed_on DESC", (pid,)):
+                        " AND discarded_at IS NULL ORDER BY performed_on DESC", (pid,)):
         if r["kind"] in {x["kind"] for x in procs}:
             continue
         concl = (json.loads(r["data"]).get("conclusion") or "").strip()

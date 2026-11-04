@@ -41,7 +41,9 @@ def test_informe_finalizado_no_se_puede_descartar(env):
     med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), then="finalizar"))
     med.post(f"/procedimientos/{proc}/finalizar", data={"csrf_token": tok, "version": version(env, proc)})
     assert env["db"].execute("SELECT status FROM procedures WHERE id = ?", (proc,)).fetchone()[0] == "finalizado"
-    assert "Descartar" not in med.get(f"/pacientes/{pid}/procedimientos").get_data(as_text=True)
+    lista = med.get(f"/pacientes/{pid}/procedimientos").get_data(as_text=True)
+    # v0.23.0: el finalizado ya no usa el descarte de borradores; tiene su propio «Descartar» con motivo (/anular)
+    assert f"/procedimientos/{proc}/descartar" not in lista and f"/procedimientos/{proc}/anular" in lista
     assert med.post(f"/procedimientos/{proc}/descartar", data={"csrf_token": tok}).status_code == 409
     with pytest.raises(sqlite3.DatabaseError):
         env["db"].execute("UPDATE procedures SET discarded_at = '2026-11-01' WHERE id = ?", (proc,))

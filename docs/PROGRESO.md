@@ -20,6 +20,18 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
+## Etapa 23 · 3-nov-2026 · Descartar informes de endoscopia finalizados (v0.23.0 · en «desarrollo», falta su «ya»)
+
+**Pedido del Dr. Lainez:** poder descartar un informe ya finalizado desde la lista de procedimientos del paciente.
+- Botón «✕ Descartar» en cada informe FINALIZADO (lista del paciente y al final del informe). Pide el **motivo** (mínimo 3 letras) y
+  confirmación. Lo puede hacer el autor del informe (con permiso de finalizar) o quien administra Ajustes (propietario).
+- El informe **no se borra ni cambia**: migración 0019 crea `procedure_voids` (motivo, quién, cuándo; sin modificar ni borrar) y
+  reemplaza los triggers para permitir SOLO marcar `discarded_at`/`discarded_by` de un finalizado que ya tiene su anulación registrada
+  (cualquier otro cambio sigue bloqueado). Auditoría `procedimiento_finalizado_descartado` con motivo y huella (sha256).
+- Desaparece de listas, resumen del paciente, búsquedas, controles pendientes, patología pendiente, calidad y estadísticas; su PDF y
+  la vista dan 404; no se puede enviar por correo.
+- Pruebas: `tests/test_v023.py` (227 en total).
+
 ## Etapa 22 · 2/3-nov-2026 · Mejoras tras usarlo con un paciente real + Mac preparada (v0.22.0 · PUBLICADA 3-nov-2026 como v0.22.0-28, solo Windows)
 
 **Pedido del Dr. Lainez:** «hazme una versión para que se pueda ejecutar en Mac».

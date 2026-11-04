@@ -142,7 +142,7 @@ def proc_view(proc_id):
         " AND COALESCE(json_extract(data, '$.facility'), '') <> '' GROUP BY f ORDER BY MAX(created_at) DESC LIMIT 20",
         (g.user["org_id"],))] if editable else []
     asis = list(data.get("assistants_list") or ([data["assistants"]] if data.get("assistants") else []))
-    return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, prev=prev, A=A,
+    return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, prev=prev, A=A, can_void=can_void,
                            staff_med=staff_med, staff_asi=staff_asi, asis=(asis + ["", "", ""])[:3], facilities=facilities,
                            endoscopist=data.get("endoscopist") or (staff_med[0] if staff_med else ""),
                            anat_svg=Markup(A.svg(pr["kind"], data.get("marks") or [], interactive=editable)),
@@ -372,6 +372,38 @@ def proc_discard(proc_id):
                    (utcnow(), g.user["id"], pr["id"]))
         audit("procedimiento_descartado", "procedimiento", pr["id"], {"tipo": pr["kind"], "fecha": pr["performed_on"]}, db=db)
     flash(f"Borrador de {D.KINDS[pr['kind']].lower()} del {pr['performed_on'][8:10]}/{pr['performed_on'][5:7]}/{pr['performed_on'][:4]} descartado.", "ok")
+    if request.form.get("back") == "endoscopia":
+        return redirect(url_for("endo.index"))
+    return redirect(url_for("endo.patient_procs", patient_id=pr["patient_id"]))
+
+
+def can_void(pr):
+    """Descartar un informe FINALIZADO: su autor (si puede finalizar informes) o quien administra Ajustes."""
+    return pr["status"] == "finalizado" and ((pr["author_id"] == g.user["id"] and can("notas.finalizar")) or can("ajustes.editar"))
+
+
+@bp.route("/procedimientos/<proc_id>/anular", methods=["POST"])
+@require("clinico.editar")
+def proc_void(proc_id):
+    """Quita de las listas un informe FINALIZADO (duplicado o hecho por error). No se borra ni cambia: queda con su motivo en la
+    base y en la auditoría (v0.23.0)."""
+    pr = _get_proc(proc_id)
+    if not can_void(pr):
+        abort(409, description="Solo el autor del informe o quien administra el programa puede descartar un informe finalizado.")
+    reason = (request.form.get("reason") or "").strip()[:300]
+    if len(reason) < 3:
+        flash("Escriba el motivo para descartar el informe (por ejemplo: duplicado, paciente equivocado).", "error")
+        return redirect(request.referrer or url_for("endo.patient_procs", patient_id=pr["patient_id"]))
+    db = get_db()
+    now = utcnow()
+    with write_tx(db):
+        db.execute("INSERT INTO procedure_voids(id, org_id, procedure_id, reason, voided_by, voided_at) VALUES (?,?,?,?,?,?)",
+                   (new_id(), g.user["org_id"], pr["id"], reason, g.user["id"], now))
+        db.execute("UPDATE procedures SET discarded_at = ?, discarded_by = ? WHERE id = ?", (now, g.user["id"], pr["id"]))
+        audit("procedimiento_finalizado_descartado", "procedimiento", pr["id"],
+              {"tipo": pr["kind"], "fecha": pr["performed_on"], "motivo": reason, "sha256": pr["content_sha256"]}, db=db)
+    flash(f"Informe de {D.KINDS[pr['kind']].lower()} del {pr['performed_on'][8:10]}/{pr['performed_on'][5:7]}/{pr['performed_on'][:4]} descartado. "
+          "Se conserva en la base y en la auditoría con el motivo.", "ok")
     if request.form.get("back") == "endoscopia":
         return redirect(url_for("endo.index"))
     return redirect(url_for("endo.patient_procs", patient_id=pr["patient_id"]))
@@ -744,11 +776,11 @@ def index():
                         " WHERE pr.org_id = ? AND pr.discarded_at IS NULL ORDER BY pr.performed_on DESC, pr.created_at DESC LIMIT 50", (org,)).fetchall()
     path = db.execute("SELECT s.*, p.first_names, p.last_names, pr.kind, pr.performed_on FROM specimens s JOIN patients p ON p.id = s.patient_id"
                       " JOIN procedures pr ON pr.id = s.procedure_id WHERE s.org_id = ? AND s.status IN ('pendiente_envio','enviado','resultado_recibido')"
-                      " ORDER BY pr.performed_on", (org,)).fetchall()
+                      " AND pr.discarded_at IS NULL ORDER BY pr.performed_on", (org,)).fetchall()
     recalls = db.execute("SELECT pr.*, p.first_names, p.last_names, p.mrn FROM procedures pr JOIN patients p ON p.id = pr.patient_id"
-                         " WHERE pr.org_id = ? AND pr.status = 'finalizado' AND pr.surveillance_due IS NOT NULL"
+                         " WHERE pr.org_id = ? AND pr.status = 'finalizado' AND pr.discarded_at IS NULL AND pr.surveillance_due IS NOT NULL"
                          " AND pr.surveillance_due <= date(?, '+60 days') AND NOT EXISTS (SELECT 1 FROM procedures p2 WHERE p2.patient_id = pr.patient_id"
-                         " AND p2.kind = pr.kind AND p2.performed_on > pr.performed_on) ORDER BY pr.surveillance_due", (org, today)).fetchall()
+                         " AND p2.kind = pr.kind AND p2.discarded_at IS NULL AND p2.performed_on > pr.performed_on) ORDER BY pr.surveillance_due", (org, today)).fetchall()
     stents = db.execute("SELECT s.*, p.first_names, p.last_names FROM stents s JOIN patients p ON p.id = s.patient_id"
                         " WHERE s.org_id = ? AND s.status = 'colocada' ORDER BY COALESCE(s.review_due, '9999')", (org,)).fetchall()
     return render_template("endo/index.html", recent=recent, path=path, recalls=recalls, stents=stents, today=today, D=D)
@@ -764,14 +796,14 @@ def patient_procs(patient_id):
                       " FROM procedures pr JOIN users u ON u.id = pr.author_id WHERE pr.patient_id = ?"
                       " AND pr.discarded_at IS NULL ORDER BY pr.performed_on DESC, pr.created_at DESC", (p["id"],)).fetchall()
     stents = db.execute("SELECT * FROM stents WHERE patient_id = ? ORDER BY placed_on DESC", (p["id"],)).fetchall()
-    return render_template("endo/paciente.html", p=p, rows=rows, stents=stents, D=D, today=local_today().isoformat())
+    return render_template("endo/paciente.html", p=p, rows=rows, stents=stents, D=D, today=local_today().isoformat(), can_void=can_void)
 
 
 # ------------------------------------------------------------------------------------------------ indicadores de calidad
 def quality_metrics(db, org, start, end, author=None):
     base = ("SELECT pr.*, (SELECT COUNT(*) FROM specimens s WHERE s.procedure_id = pr.id AND s.result_category IN "
             "('adenoma_tubular','adenoma_tubulovelloso','adenoma_velloso')) AS adenomas FROM procedures pr WHERE pr.org_id = ?"
-            " AND pr.status = 'finalizado' AND pr.kind = 'colonoscopia' AND pr.performed_on BETWEEN ? AND ?")
+            " AND pr.status = 'finalizado' AND pr.discarded_at IS NULL AND pr.kind = 'colonoscopia' AND pr.performed_on BETWEEN ? AND ?")
     params = [org, start, end]
     if author:
         base += " AND pr.author_id = ?"
