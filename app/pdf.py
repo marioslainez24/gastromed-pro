@@ -343,7 +343,12 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
                       f"Equipo: {scope['name']}" + (f" (serie {scope['serial']})" if scope and scope['serial'] else "") if scope else None,
                       f"Asistentes: {d['assistants']}" if d.get("assistants") else None,
                       f"Horario: {d.get('start_time') or '?'}–{d.get('end_time') or '?'}" if d.get("start_time") else None] if x]
-    sec("Evaluación previa, preparación y sedación", "\n".join(pre + eq))
+    # Endoscopistas y asistentes en NEGRITA (pedido del Dr. Lainez, 3-nov-2026); el resto del bloque igual
+    staff_prefixes = ("Endoscopista", "Asistentes:")
+    lines = [f"<b>{_e(x)}</b>" if x.startswith(staff_prefixes) else _e(x) for x in pre + eq]
+    story.append(Paragraph("Evaluación previa, preparación y sedación", ST["title"]))
+    story.append(Paragraph("<br/>".join(l.replace("\n", "<br/>") for l in lines), ST["body"]))
+    story.append(Spacer(1, 2 * mm))
     ext = dict(D.EXTENT[pr["kind"]]).get(pr["extent"] or "", "")
     tech = [f"Extensión: {ext}" if ext else None,
             ("Estudio completo" if pr["complete"] == 1 else ("Estudio incompleto" + (f": {d['incomplete_reason']}" if d.get("incomplete_reason") else "")))
@@ -437,7 +442,7 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     signed = pr["status"] == "finalizado"
     def sig_block(name, role, own_assets):
         img = _sig_img(own_assets)
-        t = Table([[img], [Paragraph(f"<b>{_e(name)}</b><br/>{role} · Nombre, firma y sello", ST["sub"])]],
+        t = Table([[img], [Paragraph(f"<b>{_e(name)}</b><br/><b>{role}</b> · Nombre, firma y sello", ST["sub"])]],
                   colWidths=[78 * mm], rowHeights=[16 * mm if img else 13 * mm, None])
         t.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
         return t

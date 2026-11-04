@@ -236,3 +236,25 @@ def test_dos_endoscopistas_y_tres_asistentes(env):
     assert json.loads(db.execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])["endoscopist_2"] is None
     txt = " ".join(_pdf_text(med.get(f"/procedimientos/{proc}/pdf").data).split())
     assert "Endoscopista 2" not in txt and "Endoscopista · Nombre, firma y sello" in txt
+
+
+def test_endoscopistas_y_asistentes_en_negrita(env):
+    import io
+    from pypdf import PdfReader
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import full_form, new_proc, version
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    med.post("/ajustes/personal-endoscopia", data={"csrf_token": tok, "action": "agregar", "role": "asistente", "name": "Enf. Uno Ficticia"})
+    proc = new_proc(med, create_patient(med), tok, "eda")
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), assistant_1="Enf. Uno Ficticia"))
+    page = PdfReader(io.BytesIO(med.get(f"/procedimientos/{proc}/pdf").data)).pages[0]
+    fonts = {}
+
+    def visit(text, cm, tm, font, size):
+        if text.strip():
+            fonts[text.strip()] = (font or {}).get("/BaseFont", "")
+    page.extract_text(visitor_text=visit)
+    staff = [t for t in fonts if t.startswith(("Endoscopista:", "Asistentes:"))]
+    assert staff and all("Bold" in fonts[t] for t in staff), fonts
+    assert "Bold" not in fonts.get("Clasificación ASA: II", "")
