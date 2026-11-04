@@ -258,3 +258,34 @@ def test_endoscopistas_y_asistentes_en_negrita(env):
     staff = [t for t in fonts if t.startswith(("Endoscopista:", "Asistentes:"))]
     assert staff and all("Bold" in fonts[t] for t in staff), fonts
     assert "Bold" not in fonts.get("Clasificación ASA: II", "")
+
+
+def test_estilos_del_informe(env):
+    import io
+    import sqlite3
+    import pytest as _pt
+    from pypdf import PdfReader
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import full_form, new_proc, version
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    html = med.get("/ajustes/estilo-informe").get_data(as_text=True)
+    assert "Formal" in html and "Moderno" in html and "En uso" in html
+    proc = new_proc(med, create_patient(med), tok, "eda")
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc)))
+    fonts = {}
+    for st in ("clasico", "formal", "moderno"):
+        assert med.post("/ajustes/estilo-informe", data={"csrf_token": tok, "report_style": st}).status_code == 302
+        assert env["db"].execute("SELECT report_style FROM clinic_settings").fetchone()[0] == st
+        data = med.get(f"/procedimientos/{proc}/pdf").data
+        page = PdfReader(io.BytesIO(data)).pages[0]
+        fonts[st] = {str(f["/BaseFont"]) for f in page["/Resources"]["/Font"].values()}
+        txt = " ".join("".join(pg.extract_text() for pg in PdfReader(io.BytesIO(data)).pages).split())
+        assert "Pólipo sésil de 6 mm resecado." in txt and "Nombre, firma y sello" in txt          # mismo contenido
+        ej = med.get(f"/ajustes/estilo-informe/ejemplo?estilo={st}")
+        assert ej.status_code == 200 and ej.data[:4] == b"%PDF" and "De Ejemplo" in "".join(p.extract_text() for p in PdfReader(io.BytesIO(ej.data)).pages)
+    assert any("Times" in f for f in fonts["formal"]) and not any("Times" in f for f in fonts["clasico"])
+    assert med.post("/ajustes/estilo-informe", data={"csrf_token": tok, "report_style": "otro"}).status_code == 400
+    assert login(env["app"], "recepcion").get("/ajustes/estilo-informe").status_code == 403
+    with _pt.raises(sqlite3.DatabaseError):
+        env["db"].execute("UPDATE clinic_settings SET report_style = 'raro'")

@@ -564,3 +564,9 @@ ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15r
 .gal-bottom img.on { opacity: 1; border-color: #fff; }
 .gal-top a { color: #fff; }
 @media (max-width: 600px) { .gal-stage img { left: .3rem; width: calc(100% - .6rem); height: calc(100% - 3.5rem); } .gal-prev, .gal-next { top: auto; bottom: .3rem; transform: none; } }
+.style-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .8rem; }
+.style-card { display: grid; gap: .5rem; cursor: pointer; }
+.style-card .btn { justify-self: start; }
+.style-card.is-current { border-color: var(--accent); }
+.style-card input[type=radio] { width: 1.15rem; height: 1.15rem; min-height: 0; margin: 0 .45rem 0 0; padding: 0; vertical-align: -3px; accent-color: var(--accent); }
+.style-card .row-between > span:first-child { display: inline-flex; align-items: center; }

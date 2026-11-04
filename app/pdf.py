@@ -254,8 +254,102 @@ def _annotated_jpeg(raw: bytes, annotations: list, max_px=900) -> bytes:
     return out.getvalue()
 
 
-def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, endo=None, allergies=(), endo2=None) -> bytes:
+# ---- Estilos del informe de endoscopia (v0.22.0, a pedido del Dr. Lainez) ----------------------------------------------------
+REPORT_STYLES = {"clasico": "Clásico (verde, con recuadro de color)", "formal": "Formal (blanco y negro, letra tipo libro)",
+                 "moderno": "Moderno (franja de color arriba)"}
+
+
+def _report_styles(style):
+    if style == "formal":
+        b = dict(fontName="Times-Roman", fontSize=12.5, leading=16, textColor=colors.black)
+        return {"doctor": ParagraphStyle("f-doc", **{**b, "fontName": "Times-Bold", "fontSize": 18, "leading": 22, "alignment": 1}),
+                "sub": ParagraphStyle("f-sub", **{**b, "fontSize": 11, "leading": 14, "alignment": 1}),
+                "subr": ParagraphStyle("f-subr", **{**b, "fontSize": 11, "leading": 14, "alignment": 2}),
+                "title": ParagraphStyle("f-title", **{**b, "fontName": "Times-Bold", "fontSize": 13, "leading": 16}),
+                "body": ParagraphStyle("f-body", **b), "small": ParagraphStyle("f-small", **{**b, "fontSize": 10.5, "leading": 13}),
+                "head": ParagraphStyle("f-head", **{**b, "fontName": "Times-Bold", "fontSize": 14, "leading": 18, "alignment": 1})}
+    if style == "moderno":
+        white = colors.white
+        return {**ST, "doctor": ParagraphStyle("m-doc", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 18, "leading": 22, "textColor": white}),
+                "sub": ParagraphStyle("m-sub", **{**_base, "fontSize": 10.5, "leading": 13.5, "textColor": colors.HexColor("#d7ece9")}),
+                "sigsub": ST["sub"],
+                "title": ParagraphStyle("m-title", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 13, "leading": 16, "textColor": ACCENT}),
+                "head": ParagraphStyle("m-head", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 15, "leading": 19, "textColor": ACCENT}),
+                "subr": ParagraphStyle("m-subr", **{**_base, "fontSize": 11, "leading": 14, "textColor": MUTED, "alignment": 2})}
+    return ST
+
+
+def _report_header(style, X, name, sub, title, date_txt, assets, width):
+    """Encabezado del informe según el estilo elegido en Ajustes."""
+    if style == "formal":
+        out = []
+        if assets and assets.get("logo"):
+            logo = _img_flowable(assets["logo"], 30 * mm, 20 * mm)
+            logo.hAlign = "CENTER"
+            out.append(logo)
+        out.append(Paragraph(_e(name), X["doctor"]))
+        if sub:
+            out.append(Paragraph(_e(" · ".join(sub)), X["sub"]))
+        t = Table([[Paragraph(_e(title), X["head"])]], colWidths=[width])
+        t.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.5, colors.black), ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.black),
+                               ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
+        return out + [Spacer(1, 2 * mm), t, Spacer(1, 1 * mm), Paragraph(date_txt, X["subr"])]
+    if style == "moderno":
+        txt = [Paragraph(_e(name), X["doctor"])] + ([Paragraph(_e(" · ".join(sub)), X["sub"])] if sub else [])
+        if assets and assets.get("logo"):
+            logo = _img_flowable(assets["logo"], 26 * mm, 18 * mm)
+            band = Table([[txt, logo]], colWidths=[width - 34 * mm, 34 * mm])
+        else:
+            band = Table([[txt]], colWidths=[width])
+        band.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), ACCENT), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                                  ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                                  ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
+                                  ("ALIGN", (-1, 0), (-1, 0), "RIGHT")]))
+        head = Table([[Paragraph(_e(title), X["head"]), Paragraph(date_txt, X["subr"])]], colWidths=[width * 0.65, width * 0.35])
+        head.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "BOTTOM"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                                  ("TOPPADDING", (0, 0), (-1, -1), 6)]))
+        return [band, Spacer(1, 1 * mm), head]
+    story = [Paragraph(_e(name), X["doctor"])]
+    if sub:
+        story.append(Paragraph(_e(" · ".join(sub)), X["sub"]))
+    story = _with_logo(story, assets, width)
+    head = Table([[Paragraph(_e(title), X["title"]), Paragraph(date_txt, X["subr"])]], colWidths=[width * 0.6, width * 0.4])
+    head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                              ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+    return story + [Spacer(1, 2 * mm), head]
+
+
+def _patient_box_style(style):
+    pad = [("TOPPADDING", (0, 0), (-1, -1), 1.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5), ("LEFTPADDING", (0, 0), (-1, -1), 6),
+           ("VALIGN", (0, 0), (-1, -1), "TOP")]
+    if style == "formal":
+        return pad + [("BOX", (0, 0), (-1, -1), 0.8, colors.black), ("INNERGRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#8a8a8a")),
+                      ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]
+    if style == "moderno":
+        return pad + [("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f2f7f6")), ("LINEBEFORE", (0, 0), (0, -1), 4, ACCENT),
+                      ("LEFTPADDING", (0, 0), (0, -1), 9), ("TOPPADDING", (0, 0), (-1, -1), 2.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5)]
+    return pad + [("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eef4f3"))]
+
+
+def _report_heading(style, X, text, width):
+    """Título de cada sección del informe según el estilo."""
+    if style == "formal":
+        t = Table([[Paragraph(_e(text.upper()), X["title"])]], colWidths=[width])
+        t.setStyle(TableStyle([("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.black), ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                               ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5)]))
+        return t
+    if style == "moderno":
+        t = Table([[Paragraph(_e(text), X["title"])]], colWidths=[width])
+        t.setStyle(TableStyle([("LINEBEFORE", (0, 0), (0, 0), 3, ACCENT), ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                               ("TOPPADDING", (0, 0), (-1, -1), 1), ("BOTTOMPADDING", (0, 0), (-1, -1), 1)]))
+        return t
+    return Paragraph(_e(text), X["title"])
+
+
+def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, endo=None, allergies=(), endo2=None, style="clasico") -> bytes:
     from reportlab.platypus import Image as RLImage
+    style = style if style in REPORT_STYLES else "clasico"
+    X = _report_styles(style)
     buf = io.BytesIO()
     pagesize = LETTER if size == "carta" else A4
     title = D.KINDS[pr["kind"]]
@@ -268,19 +362,10 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     all_assets = assets or {}
     if not endo["owner"]:
         assets = {k: v for k, v in all_assets.items() if k != "firma"}
-    story = [Paragraph(_e(signer), ST["doctor"])]
     sub = [x for x in ([s["specialty"], f"Colegiación: {s['license_number']}" if s["license_number"] else None] if endo["owner"] else [endo.get("detail")])
            + [s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
-    if sub:
-        story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
-    story = _with_logo(story, assets, width)
-    head = Table([[Paragraph(f"INFORME DE {_e(title.upper())}", ST["title"]),
-                   Paragraph(f"Fecha: {fmt_birth(pr['performed_on'])}"   # sin folio (pedido del Dr. Lainez, 3-nov-2026)
-                             + ("" if pr["status"] == "finalizado" else "<br/><b>BORRADOR</b>"), ST["subr"])]],
-                 colWidths=[width * 0.6, width * 0.4])
-    head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                              ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
-    story += [Spacer(1, 2 * mm), head]
+    date_txt = f"Fecha: {fmt_birth(pr['performed_on'])}" + ("" if pr["status"] == "finalizado" else "<br/><b>BORRADOR</b>")   # sin folio
+    story = _report_header(style, X, signer, sub, f"INFORME DE {title.upper()}", date_txt, assets, width)
     # Datos del paciente (v0.22.0, pedido del Dr. Lainez): DNI, fecha de nacimiento, edad el día del estudio y más
     from datetime import date as _date
     try:
@@ -306,19 +391,20 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
                          f"<b>Aseguradora:</b> {_e(p['payer'])}" if p["payer"] else None] if x]
     while extra:
         cells.append((extra.pop(0), extra.pop(0) if extra else ""))
-    rows = [[Paragraph(a, ST["body"]), Paragraph(b, ST["body"])] for a, b in cells]
+    rows = [[Paragraph(a, X["body"]), Paragraph(b, X["body"])] for a, b in cells]
     if alg:
-        rows.append([Paragraph(f"<b>Alergias:</b> {_e(alg)}", ST["body"]), ""])
+        rows.append([Paragraph(f"<b>Alergias:</b> {_e(alg)}", X["body"]), ""])
     pt = Table(rows, colWidths=[width * 0.55, width * 0.45])
-    pt.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eef4f3")), ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                            ("TOPPADDING", (0, 0), (-1, -1), 1.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5)]
-                           + ([("SPAN", (0, len(rows) - 1), (1, len(rows) - 1))] if alg else [])))
+    pt.setStyle(TableStyle(_patient_box_style(style) + ([("SPAN", (0, len(rows) - 1), (1, len(rows) - 1))] if alg else [])))
     story += [Spacer(1, 2 * mm), pt, Spacer(1, 3 * mm)]
+
+    def H(t):
+        return _report_heading(style, X, t, width)
 
     def sec(t, body):
         if body:
-            story.append(Paragraph(_e(t), ST["title"]))
-            story.append(Paragraph(_e(body).replace("\n", "<br/>"), ST["body"]))
+            # el título nunca queda solo al final de una página
+            story.append(KeepTogether([H(t), Paragraph(_e(body).replace("\n", "<br/>"), X["body"])]))
             story.append(Spacer(1, 2 * mm))
 
     sec("Indicación", (D.INDICATION_CATEGORIES.get(pr["indication_category"] or "", "") + ". " if pr["indication_category"] else "") + (d.get("indication") or ""))
@@ -346,8 +432,8 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     # Endoscopistas y asistentes en NEGRITA (pedido del Dr. Lainez, 3-nov-2026); el resto del bloque igual
     staff_prefixes = ("Endoscopista", "Asistentes:")
     lines = [f"<b>{_e(x)}</b>" if x.startswith(staff_prefixes) else _e(x) for x in pre + eq]
-    story.append(Paragraph("Evaluación previa, preparación y sedación", ST["title"]))
-    story.append(Paragraph("<br/>".join(l.replace("\n", "<br/>") for l in lines), ST["body"]))
+    story.append(H("Evaluación previa, preparación y sedación"))
+    story.append(Paragraph("<br/>".join(l.replace("\n", "<br/>") for l in lines), X["body"]))
     story.append(Spacer(1, 2 * mm))
     ext = dict(D.EXTENT[pr["kind"]]).get(pr["extent"] or "", "")
     tech = [f"Extensión: {ext}" if ext else None,
@@ -360,19 +446,19 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     sec("Técnica", "\n".join(x for x in tech if x))
     nar = d.get("narrative") or {}
     if any(nar.values()) or d.get("zline"):
-        story.append(Paragraph("Descripción de hallazgos", ST["title"]))
+        story.append(H("Descripción de hallazgos"))
         for key, lab in D.NARRATIVE[pr["kind"]]:
             txt = nar.get(key) or ""
             if key == "ueg" and d.get("zline"):
                 txt = (D.zline_text(d) + " " + txt).strip()
             if txt:
-                story.append(Paragraph(f"<b>{_e(lab)}:</b> " + _e(txt).replace("\n", "<br/>"), ST["body"]))
+                story.append(Paragraph(f"<b>{_e(lab)}:</b> " + _e(txt).replace("\n", "<br/>"), X["body"]))
                 story.append(Spacer(1, 1.2 * mm))
         story.append(Spacer(1, 1 * mm))
     if d.get("findings"):
-        story.append(Paragraph("Hallazgos detallados" if any(nar.values()) else "Hallazgos", ST["title"]))
-        rows = [[Paragraph("<b>Segmento</b>", ST["small"]), Paragraph("<b>Hallazgo</b>", ST["small"]), Paragraph("<b>Clasificación / tamaño</b>", ST["small"]),
-                 Paragraph("<b>Frasco</b>", ST["small"])]]
+        story.append(H("Hallazgos detallados" if any(nar.values()) else "Hallazgos"))
+        rows = [[Paragraph("<b>Segmento</b>", X["small"]), Paragraph("<b>Hallazgo</b>", X["small"]), Paragraph("<b>Clasificación / tamaño</b>", X["small"]),
+                 Paragraph("<b>Frasco</b>", X["small"])]]
         for f in d["findings"]:
             cl = []
             if f.get("classification"):
@@ -384,9 +470,9 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
                 cl.append(f"{f['size_mm']:g} mm")
             if f.get("removed"):
                 cl.append(f"Resección: {f['removed']}")
-            rows.append([Paragraph(_e(f["segment"]), ST["small"]),
-                         Paragraph(_e(" · ".join(x for x in [f.get("type"), f.get("desc")] if x)), ST["body"]),
-                         Paragraph(_e(" · ".join(cl)), ST["small"]), Paragraph(str(f.get("jar") or ""), ST["small"])])
+            rows.append([Paragraph(_e(f["segment"]), X["small"]),
+                         Paragraph(_e(" · ".join(x for x in [f.get("type"), f.get("desc")] if x)), X["body"]),
+                         Paragraph(_e(" · ".join(cl)), X["small"]), Paragraph(str(f.get("jar") or ""), X["small"])])
         t = Table(rows, colWidths=[width * 0.2, width * 0.45, width * 0.27, width * 0.08], repeatRows=1)
         t.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#c9d4d3")), ("VALIGN", (0, 0), (-1, -1), "TOP"),
                                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#eef4f3"))]))
@@ -397,10 +483,10 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
         if dr:
             legend = [Paragraph(f"<b>{i}.</b> <font color='{A.KINDS_OF_MARK[m['kind']][1]}'>●</font> <b>{_e(m['seg'])}</b> · "
                                 f"{_e(A.KINDS_OF_MARK[m['kind']][0])}" + (f": {_e(m['label'])}" if m.get("label") else "")
-                                + (f" · frasco {m['jar']}" if m.get("jar") else ""), ST["small"]) for i, m in enumerate(d["marks"], 1)]
+                                + (f" · frasco {m['jar']}" if m.get("jar") else ""), X["small"]) for i, m in enumerate(d["marks"], 1)]
             t = Table([[dr, legend]], colWidths=[dr.width + 4 * mm, width - dr.width - 4 * mm])
             t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
-            story += [KeepTogether([Paragraph("Esquema anatómico", ST["title"]), t]), Spacer(1, 2 * mm)]
+            story += [KeepTogether([H("Esquema anatómico"), t]), Spacer(1, 2 * mm)]
     if d.get("jars"):
         sec("Muestras enviadas a patología", "\n".join(f"Frasco {j['jar']}: {j['site']}" + (f" — {j['desc']}" if j.get("desc") else "")
                                                       + (f" ({j['pieces']} fragmentos)" if j.get("pieces") else "") for j in d["jars"]))
@@ -416,7 +502,7 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     sec("Seguimiento", "\n".join(x for x in [d.get("follow_up") or "", f"Control / vigilancia indicada para: {fmt_birth(pr['surveillance_due'])}"
                                               if pr["surveillance_due"] else ""] if x))
     if images:
-        story.append(Paragraph("Imágenes", ST["title"]))
+        story.append(H("Imágenes"))
         cells, row = [], []
         cw = (width - 4 * mm) / 3
         for im, raw in images:
@@ -428,7 +514,7 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
             cap = " · ".join(x for x in [im["location"], im["caption"]] if x)
             if ann:
                 cap += (" · " if cap else "") + "; ".join(f"{i}: {a['text']}" for i, a in enumerate(ann, 1) if a.get("text"))
-            row.append([img, Paragraph(_e(cap), ST["small"])])
+            row.append([img, Paragraph(_e(cap), X["small"])])
             if len(row) == 3:
                 cells.append(row)
                 row = []
@@ -442,7 +528,7 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     signed = pr["status"] == "finalizado"
     def sig_block(name, role, own_assets):
         img = _sig_img(own_assets)
-        t = Table([[img], [Paragraph(f"<b>{_e(name)}</b><br/><b>{role}</b> · Nombre, firma y sello", ST["sub"])]],
+        t = Table([[img], [Paragraph(f"<b>{_e(name)}</b><br/><b>{role}</b> · Nombre, firma y sello", X.get("sigsub", X["sub"]))]],
                   colWidths=[78 * mm], rowHeights=[16 * mm if img else 13 * mm, None])
         t.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
         return t
@@ -456,7 +542,12 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     else:
         outer = Table([[sig_block(signer, "Endoscopista", assets)]], colWidths=[width])
         outer.setStyle(TableStyle([("ALIGN", (0, 0), (0, 0), "RIGHT")]))
-    story += [Spacer(1, 3 * mm), KeepTogether([outer])]
+    # la firma nunca queda sola en una página: va junto con la última sección del informe
+    tail = []
+    if len(story) >= 2 and isinstance(story[-1], Spacer):
+        tail = story[-2:]
+        del story[-2:]
+    story.append(KeepTogether(tail + [Spacer(1, 3 * mm), outer]))
 
     def on_page(canvas, dd):
         canvas.saveState()

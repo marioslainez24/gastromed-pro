@@ -604,6 +604,7 @@ def proc_pdf(proc_id):
     data = procedure_pdf(pr, pdata, p, s, size, imgs, scope, addenda, D, load_assets(g.user["org_id"]),
                          endo=endoscopist_info(db, g.user["org_id"], pdata.get("endoscopist"), s),
                          endo2=endoscopist_info(db, g.user["org_id"], pdata.get("endoscopist_2"), s) if pdata.get("endoscopist_2") else None,
+                         style=s["report_style"],
                          allergies=db.execute("SELECT * FROM patient_allergies WHERE patient_id = ? AND active = 1", (p["id"],)).fetchall())
     audit("procedimiento_pdf", "procedimiento", pr["id"])
     resp = make_response(data)

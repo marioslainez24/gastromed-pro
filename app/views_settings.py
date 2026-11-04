@@ -6,7 +6,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 
 from .db import get_db, utcnow, write_tx
 from .security import DEFAULT_ROLES, PERMISSIONS, audit, require, verify_audit_chain
-from .util import LABELS
+from .util import LABELS, local_today
 
 bp = Blueprint("settings", __name__, url_prefix="/ajustes")
 
@@ -376,3 +376,58 @@ def backups_drive():
     else:
         abort(400)
     return redirect(url_for("settings.backups"))
+
+
+# ------------------------------------------------------------------------------------------------ estilo del informe (v0.22.0)
+def sample_report_pdf(style, s, assets, size):
+    """Informe de EJEMPLO con datos ficticios para ver cómo queda cada estilo (no usa ningún paciente real)."""
+    from . import endoscopy_defs as D
+    from .pdf import procedure_pdf
+    pr = {"id": "0" * 32, "kind": "eda", "status": "finalizado", "performed_on": local_today().isoformat(), "indication_category": "diagnostica",
+          "extent": "segunda_porcion", "complete": 1, "withdrawal_minutes": None, "bbps_right": None, "bbps_transverse": None,
+          "bbps_left": None, "surveillance_due": None}
+    p = {"first_names": "Paciente", "last_names": "De Ejemplo", "mrn": "EJEMPLO", "document_type": "dni", "document_number": "0000-0000-00000",
+         "birth_date": "1980-01-01", "sex": "femenino", "allergy_status": "sin_alergias_conocidas", "phone": None, "origin": None,
+         "referring_physician": None, "payer": None}
+    d = {"indication": "Dispepsia (texto de ejemplo)", "consent_obtained": True, "asa": "I", "sedation_type": "moderada",
+         "endoscopist": s["doctor_display_name"], "assistants": "Asistente de ejemplo", "care_setting": "externa",
+         "narrative": {"esofago": "Mucosa de aspecto normal (texto de ejemplo).", "estomago": "Eritema leve en antro (texto de ejemplo).",
+                       "duodeno": "Sin alteraciones (texto de ejemplo)."},
+         "conclusion": "Gastropatía eritematosa leve de antro (ejemplo).", "recommendations": "Texto de ejemplo.", "complications": []}
+    return procedure_pdf(pr, d, p, s, size, [], None, [], D, assets, allergies=(), style=style)
+
+
+@bp.route("/estilo-informe", methods=["GET", "POST"])
+@require("ajustes.editar")
+def report_style():
+    from .pdf import REPORT_STYLES
+    db = get_db()
+    org = g.user["org_id"]
+    if request.method == "POST":
+        st = request.form.get("report_style")
+        if st not in REPORT_STYLES:
+            abort(400)
+        with write_tx(db):
+            db.execute("UPDATE clinic_settings SET report_style = ?, updated_at = ?, updated_by = ?, version = version + 1 WHERE org_id = ?",
+                       (st, utcnow(), g.user["id"], org))
+            audit("estilo_informe_cambiado", "ajustes", org, {"estilo": st}, db=db)
+        flash(f"Estilo del informe: {REPORT_STYLES[st]}.", "ok")
+        return redirect(url_for("settings.report_style"))
+    cur = db.execute("SELECT report_style FROM clinic_settings WHERE org_id = ?", (org,)).fetchone()[0]
+    return render_template("ajustes/estilo_informe.html", STYLES=REPORT_STYLES, current=cur)
+
+
+@bp.route("/estilo-informe/ejemplo")
+@require("ajustes.editar")
+def report_style_sample():
+    from flask import make_response
+    from .pdf import REPORT_STYLES
+    from .views_extras import load_assets
+    st = request.args.get("estilo")
+    if st not in REPORT_STYLES:
+        abort(400)
+    s = get_db().execute("SELECT * FROM clinic_settings WHERE org_id = ?", (g.user["org_id"],)).fetchone()
+    resp = make_response(sample_report_pdf(st, s, load_assets(g.user["org_id"]), s["paper_size"]))
+    resp.headers["Content-Type"] = "application/pdf"
+    resp.headers["Content-Disposition"] = f'inline; filename="ejemplo-estilo-{st}.pdf"'
+    return resp

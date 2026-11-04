@@ -57,11 +57,16 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
     nuevo `endoscopist_2` en `procedures.data` (el 1 sigue en `endoscopist`; si se elige el mismo médico en ambos, el 2 se descarta).
     En el PDF: «Endoscopista 1/2» en la evaluación previa y DOS firmas lado a lado; la firma escaneada solo en la del médico de Ajustes.
     Endoscopistas y asistentes van en NEGRITA (en la evaluación previa y el rol bajo cada firma), a pedido.
+  - **Estilos del informe** (3-nov-2026, a pedido): Ajustes → «Estilo del informe» con 3 estilos para el PDF de endoscopia: Clásico
+    (el de siempre), Formal (blanco y negro, letra Times, recuadro del paciente con líneas, títulos en mayúsculas subrayados) y
+    Moderno (franja de color con el nombre arriba, títulos con barra de color). «Ver ejemplo» abre un informe con datos ficticios.
+    Migración 0018 (`clinic_settings.report_style`, CHECK). Mismo contenido en los tres. Además, en todos: el título de una sección
+    no queda solo al final de la página y la firma va junto con la última sección (nunca sola en una página).
 - **Mac en espera** (3-nov-2026): el Dr. Lainez dijo «no hagas para Mac en este momento, solo para Windows». La construcción para Mac
   queda preparada y probada, pero la CI solo la hace si el último commit trae «[mac]» (o a mano con mac=true). Por ahora, solo Windows.
 - **Letra 12** (3-nov-2026, a pedido): texto de los PDF en 12 puntos (títulos 13.5, letra chica 10, documentos 12.5, hojas 12).
 - Si se copia la carpeta `datos` de Windows a la Mac, `adapt_paths()` corrige las rutas guardadas sin tocar las claves.
-- Pruebas: `tests/test_v022.py` (222 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
+- Pruebas: `tests/test_v022.py` (223 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
   y Mac Intel correctos (pruebas + prueba completa del programa). Falta probar en una Mac real.
 
 ## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · PUBLICADA 2-nov-2026)

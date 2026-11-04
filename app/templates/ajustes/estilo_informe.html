@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Estilo del informe{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Ajustes</h1></div>
+{% include "ajustes/_tabs.html" %}
+<p class="muted">Elija cómo se ve el PDF del <b>informe de endoscopia</b>. El contenido es el mismo; solo cambia el diseño. Use «Ver ejemplo»
+  para abrir un informe con datos ficticios en cada estilo. El cambio se aplica a todos los informes que imprima desde ahora
+  (también a los ya finalizados, porque el PDF se arma al imprimir; el texto del informe no cambia).</p>
+<form method="post" class="stack">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="style-cards">
+  {% for k, v in STYLES.items() %}
+    <label class="card style-card {% if k == current %}is-current{% endif %}">
+      <span class="row-between"><span><input type="radio" name="report_style" value="{{ k }}" {% if k == current %}checked{% endif %}> <b>{{ v.split(' (')[0] }}</b></span>
+        {% if k == current %}<span class="tag tag-ok">En uso</span>{% endif %}</span>
+      <span class="small muted">{{ v.split(' (')[1]|replace(')', '') if ' (' in v }}</span>
+      <a class="btn btn-sm" href="{{ url_for('settings.report_style_sample', estilo=k) }}" target="_blank" rel="noopener">👁 Ver ejemplo</a>
+    </label>
+  {% endfor %}
+  </div>
+  <div><button class="btn btn-primary" type="submit">Guardar estilo</button></div>
+</form>
+{% endblock %}
