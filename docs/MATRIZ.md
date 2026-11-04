@@ -169,3 +169,6 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | Endoscopista 1 y Endoscopista 2 (dos firmas) + Asistentes 1 a 3 en el informe | ✅ probado (pruebas + navegador + PDF); publicado en v0.22.0 |
 | Tres estilos del informe de endoscopia (Clásico, Formal, Moderno) elegibles en Ajustes, con ejemplo ficticio | ✅ probado (pruebas + navegador + PDF); publicado en v0.22.0 |
 | Descartar informes de endoscopia finalizados (con motivo; no se borran; fuera de listas y estadísticas) | ✅ probado (pruebas + navegador); publicado en v0.23.0 |
+| Repositorio privado (código y descargas solo para el titular) | ⬜ lo hace el Dr. Lainez en GitHub (Settings → Change visibility) |
+| Activación por computadora con clave firmada; generador en GitHub Actions | ✅ probado (pruebas + prueba completa del programa + navegador); se publica con su «ya» (requiere el secreto GM_LICENCIA_CLAVE) |
+| Titular de la licencia visible en el programa y en todos los PDF | ✅ probado; se publica con su «ya» |

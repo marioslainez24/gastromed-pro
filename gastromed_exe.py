@@ -191,7 +191,11 @@ def reminder_loop(app):
     from app.db import connect
     from app.reminders import run_email_reminders
     time.sleep(30)
+    from app import license as lic
     while True:
+        if not lic.active():          # sin licencia, el programa no envía nada
+            time.sleep(600)
+            continue
         try:
             db = connect(app.config["GM"].DATABASE_PATH)
             try:
@@ -256,6 +260,9 @@ def main():
         print("  Aviso: no se pudo preparar https para el celular:", e)
 
     from app import APP_VERSION, create_app
+    from app import license as lic
+    # v0.24: licencia por computadora OBLIGATORIA en el programa instalado (archivo datos/licencia.txt)
+    lic.configure(env_file.parent / "licencia.txt")
     app = create_app()
     cfg = app.config["GM"]
     if https_ok:
@@ -278,6 +285,12 @@ def main():
     if https_ok and ips:
         print("    La primera vez el celular dirá «La conexión no es privada»: toque «Configuración")
         print("    avanzada» y luego «Continuar». Es normal: el certificado lo creó esta PC, no una empresa externa.")
+    if lic.active():
+        print(f"  Licencia de uso:   {lic.holder()}")
+    else:
+        print("  PROGRAMA SIN ACTIVAR en esta computadora.")
+        print(f"  Código de equipo:  {lic.machine_code()}")
+        print("  Abra http://localhost:%d/activar y pegue la clave de activación generada para este código." % PORT)
     print(f"  Datos:             {Path(cfg.DATABASE_PATH).parent}")
     print(f"  Respaldos:         {cfg.BACKUP_DIR}  (automático cada 24 h)")
     print("\n  NO CIERRE ESTA VENTANA mientras use el sistema. Para apagarlo, ciérrela"

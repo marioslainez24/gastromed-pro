@@ -576,3 +576,5 @@ ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15r
 .void-details > summary::-webkit-details-marker { display: none; }
 .void-details[open] { display: block; margin-top: .4rem; }
 .void-form input { min-width: 16rem; }
+.machine-code { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.machine-code .mono { font-size: 1.35rem; letter-spacing: .06em; padding: .35rem .6rem; background: var(--surface-2); border-radius: 8px; }

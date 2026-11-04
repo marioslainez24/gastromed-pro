@@ -868,4 +868,14 @@
     };
     sel.addEventListener("change", upd); upd();
   });
+  // ---- Botón «Copiar» de un texto fijo (v0.24: código de equipo) ----
+  $$("[data-copy-text]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var t = b.getAttribute("data-copy-text"), old = b.textContent;
+      var done = function () { b.textContent = "Copiado ✓"; setTimeout(function () { b.textContent = old; }, 1800); };
+      if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t).then(done, function () {}); }
+      else { var ta = document.createElement("textarea"); ta.value = t; document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); done(); } catch (e) {} document.body.removeChild(ta); }
+    });
+  });
 })();

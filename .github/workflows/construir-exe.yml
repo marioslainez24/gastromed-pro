@@ -38,6 +38,8 @@ jobs:
         run: pyinstaller --noconfirm --clean GastroMedPro.spec
 
       - name: Probar el ejecutable (flujo completo)
+        env:
+          GM_LICENCIA_CLAVE: ${{ secrets.GM_LICENCIA_CLAVE }}
         run: python build/smoke_exe.py build/dist/GastroMedPro.exe
 
       - name: Guardar el ejecutable
@@ -81,6 +83,8 @@ jobs:
         run: pyinstaller --noconfirm --clean GastroMedPro-mac.spec
 
       - name: Probar el programa (flujo completo)
+        env:
+          GM_LICENCIA_CLAVE: ${{ secrets.GM_LICENCIA_CLAVE }}
         run: python build/smoke_exe.py build/dist/GastroMedPro
 
       - name: Empaquetar (zip que conserva el permiso de ejecución)

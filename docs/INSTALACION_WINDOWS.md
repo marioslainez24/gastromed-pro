@@ -114,3 +114,16 @@ Importante: los datos de la Mac y los de la PC con Windows son **independientes*
 la Mac lo que ya tiene en Windows: cierre el programa en ambas, copie con una USB la carpeta `C:\GastroMed\datos` completa a la
 Mac como `GastroMed/datos` (en su carpeta de usuario, reemplazando la que esté) y abra el programa en la Mac. Desde entonces use solo una
 de las dos para no tener datos distintos en cada una.
+
+
+## Activar el programa en una computadora (desde la versión 0.24.0)
+
+El programa solo funciona en computadoras activadas por su titular. La primera vez (o al usarlo en otra PC):
+1. Al abrir GastroMed Pro aparece «Activar GastroMed Pro» con el **código de esta computadora** (también sale en la ventana negra).
+   Pulse «Copiar».
+2. En su cuenta de GitHub abra el programa → pestaña **Actions** → «**Activar una computadora**» → **Run workflow** → pegue el código →
+   **Run workflow**. En un minuto termina: ábralo y copie la **clave de activación** (una línea que empieza con «GM1.»).
+3. Vuelva al programa, pegue la clave en el cuadro y pulse **Activar**. Listo: no se vuelve a pedir en esa PC.
+
+Si el programa se copia a otra computadora, pedirá una clave nueva (la clave de una PC no sirve en otra). Si reinstala Windows, el
+código cambia y hay que activar de nuevo. Los celulares no necesitan activación: se conectan a la PC ya activada.

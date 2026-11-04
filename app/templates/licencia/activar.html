@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Activar GastroMed Pro{% endblock %}
+{% block main_class %}login-wrap{% endblock %}
+{% block content %}
+<section class="login-card setup-card">
+  <div class="login-brand">
+    <svg class="brand-mark lg" viewBox="0 0 32 32" aria-hidden="true"><use href="{{ url_for('static', filename='icons/sprite.svg') }}#logo"/></svg>
+    <h1>Activar GastroMed <b>Pro</b></h1>
+    <p class="muted">Este programa solo funciona en computadoras autorizadas por su titular.</p>
+  </div>
+  {% if not local %}
+  <p>La activación solo puede hacerse <b>en la PC donde está instalado GastroMed Pro</b>.</p>
+  {% else %}
+  {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+  <div class="stack">
+    <p class="small"><b>1.</b> Código de esta computadora:</p>
+    <p class="machine-code"><span class="mono" data-machine-code>{{ code }}</span>
+      <button type="button" class="btn btn-sm" data-copy-text="{{ code }}">Copiar</button></p>
+    <p class="small"><b>2.</b> Con ese código, el titular genera la clave de activación en su cuenta de GitHub
+      (Actions → «Activar una computadora»).</p>
+    <form method="post" class="stack">
+      <input type="hidden" name="activar_csrf" value="{{ csrf }}">
+      <label><span><b>3.</b> Pegue aquí la clave de activación</span>
+        <textarea name="clave" rows="4" required spellcheck="false" autocomplete="off" class="mono" placeholder="GM1.…"></textarea></label>
+      <button class="btn btn-primary w100" type="submit">Activar</button>
+    </form>
+    <p class="muted small">La clave solo sirve para esta computadora. Si el programa se copia a otra PC, pedirá una clave nueva.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

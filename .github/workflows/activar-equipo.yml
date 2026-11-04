@@ -1,0 +1,35 @@
+name: Activar una computadora
+
+# El titular la usa desde GitHub: Actions → «Activar una computadora» → Run workflow → escribe el código de equipo.
+# La clave aparece al terminar (en el resumen de la ejecución). Usa la llave privada guardada como secreto GM_LICENCIA_CLAVE.
+on:
+  workflow_dispatch:
+    inputs:
+      codigo:
+        description: "Código de equipo que muestra el programa (ej.: 3F2A-91C0-7B44-0DE1)"
+        required: true
+      titular:
+        description: "Nombre del titular de la licencia"
+        required: true
+        default: "Dr. Mario Lainez"
+
+permissions:
+  contents: read
+
+jobs:
+  clave:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Instalar
+        run: pip install "cryptography>=42"
+      - name: Generar la clave de activación
+        env:
+          GM_LICENCIA_CLAVE: ${{ secrets.GM_LICENCIA_CLAVE }}
+          CODIGO: ${{ inputs.codigo }}
+          TITULAR: ${{ inputs.titular }}
+        run: python build/firmar_licencia.py "$CODIGO" "$TITULAR"

@@ -4,12 +4,13 @@ import os
 
 from flask import Flask, g, redirect, render_template, request, url_for
 
+from . import license as license_mod
 from . import util
 from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.23.0"
+APP_VERSION = "0.24.0"
 
 
 def _loopback(addr) -> bool:
@@ -59,8 +60,9 @@ def create_app(config: Config | None = None) -> Flask:
     from .views_search import bp as search_bp
     from .views_mail import bp as mail_bp
     from .views_handouts import bp as edu_bp
+    from .views_license import bp as lic_bp
     for bp in (auth_bp, patients_bp, agenda_bp, notes_bp, rx_bp, settings_bp, record_bp, files_bp, account_bp, setup_bp, labs_bp, gi_bp,
-               endo_bp, extras_bp, texts_bp, docs_bp, stats_bp, search_bp, mail_bp, edu_bp):
+               endo_bp, extras_bp, texts_bp, docs_bp, stats_bp, search_bp, mail_bp, edu_bp, lic_bp):
         app.register_blueprint(bp)
 
     app.teardown_appcontext(close_db)
@@ -74,6 +76,11 @@ def create_app(config: Config | None = None) -> Flask:
             host = (request.host or "").rsplit(":", 1)[0]
             return redirect(f"https://{host}:{https_port}{request.full_path.rstrip('?')}", code=302)
         if request.endpoint in ("static", "auth.manifest", "auth.service_worker"):
+            return
+        # v0.24: sin licencia válida para ESTA computadora no se abre ninguna pantalla (solo la de activación)
+        if not license_mod.active():
+            if request.endpoint != "license.activate":
+                return redirect(url_for("license.activate"))
             return
         if request.endpoint != "setup.first_run" and needs_setup():
             return redirect(url_for("setup.first_run"))
@@ -110,7 +117,7 @@ def create_app(config: Config | None = None) -> Flask:
 
     @app.context_processor
     def _ctx():
-        return {"can": can, "label": util.label, "fmt_dt": util.fmt_dt, "fmt_time": util.fmt_time, "age": util.age,
+        return {"license_holder": license_mod.holder(), "can": can, "label": util.label, "fmt_dt": util.fmt_dt, "fmt_time": util.fmt_time, "age": util.age,
                 "fmt_birth": util.fmt_birth, "parse_utc": util.parse_utc, "current_user": g.get("user"), "csrf_token": g.get("csrf_token"),
                 "approved_sheets": _approved_sheets, "ENDO_KINDS": _endo_kinds(), "app_version": APP_VERSION, "asset": lambda f: f"/static/v{APP_VERSION}/{f}", "env": cfg.ENV, "demo_mode": cfg.DEMO, "clinic_cfg": util.clinic_settings}
 

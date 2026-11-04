@@ -59,6 +59,6 @@
   {% endwith %}
   {% block content %}{% endblock %}
 </main>
-<footer class="foot muted small">GastroMed Pro {{ app_version }}{% if env in ('desarrollo', 'pruebas') %} · Sistema en desarrollo: use solo datos ficticios{% endif %}</footer>
+<footer class="foot muted small">GastroMed Pro {{ app_version }}{% if license_holder %} · Licencia de uso: <b>{{ license_holder }}</b>{% endif %}{% if env in ('desarrollo', 'pruebas') %} · Sistema en desarrollo: use solo datos ficticios{% endif %}</footer>
 </body>
 </html>

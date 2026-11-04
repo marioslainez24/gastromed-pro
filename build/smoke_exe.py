@@ -48,8 +48,32 @@ def main(exe):
                 time.sleep(1)
         else:
             raise SystemExit("El ejecutable no respondió en 90 s")
+        # v0.24: sin licencia todo lleva a /activar (ni siquiera la configuración inicial se puede abrir)
+        assert r.url.endswith("/activar"), r.url
+        html = r.read().decode()
+        assert get("/configuracion-inicial").url.endswith("/activar")
+        html = get("/activar").read().decode()
+        code = re.search(r"data-machine-code>([0-9A-F-]{19})<", html).group(1)
+        tok = re.search(r'name="activar_csrf" value="([^"]+)"', html).group(1)
+        try:
+            post("/activar", {"activar_csrf": tok, "clave": "GM1.abc.def"})
+            raise SystemExit("Aceptó una clave falsa")
+        except urllib.error.HTTPError as e:
+            assert e.code == 422 and "no es válida" in e.read().decode(), "Clave falsa"
+        priv = os.environ.get("GM_LICENCIA_CLAVE", "")
+        if not priv:
+            raise SystemExit("Falta el secreto GM_LICENCIA_CLAVE para activar el programa en la prueba")
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from app.license import sign
+        clave = sign(priv, code, "Titular de Prueba", "2026-11-04")
+        html = get("/activar").read().decode()
+        tok = re.search(r'name="activar_csrf" value="([^"]+)"', html).group(1)
+        r = post("/activar", {"activar_csrf": tok, "clave": clave})
+        assert (root / "datos" / "licencia.txt").exists(), "No guardó la licencia"
+        r = get("/")
         assert r.url.endswith("/configuracion-inicial"), r.url
         html = r.read().decode()
+        assert "Licencia de uso: <b>Titular de Prueba</b>" in html, "Titular en el pie"
         tok = re.search(r'name="setup_csrf" value="([^"]+)"', html).group(1)
         r = post("/configuracion-inicial", {"setup_csrf": tok, "clinic": "Consultorio prueba", "name": "Dr. Prueba",
                                             "specialty": "Gastroenterología", "email": "dr@prueba.local",

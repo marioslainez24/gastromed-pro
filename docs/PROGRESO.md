@@ -20,6 +20,27 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
+## Etapa 24 · 4-nov-2026 · Protección contra copia: licencia por computadora (v0.24.0 · en «desarrollo», falta su «ya»)
+
+**Pedido del Dr. Lainez:** «que tenga más seguridad para que nadie me lo robe y pueda usarlo en su clínica». Eligió las tres medidas:
+1. **Repositorio privado.** Hallazgo: el repositorio era PÚBLICO (cualquiera podía bajar el .exe y ver el código). Desde aquí no se puede
+   cambiar (el proxy bloquea los ajustes del repositorio): lo hace él en GitHub → Settings → Danger Zone → Change visibility → Private.
+   Con repositorio privado, Actions usa el crédito gratuito mensual (USD 12; Windows ≈ USD 0.010/min ⇒ ~1200 min/mes); sin tarjeta
+   registrada, al agotarse se bloquea, no cobra. Para descargar el .exe tendrá que haber iniciado sesión en GitHub.
+2. **Activación por computadora** (`app/license.py`, `app/views_license.py`, plantilla `licencia/activar.html`):
+   - Código de equipo = SHA-256 del MachineGuid de Windows (IOPlatformUUID en Mac; machine-id en Linux), 16 hex en 4 grupos.
+   - Clave = `GM1.<datos>.<firma>` firmada con Ed25519. El programa solo trae la llave PÚBLICA; la PRIVADA es el secreto de GitHub
+     `GM_LICENCIA_CLAVE` (no está en el código). Generador: workflow «Activar una computadora» (`.github/workflows/activar-equipo.yml`,
+     `build/firmar_licencia.py`): Actions → Run workflow → código → la clave sale en el resumen y como aviso (::notice).
+   - El lanzador llama `license.configure(datos/licencia.txt)`: sin clave válida para ESA PC todo redirige a `/activar` (solo desde
+     localhost); la ventana negra muestra el código. Sin licencia no se envían recordatorios. En pruebas/desarrollo no se exige.
+   - `smoke_exe.py` activa con el secreto (prueba también que rechaza una clave falsa); la CI pasa `GM_LICENCIA_CLAVE` al paso.
+     Si el secreto no existe, la prueba falla y NO se publica nada (no se puede publicar un .exe que nadie pueda activar).
+   - Límite honesto: detiene la copia normal; un experto con mucho tiempo podría modificar el ejecutable.
+3. **Titular visible:** «Licencia de uso: <titular>» (tomado de la clave firmada, no editable) en el pie del programa y en todos los PDF
+   (receta, órdenes, informe, documentos, hojas).
+- Pruebas: `tests/test_v024.py` (233 en total).
+
 ## Etapa 23 · 3-nov-2026 · Descartar informes de endoscopia finalizados (v0.23.0 · PUBLICADA 3-nov-2026 como v0.23.0-29, solo Windows)
 
 **Pedido del Dr. Lainez:** poder descartar un informe ya finalizado desde la lista de procedimientos del paciente.
