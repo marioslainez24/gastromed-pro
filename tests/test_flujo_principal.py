@@ -122,7 +122,7 @@ def test_flujo_completo_cita_nota_receta_pdf(env):
         pdf = PdfReader(io.BytesIO(r.data))
         box = pdf.pages[0].mediabox
         assert abs(float(box.width) - w) < 1 and abs(float(box.height) - h) < 1, papel
-        text = pdf.pages[0].extract_text()
+        text = " ".join(pdf.pages[0].extract_text().split())   # la letra más grande puede partir líneas
         for expected in ["Dr. Mario Lainez", "RECETA MÉDICA", "Omeprazol", "cada 24 horas", "8 semanas", "56 cápsulas",
                          "Alginato de sodio", "GM-000001", "Alergias no investigadas", "Firma y sello"]:
             assert expected in text, (papel, expected)

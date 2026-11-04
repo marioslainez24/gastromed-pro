@@ -16,16 +16,16 @@ INK = colors.HexColor("#1d2b36")
 MUTED = colors.HexColor("#5b6b77")
 ACCENT = colors.HexColor("#0f6e66")
 
-_base = dict(fontName="Helvetica", fontSize=10, leading=13.5, textColor=INK)
+_base = dict(fontName="Helvetica", fontSize=11.5, leading=15.5, textColor=INK)   # v0.22: letra más grande (antes 10)
 ST = {
-    "doctor": ParagraphStyle("doctor", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 15, "leading": 18}),
-    "sub": ParagraphStyle("sub", **{**_base, "fontSize": 9, "leading": 12, "textColor": MUTED}),
-    "title": ParagraphStyle("title", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 11, "textColor": ACCENT}),
+    "doctor": ParagraphStyle("doctor", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 17, "leading": 21}),
+    "sub": ParagraphStyle("sub", **{**_base, "fontSize": 10.5, "leading": 13.5, "textColor": MUTED}),
+    "title": ParagraphStyle("title", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 13, "leading": 17, "textColor": ACCENT}),
     "body": ParagraphStyle("body", **_base),
-    "med": ParagraphStyle("med", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 11}),
-    "subr": ParagraphStyle("subr", **{**_base, "fontSize": 9, "leading": 12, "textColor": MUTED, "alignment": 2}),
-    "item9": ParagraphStyle("item9", **{**_base, "fontSize": 9, "leading": 11.5}),
-    "small": ParagraphStyle("small", **{**_base, "fontSize": 8, "leading": 10, "textColor": MUTED}),
+    "med": ParagraphStyle("med", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 12.5, "leading": 16}),
+    "subr": ParagraphStyle("subr", **{**_base, "fontSize": 10.5, "leading": 13.5, "textColor": MUTED, "alignment": 2}),
+    "item9": ParagraphStyle("item9", **{**_base, "fontSize": 10.5, "leading": 13.5}),
+    "small": ParagraphStyle("small", **{**_base, "fontSize": 9.5, "leading": 12, "textColor": MUTED}),
 }
 
 
@@ -129,7 +129,7 @@ def prescription_pdf(r, items, p, s, size: str, allergies, assets=None) -> bytes
 
     def on_page(canvas, d):
         canvas.saveState()
-        canvas.setFont("Helvetica", 7.5)
+        canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(MUTED)
         canvas.drawString(18 * mm, 12 * mm, "Generado con GastroMed Pro. Requiere firma manuscrita del médico; "
                                            "este documento no contiene firma electrónica verificable.")
@@ -221,7 +221,7 @@ def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str, a
 
     def on_page(canvas, d):
         canvas.saveState()
-        canvas.setFont("Helvetica", 7.5)
+        canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(MUTED)
         canvas.drawString(18 * mm, 12 * mm, "Generado con GastroMed Pro. Requiere firma manuscrita del médico.")
         canvas.drawRightString(pagesize[0] - 18 * mm, 12 * mm, f"Página {d.page}")
@@ -254,17 +254,22 @@ def _annotated_jpeg(raw: bytes, annotations: list, max_px=900) -> bytes:
     return out.getvalue()
 
 
-def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None) -> bytes:
+def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, endo=None) -> bytes:
     from reportlab.platypus import Image as RLImage
     buf = io.BytesIO()
     pagesize = LETTER if size == "carta" else A4
     title = D.KINDS[pr["kind"]]
     doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=14 * mm, bottomMargin=20 * mm,
-                            title=f"Informe de {title}", author=s["doctor_display_name"], creator="GastroMed Pro")
+                            title=f"Informe de {title}", author=(endo or {}).get("name") or s["doctor_display_name"], creator="GastroMed Pro")
     width = pagesize[0] - 32 * mm
-    story = [Paragraph(_e(s["doctor_display_name"]), ST["doctor"])]
-    sub = [x for x in [s["specialty"], f"Colegiación: {s['license_number']}" if s["license_number"] else None,
-                       s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
+    # Encabezado y firma con el ENDOSCOPISTA elegido en el informe (v0.22.0); si es otro médico, sin la firma escaneada del dueño
+    endo = endo or {"name": s["doctor_display_name"], "owner": True, "detail": None}
+    signer = endo["name"] or s["doctor_display_name"]
+    if not endo["owner"]:
+        assets = {k: v for k, v in (assets or {}).items() if k != "firma"}
+    story = [Paragraph(_e(signer), ST["doctor"])]
+    sub = [x for x in ([s["specialty"], f"Colegiación: {s['license_number']}" if s["license_number"] else None] if endo["owner"] else [endo.get("detail")])
+           + [s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
     if sub:
         story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
     story = _with_logo(story, assets, width)
@@ -400,7 +405,8 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None) -> 
     for a in addenda:
         sec(f"Adenda · {a['full_name']} · {a['created_at'][:10]}", a["text"])
     signed = pr["status"] == "finalizado"
-    sig = Table([[_sig_img(assets)], [Paragraph(f"<b>{_e(s['doctor_display_name'])}</b><br/>Firma y sello", ST["sub"])]], colWidths=[70 * mm], rowHeights=[16 * mm, None])
+    sig = Table([[_sig_img(assets)], [Paragraph(f"<b>{_e(signer)}</b><br/>Endoscopista · Nombre, firma y sello", ST["sub"])]],
+                colWidths=[80 * mm], rowHeights=[16 * mm, None])
     sig.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("ALIGN", (0, 1), (0, 1), "CENTER"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
     outer = Table([[sig]], colWidths=[width])
     outer.setStyle(TableStyle([("ALIGN", (0, 0), (0, 0), "RIGHT")]))
@@ -408,7 +414,7 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None) -> 
 
     def on_page(canvas, dd):
         canvas.saveState()
-        canvas.setFont("Helvetica", 7.5)
+        canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(MUTED)
         canvas.drawString(16 * mm, 11 * mm, "Generado con GastroMed Pro. " + ("Informe finalizado; requiere firma manuscrita." if signed
                                                                             else "BORRADOR: no válido como informe definitivo."))
@@ -446,7 +452,7 @@ def document_pdf(d, p, s, size, assets=None) -> bytes:
                  colWidths=[width * 0.65, width * 0.35])
     head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
                               ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
-    body_style = ParagraphStyle("docbody", **{**_base, "fontSize": 11, "leading": 17, "alignment": 4})
+    body_style = ParagraphStyle("docbody", **{**_base, "fontSize": 12.5, "leading": 18.5, "alignment": 4})
     story += [Spacer(1, 6 * mm), head, Spacer(1, 10 * mm)]
     for para in d["body"].split("\n\n"):
         story.append(Paragraph(_e(para).replace("\n", "<br/>"), body_style))
@@ -463,7 +469,7 @@ def document_pdf(d, p, s, size, assets=None) -> bytes:
 
     def on_page(canvas, _d):
         canvas.saveState()
-        canvas.setFont("Helvetica", 7.5)
+        canvas.setFont("Helvetica", 8.5)
         canvas.setFillColor(MUTED)
         canvas.drawString(22 * mm, 12 * mm, "Generado con GastroMed Pro. Válido solo con firma manuscrita y sello del médico.")
         if voided:
@@ -535,16 +541,16 @@ def sheet_pdf(title, body, s, size, assets=None) -> bytes:
     """Hoja de preparación o consentimiento con el encabezado del consultorio."""
     buf = io.BytesIO()
     pagesize = LETTER if size == "carta" else A4
-    doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=20 * mm, rightMargin=20 * mm, topMargin=16 * mm, bottomMargin=18 * mm,
+    doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=15 * mm, rightMargin=15 * mm, topMargin=11 * mm, bottomMargin=11 * mm,
                             title=title, author=s["doctor_display_name"], creator="GastroMed Pro")
-    width = pagesize[0] - 40 * mm
+    width = pagesize[0] - 30 * mm
     story = [Paragraph(_e(s["doctor_display_name"]), ST["doctor"])]
     sub = [x for x in [s["specialty"], s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
     if sub:
         story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
     story = _with_logo(story, assets, width)
-    story += [Spacer(1, 5 * mm), Paragraph(_e(title), ST["title"]), Spacer(1, 4 * mm)]
-    style = ParagraphStyle("sheet", **{**_base, "fontSize": 10, "leading": 13.2})
+    story += [Spacer(1, 3 * mm), Paragraph(_e(title), ST["title"]), Spacer(1, 2 * mm)]
+    style = ParagraphStyle("sheet", **{**_base, "fontSize": 11.5, "leading": 14.2})
     for block in body.split("\n\n"):
         lines = block.split("\n")
         first = lines[0].strip()
@@ -554,6 +560,6 @@ def sheet_pdf(title, body, s, size, assets=None) -> bytes:
         else:
             html = _e(block).replace("\n", "<br/>")
         story.append(Paragraph(html, style))
-        story.append(Spacer(1, 2.2 * mm))
+        story.append(Spacer(1, 1.6 * mm))
     doc.build(story)
     return buf.getvalue()

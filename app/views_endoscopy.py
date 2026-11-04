@@ -589,12 +589,36 @@ def proc_pdf(proc_id):
     addenda = db.execute("SELECT a.*, u.full_name FROM procedure_addenda a JOIN users u ON u.id = a.author_id WHERE a.procedure_id = ?"
                          " ORDER BY a.created_at", (pr["id"],)).fetchall()
     from .views_extras import load_assets
-    data = procedure_pdf(pr, json.loads(pr["data"]), p, s, size, imgs, scope, addenda, D, load_assets(g.user["org_id"]))
+    pdata = json.loads(pr["data"])
+    data = procedure_pdf(pr, pdata, p, s, size, imgs, scope, addenda, D, load_assets(g.user["org_id"]),
+                         endo=endoscopist_info(db, g.user["org_id"], pdata.get("endoscopist"), s))
     audit("procedimiento_pdf", "procedimiento", pr["id"])
     resp = make_response(data)
     resp.headers["Content-Type"] = "application/pdf"
     resp.headers["Content-Disposition"] = f'inline; filename="informe-{pr["id"][:8]}.pdf"'
     return resp
+
+
+def _person_key(name):
+    import re
+    import unicodedata
+    t = unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode().lower()
+    t = re.sub(r"^\s*(dr|dra|doctor|doctora)\.?\s+", "", t)
+    return " ".join(re.sub(r"[^a-z ]", " ", t).split())
+
+
+def endoscopist_info(db, org_id, name, s):
+    """Quién firma el informe: el endoscopista elegido (si no hay, el médico de Ajustes).
+
+    Si es el mismo médico de Ajustes se usan su especialidad, colegiación y firma escaneada; si es otro médico de la lista se usa su
+    especialidad y la firma queda en blanco para firmar a mano (nunca se pone la firma de otra persona)."""
+    name = (name or "").strip()
+    owner = s["doctor_display_name"] or ""
+    if not name or _person_key(name) == _person_key(owner):
+        return {"name": name or owner, "owner": True, "detail": None}
+    row = db.execute("SELECT detail FROM endo_staff WHERE org_id = ? AND role = 'medico' AND lower(name) = lower(?) ORDER BY active DESC LIMIT 1",
+                     (org_id, name)).fetchone()
+    return {"name": name, "owner": False, "detail": row["detail"] if row else None}
 
 
 # ------------------------------------------------------------------------------------------------ patología
@@ -720,7 +744,7 @@ def index():
 def patient_procs(patient_id):
     p = get_patient_or_404(patient_id)
     db = get_db()
-    rows = db.execute("SELECT pr.*, u.full_name AS author FROM procedures pr JOIN users u ON u.id = pr.author_id WHERE pr.patient_id = ?"
+    rows = db.execute("SELECT pr.*, COALESCE(NULLIF(json_extract(pr.data, '$.endoscopist'), ''), u.full_name) AS author FROM procedures pr JOIN users u ON u.id = pr.author_id WHERE pr.patient_id = ?"
                       " AND pr.discarded_at IS NULL ORDER BY pr.performed_on DESC, pr.created_at DESC", (p["id"],)).fetchall()
     stents = db.execute("SELECT * FROM stents WHERE patient_id = ? ORDER BY placed_on DESC", (p["id"],)).fetchall()
     return render_template("endo/paciente.html", p=p, rows=rows, stents=stents, D=D, today=local_today().isoformat())

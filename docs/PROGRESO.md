@@ -33,8 +33,15 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
   programa; luego un trabajo «publicar» (solo en `main`) sube el .exe y los .zip de Mac que hayan salido bien. Desde `desarrollo` se puede
   lanzar a mano (workflow_dispatch) para probar sin publicar.
 - Sin firma de Apple (cuesta 99 USD al año): la primera vez se abre con Ajustes del Sistema → Privacidad y seguridad → «Abrir igualmente».
+- **Tras probarlo con un paciente real (3-nov-2026), a pedido del Dr. Lainez:**
+  - Letra más grande en TODOS los PDF (`app/pdf.py`: texto 10→11.5, títulos 11→13, letra chica 8→9.5, pie 7.5→8.5; documentos 11→12.5;
+    hojas 10→11.5 con márgenes menores para que la preparación siga cabiendo en una página). Las etiquetas de frascos no cambian.
+  - Informe de endoscopia: el encabezado y «Nombre, firma y sello» llevan el **endoscopista elegido** en el informe, no el usuario
+    (`endoscopist_info()` en `views_endoscopy.py`). Si es el médico de Ajustes, con su especialidad, colegiación y firma escaneada; si es
+    otro médico de la lista, con su especialidad y la línea de firma en blanco (nunca la firma escaneada de otra persona). También en la
+    pantalla del informe y en la lista de estudios del paciente.
 - Si se copia la carpeta `datos` de Windows a la Mac, `adapt_paths()` corrige las rutas guardadas sin tocar las claves.
-- Pruebas: `tests/test_v022.py` (211 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
+- Pruebas: `tests/test_v022.py` (214 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
   y Mac Intel correctos (pruebas + prueba completa del programa). Falta probar en una Mac real.
 
 ## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · PUBLICADA 2-nov-2026)

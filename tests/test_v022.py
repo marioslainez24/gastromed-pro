@@ -49,3 +49,52 @@ def test_datos_propios_no_se_tocan(tmp_path):
     env = datos / "gastromed.env"
     env.write_text(f"GASTROMED_DATABASE_PATH={datos / 'gastromed.sqlite3'}\n", encoding="utf-8")
     assert G.adapt_paths(env, datos, tmp_path / "respaldos") is False
+
+
+def _pdf_text(data):
+    import io
+    from pypdf import PdfReader
+    return "".join(pg.extract_text() for pg in PdfReader(io.BytesIO(data)).pages)
+
+
+def test_informe_con_nombre_del_endoscopista_en_encabezado_y_firma(env):
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import new_proc
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    db = env["db"]
+    org = env["org"]["org_id"]
+    owner = db.execute("SELECT doctor_display_name FROM clinic_settings WHERE org_id = ?", (org,)).fetchone()[0]
+    med.post("/ajustes/personal-endoscopia", data={"csrf_token": tok, "action": "agregar", "role": "medico",
+                                                   "name": "Dra. Ficticia Prueba", "detail": "Gastroenterología"})
+    pid = create_patient(med)
+    proc = new_proc(med, pid, tok, "eda")
+    data = db.execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0]
+    import json
+    d = json.loads(data)
+    d["endoscopist"] = "Dra. Ficticia Prueba"
+    db.execute("UPDATE procedures SET data = ? WHERE id = ?", (json.dumps(d), proc))
+    db.commit()
+    txt = _pdf_text(med.get(f"/procedimientos/{proc}/pdf").data)
+    assert "Dra. Ficticia Prueba\nGastroenterología" in txt                  # encabezado = endoscopista con su especialidad
+    assert "Dra. Ficticia Prueba\nEndoscopista · Nombre, firma y sello" in txt
+    assert owner not in txt
+    assert "Dra. Ficticia Prueba" in med.get(f"/pacientes/{pid}/procedimientos").get_data(as_text=True)
+
+
+def test_informe_sin_endoscopista_usa_medico_de_ajustes(env):
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import new_proc
+    from app.views_endoscopy import _person_key
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    owner = env["db"].execute("SELECT doctor_display_name FROM clinic_settings WHERE org_id = ?", (env["org"]["org_id"],)).fetchone()[0]
+    proc = new_proc(med, create_patient(med), tok, "eda")
+    txt = _pdf_text(med.get(f"/procedimientos/{proc}/pdf").data)
+    assert owner + "\nEndoscopista · Nombre, firma y sello" in txt
+    assert _person_key("Dr. Mario Láinez") == _person_key("mario lainez")
+
+
+def test_letra_mas_grande_en_los_pdf():
+    from app.pdf import ST
+    assert ST["body"].fontSize >= 11.5 and ST["small"].fontSize >= 9.5 and ST["title"].fontSize >= 13
