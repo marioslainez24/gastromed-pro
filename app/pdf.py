@@ -295,7 +295,11 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     cells = [(f"<b>Paciente:</b> {_e(p['first_names'])} {_e(p['last_names'])}", f"<b>Expediente:</b> {_e(p['mrn'])}"),
              (doc_cell, f"<b>Fecha de nacimiento:</b> {_e(fmt_birth(p['birth_date'])) if p['birth_date'] else 'no registrada'}"),
              (f"<b>Edad:</b> {_e(age(p['birth_date'], on))}", f"<b>Sexo:</b> {_e(label('sex', p['sex']))}")]
-    extra = [x for x in [f"<b>Teléfono:</b> {_e(p['phone'])}" if p["phone"] else None,
+    care = D.care_text(d)
+    extra = [x for x in [f"<b>Atención:</b> {_e(care)}" if care else None,
+                         f"<b>Lugar:</b> {_e(d['facility'])}" if d.get("facility") else None,
+                         f"<b>Exp. del hospital:</b> {_e(d['facility_record'])}" if d.get("facility_record") else None,
+                         f"<b>Teléfono:</b> {_e(p['phone'])}" if p["phone"] else None,
                          f"<b>Procedencia:</b> {_e(p['origin'])}" if p["origin"] else None,
                          f"<b>Médico que refiere:</b> {_e(p['referring_physician'])}" if p["referring_physician"] else None,
                          f"<b>Aseguradora:</b> {_e(p['payer'])}" if p["payer"] else None] if x]

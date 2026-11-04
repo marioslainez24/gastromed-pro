@@ -41,6 +41,12 @@
 <p class="muted small">Los diagnósticos se cuentan tal como se escribieron (sin distinguir mayúsculas). Si usa siempre la misma redacción o la lista
   de diagnósticos con CIE-10, el conteo es más exacto.</p>
 
+<section class="card"><h2>Estudios por tipo de atención y lugar</h2>
+  {% if st.by_care %}<div class="table-wrap"><table class="table"><thead><tr><th>Atención</th><th>Lugar</th><th class="num">Estudios</th></tr></thead>
+    <tbody>{% for c, f, n in st.by_care %}<tr><td>{{ c }}</td><td>{{ f }}</td><td class="num">{{ n }}</td></tr>{% endfor %}</tbody></table></div>
+  {% else %}<p class="muted small">Sin estudios finalizados en el periodo.</p>{% endif %}
+</section>
+
 <section class="card"><h2>Calidad de la colonoscopia</h2>
   <div class="table-wrap"><table class="table">
     <thead><tr><th>Indicador</th><th>Resultado</th><th>Cómo se calcula</th></tr></thead>

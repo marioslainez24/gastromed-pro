@@ -858,4 +858,14 @@
       if (Math.abs(dx) > 50) show(cur + (dx < 0 ? 1 : -1));
     });
   })();
+  // ---- Tipo de atención (v0.22): sala y cama solo si es de sala o emergencia ----
+  $$("[data-care]").forEach(function (box) {
+    var sel = $("[data-care-select]", box);
+    if (!sel) return;
+    var upd = function () {
+      var on = sel.value === "sala" || sel.value === "emergencia";
+      $$("[data-care-sala]", box).forEach(function (el) { el.hidden = !on; });
+    };
+    sel.addEventListener("change", upd); upd();
+  });
 })();

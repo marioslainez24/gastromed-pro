@@ -75,10 +75,13 @@ def compute(db, org, start, end, author=None):
                 dx_consult[t] += 1
     procs = {k: Counter() for k in KIND_ORDER}
     dx_endo = Counter()
+    by_care = Counter()          # v0.22: estudios por tipo de atención y lugar
     for r in db.execute("SELECT kind, performed_on, data FROM procedures WHERE org_id = ? AND status = 'finalizado' AND discarded_at IS NULL"
                         " AND performed_on BETWEEN ? AND ?" + who, [org, s_iso, e_iso] + args):
         procs[r["kind"]][r["performed_on"][:7]] += 1
-        for t in _dx_lines(json.loads(r["data"]).get("conclusion")):
+        pd = json.loads(r["data"])
+        by_care[(D.CARE_SETTINGS.get(pd.get("care_setting") or "", "Sin indicar"), (pd.get("facility") or "").strip() or "Su clínica")] += 1
+        for t in _dx_lines(pd.get("conclusion")):
             dx_endo[t] += 1
     new_pat = Counter()
     for r in db.execute("SELECT created_at FROM patients WHERE org_id = ?", (org,)):
@@ -90,6 +93,7 @@ def compute(db, org, start, end, author=None):
     totals = {k: sum(r[k] for r in rows) for k in ["consultas", "pacientes"] + KIND_ORDER}
     from .views_endoscopy import quality_metrics
     return {"rows": rows, "totals": totals, "dx_consult": _top(dx_consult), "dx_endo": _top(dx_endo),
+            "by_care": [(c, f, n) for (c, f), n in sorted(by_care.items(), key=lambda x: (-x[1], x[0]))],
             "quality": quality_metrics(db, org, s_iso, e_iso, author)}
 
 
@@ -152,7 +156,8 @@ def excel():
     info = [["Dato", "Valor"], ["Periodo", f"{start.isoformat()} a {end.isoformat()}"], ["Profesional", who],
             ["Generado con", "GastroMed Pro"], ["Contenido", "Solo números agregados; no incluye datos de pacientes."]]
     data = workbook([("Por mes", by_month), ("Diagnósticos de consulta", [["Diagnóstico", "Veces"]] + st["dx_consult"]),
-                     ("Diagnósticos endoscópicos", [["Diagnóstico", "Veces"]] + st["dx_endo"]), ("Calidad colonoscopia", quality),
+                     ("Diagnósticos endoscópicos", [["Diagnóstico", "Veces"]] + st["dx_endo"]),
+                     ("Atención y lugar", [["Atención", "Lugar", "Estudios"]] + [list(x) for x in st["by_care"]]), ("Calidad colonoscopia", quality),
                      ("Información", info)])
     audit("estadisticas_exportadas", "estadisticas", None, {"desde": start.isoformat(), "hasta": end.isoformat()})
     resp = make_response(data)

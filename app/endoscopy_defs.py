@@ -46,6 +46,24 @@ EXTENT = {
     "use": [("completo", "Evaluación completa de la región objetivo"), ("parcial", "Evaluación parcial")],
 }
 
+# Tipo de atención (v0.22.0, para usar el programa también en hospitales)
+CARE_SETTINGS = {"externa": "Consulta externa", "sala": "Sala (hospitalizado)", "emergencia": "Emergencia"}
+
+
+def care_text(d):
+    """Texto corto del tipo de atención para el informe: «Sala (hospitalizado) · Medicina interna · cama 12»."""
+    cs = CARE_SETTINGS.get((d or {}).get("care_setting") or "")
+    if not cs:
+        return ""
+    parts = [cs]
+    if d.get("care_setting") in ("sala", "emergencia"):
+        if d.get("ward"):
+            parts.append(d["ward"])
+        if d.get("bed"):
+            parts.append(f"cama {d['bed']}")
+    return " · ".join(parts)
+
+
 INDICATION_CATEGORIES = {"diagnostica": "Diagnóstica (síntomas o hallazgos)", "tamizaje": "Tamizaje (persona asintomática)",
                          "vigilancia": "Vigilancia (antecedente de pólipos, cáncer, EII, Barrett…)", "terapeutica": "Terapéutica"}
 

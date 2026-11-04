@@ -139,3 +139,53 @@ def test_informe_muestra_dni_nacimiento_edad_y_mas(env):
     for x in ("0801-1980-99999", "Fecha de nacimiento: 15/05/1980", "Edad: 46 años", "Expediente:", "Sexo:",
               "Médico que refiere: Dr. Remitente Ficticio"):
         assert x in txt, x
+
+
+def test_tipo_de_atencion_sala_o_consulta_externa(env):
+    import json
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import full_form, new_proc, version
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    proc = new_proc(med, pid, tok, "colonoscopia")
+    html = med.get(f"/procedimientos/{proc}").get_data(as_text=True)
+    assert "Tipo de atención y lugar" in html and '<option value="externa" selected>Consulta externa</option>' in html
+    r = med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting="sala", ward="Medicina interna",
+                                                                  bed="12", facility="Hospital Ficticio", facility_record="H-555"))
+    assert r.status_code == 302
+    d = json.loads(env["db"].execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])
+    assert (d["care_setting"], d["ward"], d["bed"], d["facility"], d["facility_record"]) == ("sala", "Medicina interna", "12", "Hospital Ficticio", "H-555")
+    txt = " ".join(_pdf_text(med.get(f"/procedimientos/{proc}/pdf").data).split())
+    assert "Atención: Sala (hospitalizado) · Medicina interna · cama 12" in txt and "Lugar: Hospital Ficticio" in txt and "Exp. del hospital: H-555" in txt
+    assert "Hospital Ficticio" in med.get(f"/pacientes/{pid}/procedimientos").get_data(as_text=True)
+    assert ">Sala<" in med.get("/endoscopia").get_data(as_text=True)
+    # consulta externa: la sala y la cama no se guardan aunque vengan escritas
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting="externa", ward="X", bed="9"))
+    d = json.loads(env["db"].execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])
+    assert d["care_setting"] == "externa" and d["ward"] is None and d["bed"] is None
+    txt = " ".join(_pdf_text(med.get(f"/procedimientos/{proc}/pdf").data).split())
+    assert "Atención: Consulta externa" in txt and "cama" not in txt
+    # valor no válido: no se guarda
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting="inventado"))
+    assert json.loads(env["db"].execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])["care_setting"] is None
+
+
+def test_estadisticas_por_atencion_y_lugar(env):
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import full_form, new_proc, version
+    from app.views_stats import compute
+    from datetime import date
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    for care, fac in (("sala", "Hospital Ficticio"), ("externa", "")):
+        proc = new_proc(med, pid, tok, "colonoscopia")
+        med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting=care, facility=fac, then="finalizar"))
+        med.post(f"/procedimientos/{proc}/finalizar", data={"csrf_token": tok, "version": version(env, proc)})
+    with env["app"].test_request_context():
+        from app.db import get_db
+        st = compute(get_db(), env["org"]["org_id"], date(2026, 1, 1), date(2026, 12, 31))
+    assert ("Sala (hospitalizado)", "Hospital Ficticio", 1) in st["by_care"] and ("Consulta externa", "Su clínica", 1) in st["by_care"]
+    html = med.get("/estadisticas?desde=2026-01-01&hasta=2026-12-31").get_data(as_text=True)
+    assert "Estudios por tipo de atención y lugar" in html and "Hospital Ficticio" in html

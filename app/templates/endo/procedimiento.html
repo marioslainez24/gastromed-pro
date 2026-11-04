@@ -60,6 +60,19 @@
 <form method="post" action="{{ url_for('endo.proc_save', proc_id=pr.id) }}" class="stack proc-form" id="proc-form" data-dirty-guard>
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="version" value="{{ pr.version }}">
 
+  <fieldset class="card"><legend>Tipo de atención y lugar</legend>
+    <div class="grid4" data-care>
+      <label class="field">Atención<select name="care_setting" data-care-select>{% for k, v in D.CARE_SETTINGS.items() %}<option value="{{ k }}" {% if (d.care_setting or 'externa') == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+      <label class="field" data-care-sala {% if d.care_setting not in ('sala', 'emergencia') %}hidden{% endif %}>Sala o servicio<input name="ward" maxlength="120" value="{{ d.ward or '' }}" placeholder="Ej.: Medicina interna"></label>
+      <label class="field" data-care-sala {% if d.care_setting not in ('sala', 'emergencia') %}hidden{% endif %}>Cama<input name="bed" maxlength="20" value="{{ d.bed or '' }}"></label>
+    </div>
+    <div class="grid2">
+      <label class="field"><span>Hospital o lugar donde se realiza <span class="muted">· opcional</span></span><input name="facility" maxlength="160" value="{{ d.facility or '' }}" list="facilities-list" placeholder="Vacío = su clínica"></label>
+      <label class="field"><span>N.º de expediente en ese hospital <span class="muted">· opcional</span></span><input name="facility_record" maxlength="40" value="{{ d.facility_record or '' }}"></label>
+    </div>
+    <datalist id="facilities-list">{% for x in facilities %}<option value="{{ x }}">{% endfor %}</datalist>
+  </fieldset>
+
   <fieldset class="card"><legend>Indicación y consentimiento</legend>
     <div class="grid4">
       <label class="field">Fecha<input type="date" name="performed_on" value="{{ pr.performed_on }}" required></label>
@@ -298,6 +311,7 @@
 {% else %}
   {# ---------------- Vista de solo lectura ---------------- #}
   <section class="card note-read">
+    {% if d.care_setting or d.facility %}<h2>Atención</h2><p>{{ D.care_text(d) }}{% if d.facility %}{{ ' · ' if d.care_setting }}{{ d.facility }}{% endif %}{% if d.facility_record %} · Exp. hospital {{ d.facility_record }}{% endif %}</p>{% endif %}
     <h2>Indicación</h2><p>{{ D.INDICATION_CATEGORIES.get(pr.indication_category, '') }}{% if d.indication %} · {{ d.indication }}{% endif %}</p>
     <h2>Evaluación previa y sedación</h2>
     <p class="small">Consentimiento: {{ 'obtenido' if d.consent_obtained else 'no registrado' }}{% if d.consent_version %} ({{ d.consent_version }}){% endif %}

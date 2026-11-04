@@ -123,7 +123,7 @@ def test_estadisticas_y_excel(env):
     r = med.get("/estadisticas/excel?desde=2026-01-01&hasta=2026-12-31")
     assert r.status_code == 200 and r.headers["Content-Type"].startswith("application/vnd.openxmlformats")
     wb = read_xlsx(r.data)
-    assert list(wb) == ["Por mes", "Diagnósticos de consulta", "Diagnósticos endoscópicos", "Calidad colonoscopia", "Información"]
+    assert list(wb) == ["Por mes", "Diagnósticos de consulta", "Diagnósticos endoscópicos", "Atención y lugar", "Calidad colonoscopia", "Información"]
     oct_row = [row for row in wb["Por mes"] if row[0] == "2026-10"][0]
     assert oct_row[1] == "2" and oct_row[4] == "1"                              # 2 consultas y 1 colonoscopia en octubre
     texto = " ".join(c for rows in wb.values() for row in rows for c in row)

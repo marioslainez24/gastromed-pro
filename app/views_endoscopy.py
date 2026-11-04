@@ -137,9 +137,13 @@ def proc_view(proc_id):
     from .views_settings import endo_staff
     staff_med = [r["name"] for r in endo_staff(db, g.user["org_id"], "medico")]
     staff_asi = [r["name"] for r in endo_staff(db, g.user["org_id"], "asistente")]
+    facilities = [r[0] for r in db.execute(
+        "SELECT json_extract(data, '$.facility') AS f FROM procedures WHERE org_id = ? AND discarded_at IS NULL"
+        " AND COALESCE(json_extract(data, '$.facility'), '') <> '' GROUP BY f ORDER BY MAX(created_at) DESC LIMIT 20",
+        (g.user["org_id"],))] if editable else []
     asis = list(data.get("assistants_list") or ([data["assistants"]] if data.get("assistants") else []))
     return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, prev=prev, A=A,
-                           staff_med=staff_med, staff_asi=staff_asi, asis=(asis + ["", "", ""])[:3],
+                           staff_med=staff_med, staff_asi=staff_asi, asis=(asis + ["", "", ""])[:3], facilities=facilities,
                            endoscopist=data.get("endoscopist") or (staff_med[0] if staff_med else ""),
                            anat_svg=Markup(A.svg(pr["kind"], data.get("marks") or [], interactive=editable)),
                            prev_concl=[x for x in (json.loads(prev["data"]).get("conclusion") or "").splitlines() if x.strip()][:4] if prev else [],
@@ -213,6 +217,10 @@ def parse_form(kind, f):
         "sedation_type": f.get("sedation_type") if f.get("sedation_type") in D.SEDATION else None,
         "sedation_agents": _txt(f, "sedation_agents", 500), "sedation_by": _txt(f, "sedation_by", 200), "monitoring": _txt(f, "monitoring", 500),
         "endoscopist": _txt(f, "endoscopist", 120),
+        "care_setting": f.get("care_setting") if f.get("care_setting") in D.CARE_SETTINGS else None,
+        "ward": _txt(f, "ward", 120) if f.get("care_setting") in ("sala", "emergencia") else None,
+        "bed": _txt(f, "bed", 20) if f.get("care_setting") in ("sala", "emergencia") else None,
+        "facility": _txt(f, "facility", 160), "facility_record": _txt(f, "facility_record", 40),
         "assistants_list": [a for a in (_txt(f, f"assistant_{i}", 120) for i in (1, 2, 3)) if a],
         "start_time": _txt(f, "start_time", 5), "end_time": _txt(f, "end_time", 5),
         "incomplete_reason": _txt(f, "incomplete_reason", 300), "interventions": _txt(f, "interventions"), "materials": _txt(f, "materials"),
@@ -726,7 +734,8 @@ def index():
     db = get_db()
     org = g.user["org_id"]
     today = local_today().isoformat()
-    recent = db.execute("SELECT pr.*, p.first_names, p.last_names, p.mrn FROM procedures pr JOIN patients p ON p.id = pr.patient_id"
+    recent = db.execute("SELECT pr.*, p.first_names, p.last_names, p.mrn, json_extract(pr.data, '$.care_setting') AS care,"
+                        " json_extract(pr.data, '$.facility') AS facility FROM procedures pr JOIN patients p ON p.id = pr.patient_id"
                         " WHERE pr.org_id = ? AND pr.discarded_at IS NULL ORDER BY pr.performed_on DESC, pr.created_at DESC LIMIT 50", (org,)).fetchall()
     path = db.execute("SELECT s.*, p.first_names, p.last_names, pr.kind, pr.performed_on FROM specimens s JOIN patients p ON p.id = s.patient_id"
                       " JOIN procedures pr ON pr.id = s.procedure_id WHERE s.org_id = ? AND s.status IN ('pendiente_envio','enviado','resultado_recibido')"
@@ -745,7 +754,9 @@ def index():
 def patient_procs(patient_id):
     p = get_patient_or_404(patient_id)
     db = get_db()
-    rows = db.execute("SELECT pr.*, COALESCE(NULLIF(json_extract(pr.data, '$.endoscopist'), ''), u.full_name) AS author FROM procedures pr JOIN users u ON u.id = pr.author_id WHERE pr.patient_id = ?"
+    rows = db.execute("SELECT pr.*, COALESCE(NULLIF(json_extract(pr.data, '$.endoscopist'), ''), u.full_name) AS author,"
+                      " json_extract(pr.data, '$.care_setting') AS care, json_extract(pr.data, '$.facility') AS facility"
+                      " FROM procedures pr JOIN users u ON u.id = pr.author_id WHERE pr.patient_id = ?"
                       " AND pr.discarded_at IS NULL ORDER BY pr.performed_on DESC, pr.created_at DESC", (p["id"],)).fetchall()
     stents = db.execute("SELECT * FROM stents WHERE patient_id = ? ORDER BY placed_on DESC", (p["id"],)).fetchall()
     return render_template("endo/paciente.html", p=p, rows=rows, stents=stents, D=D, today=local_today().isoformat())

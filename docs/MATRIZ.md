@@ -165,3 +165,4 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | Letra 12 en los PDF; informe de endoscopia con el nombre del endoscopista en encabezado y firma | ✅ probado (pruebas automáticas + revisión del PDF); se publica con su «ya» |
 | Estudios y archivos agrupados por estudio y fecha, con visor de imágenes en grande (PC y celular) | ✅ probado (pruebas + navegador); se publica con su «ya» |
 | Informe de endoscopia con DNI, fecha de nacimiento, edad y demás datos del paciente | ✅ probado; se publica con su «ya» |
+| Tipo de atención en el informe (consulta externa / sala / emergencia, sala y cama, hospital) para usarlo también en hospitales | ✅ probado (pruebas + navegador); se publica con su «ya» |

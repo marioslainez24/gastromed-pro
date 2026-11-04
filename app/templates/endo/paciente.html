@@ -6,7 +6,7 @@
 {% if can('clinico.editar') %}<div class="btn-row"><a class="btn btn-primary" href="{{ url_for('endo.proc_new', patient_id=p.id) }}">＋ Nuevo informe de endoscopia</a></div>{% endif %}
 <section class="card">
   {% if rows %}<ul class="list">{% for r in rows %}
-    <li class="row-between"><span><a class="strong" href="{{ url_for('endo.proc_view', proc_id=r.id) }}">{{ D.KINDS[r.kind] }}</a> · {{ fmt_birth(r.performed_on) }} · {{ r.author }}</span>
+    <li class="row-between"><span><a class="strong" href="{{ url_for('endo.proc_view', proc_id=r.id) }}">{{ D.KINDS[r.kind] }}</a> · {{ fmt_birth(r.performed_on) }} · {{ r.author }}{% if r.care %} · <span class="tag">{{ D.CARE_SETTINGS.get(r.care, '')|replace(' (hospitalizado)', '') }}</span>{% endif %}{% if r.facility %} <span class="muted small">{{ r.facility }}</span>{% endif %}</span>
       <span>{% if r.surveillance_due %}<span class="tag {{ 'tag-danger' if r.surveillance_due < today else '' }}">Control {{ fmt_birth(r.surveillance_due) }}</span>{% endif %}
       <span class="tag {{ 'tag-ok' if r.status == 'finalizado' else 'tag-warn' }}">{{ 'Finalizado' if r.status == 'finalizado' else 'Borrador' }}</span>
       {% if r.status == 'borrador' and r.author_id == current_user.id and can('clinico.editar') %}<form method="post" class="discard-form" action="{{ url_for('endo.proc_discard', proc_id=r.id) }}"
