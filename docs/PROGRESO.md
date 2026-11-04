@@ -20,7 +20,7 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
-## Etapa 22 · 2-nov-2026 · Versión para Mac (v0.22.0 · en «desarrollo», falta su «ya»)
+## Etapa 22 · 2/3-nov-2026 · Mejoras tras usarlo con un paciente real + Mac preparada (v0.22.0 · en «desarrollo», falta su «ya»)
 
 **Pedido del Dr. Lainez:** «hazme una versión para que se pueda ejecutar en Mac».
 - Mismo programa, sin cambios en las pantallas. Dos paquetes: **GastroMedPro-Mac-chip-Apple.zip** (M1–M4) y **GastroMedPro-Mac-Intel.zip**,
@@ -46,8 +46,9 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
     Esc, deslizar con el dedo en el celular, tira de miniaturas, «Descargar». Capturas `evidencia/capturas/v022-*.png`.
   - **Datos del paciente en el informe de endoscopia:** nombre, expediente, documento (DNI), fecha de nacimiento, edad el día del
     estudio, sexo, y si existen teléfono, procedencia, médico que refiere, aseguradora y alergias.
-- **Mac solo esta vez** (pedido del 3-nov-2026): la CI construye Mac únicamente si el último commit trae «[mac]» (o a mano con mac=true).
-  Las próximas versiones salen solo para Windows.
+- **Mac en espera** (3-nov-2026): el Dr. Lainez dijo «no hagas para Mac en este momento, solo para Windows». La construcción para Mac
+  queda preparada y probada, pero la CI solo la hace si el último commit trae «[mac]» (o a mano con mac=true). Por ahora, solo Windows.
+- **Letra 12** (3-nov-2026, a pedido): texto de los PDF en 12 puntos (títulos 13.5, letra chica 10, documentos 12.5, hojas 12).
 - Si se copia la carpeta `datos` de Windows a la Mac, `adapt_paths()` corrige las rutas guardadas sin tocar las claves.
 - Pruebas: `tests/test_v022.py` (216 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
   y Mac Intel correctos (pruebas + prueba completa del programa). Falta probar en una Mac real.

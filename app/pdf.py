@@ -16,16 +16,16 @@ INK = colors.HexColor("#1d2b36")
 MUTED = colors.HexColor("#5b6b77")
 ACCENT = colors.HexColor("#0f6e66")
 
-_base = dict(fontName="Helvetica", fontSize=11.5, leading=15.5, textColor=INK)   # v0.22: letra más grande (antes 10)
+_base = dict(fontName="Helvetica", fontSize=12, leading=16, textColor=INK)   # v0.22: letra 12 a pedido del Dr. Lainez (antes 10)
 ST = {
     "doctor": ParagraphStyle("doctor", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 17, "leading": 21}),
-    "sub": ParagraphStyle("sub", **{**_base, "fontSize": 10.5, "leading": 13.5, "textColor": MUTED}),
-    "title": ParagraphStyle("title", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 13, "leading": 17, "textColor": ACCENT}),
+    "sub": ParagraphStyle("sub", **{**_base, "fontSize": 11, "leading": 14, "textColor": MUTED}),
+    "title": ParagraphStyle("title", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 13.5, "leading": 17.5, "textColor": ACCENT}),
     "body": ParagraphStyle("body", **_base),
-    "med": ParagraphStyle("med", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 12.5, "leading": 16}),
-    "subr": ParagraphStyle("subr", **{**_base, "fontSize": 10.5, "leading": 13.5, "textColor": MUTED, "alignment": 2}),
-    "item9": ParagraphStyle("item9", **{**_base, "fontSize": 10.5, "leading": 13.5}),
-    "small": ParagraphStyle("small", **{**_base, "fontSize": 9.5, "leading": 12, "textColor": MUTED}),
+    "med": ParagraphStyle("med", **{**_base, "fontName": "Helvetica-Bold", "fontSize": 13, "leading": 16.5}),
+    "subr": ParagraphStyle("subr", **{**_base, "fontSize": 11, "leading": 14, "textColor": MUTED, "alignment": 2}),
+    "item9": ParagraphStyle("item9", **{**_base, "fontSize": 11, "leading": 14}),
+    "small": ParagraphStyle("small", **{**_base, "fontSize": 10, "leading": 12.5, "textColor": MUTED}),
 }
 
 
@@ -574,7 +574,7 @@ def sheet_pdf(title, body, s, size, assets=None) -> bytes:
         story.append(Paragraph(_e(" · ".join(sub)), ST["sub"]))
     story = _with_logo(story, assets, width)
     story += [Spacer(1, 3 * mm), Paragraph(_e(title), ST["title"]), Spacer(1, 2 * mm)]
-    style = ParagraphStyle("sheet", **{**_base, "fontSize": 11.5, "leading": 14.2})
+    style = ParagraphStyle("sheet", **{**_base, "fontSize": 12, "leading": 14.6})
     for block in body.split("\n\n"):
         lines = block.split("\n")
         first = lines[0].strip()

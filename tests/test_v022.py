@@ -97,7 +97,7 @@ def test_informe_sin_endoscopista_usa_medico_de_ajustes(env):
 
 def test_letra_mas_grande_en_los_pdf():
     from app.pdf import ST
-    assert ST["body"].fontSize >= 11.5 and ST["small"].fontSize >= 9.5 and ST["title"].fontSize >= 13
+    assert ST["body"].fontSize == 12 and ST["small"].fontSize >= 10 and ST["title"].fontSize >= 13
 
 
 def test_estudios_se_agrupan_por_fecha_y_nombre(env):

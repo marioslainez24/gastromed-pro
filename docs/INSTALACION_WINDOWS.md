@@ -95,7 +95,7 @@ En la nota, encima de *Historia de la enfermedad actual*, abra **✍ Asistente d
 - Si algo falla, la ventana negra muestra el error: tome una foto y compártala.
 
 
-## Usar GastroMed Pro en una Mac (v0.22.0)
+## Usar GastroMed Pro en una Mac (preparado; se publica solo cuando el Dr. Lainez lo pida)
 
 1. En la página de descargas baje **GastroMedPro-Mac-chip-Apple.zip** si su Mac tiene chip M1, M2, M3 o M4, o
    **GastroMedPro-Mac-Intel.zip** si es Intel (menú Apple  → «Acerca de esta Mac» lo dice).

@@ -47,12 +47,13 @@ El 1-nov-2026 dijo «ya»: se publicó la v0.18.0 (descartar borradores; hojas d
 v0.19.0 (clasificaciones del consenso cubano; recetas frecuentes; partir del estudio anterior; estadísticas + Excel; búsqueda en expedientes; esquema anatómico; envío al correo del paciente) se publicó el 1-nov-2026 tras su «ya». Lo siguiente, en `desarrollo` hasta su «ya». El Dr. Lainez NO quiere atlas ni fotos de internet.
 v0.20.0 (personal de endoscopia: endoscopista y asistentes con menús) se publicó el 1-nov-2026 tras su «ya». Lo siguiente, en `desarrollo` hasta su «ya».
 v0.21.0 (hojas educativas y dietas; agenda en el calendario del celular) se publicó el 2-nov-2026 tras su «ya». Lo siguiente, en `desarrollo` hasta su «ya».
-v0.22.0 (versión para Mac: chip Apple en `macos-14` e Intel en `macos-15-intel`; `build/GastroMedPro-mac.spec`, `build/LEEME-mac.txt`;
-`adapt_paths` corrige rutas si se copia la carpeta datos de Windows a Mac) probada en CI desde `desarrollo` (workflow_dispatch, no publica); además letra más grande en todos los PDF y el informe de endoscopia
+v0.22.0 (versión para Mac preparada pero NO publicada: chip Apple en `macos-14` e Intel en `macos-15-intel`; `build/GastroMedPro-mac.spec`, `build/LEEME-mac.txt`;
+`adapt_paths` corrige rutas si se copia la carpeta datos de Windows a Mac) probada en CI desde `desarrollo` (workflow_dispatch, no publica); además letra 12 en todos los PDF y el informe de endoscopia
 firmado por el endoscopista elegido (no por el usuario); estudios agrupados por fecha con visor en grande; DNI, nacimiento y más datos del paciente en el informe. Espera su «ya».
 La CI tiene trabajos windows, mac (matriz) y publicar (solo en main; sube el .exe y los .zip de Mac que salieron bien). `macos-latest` se quedó sin máquinas: usar `macos-14`.
-**Mac SOLO UNA VEZ (pedido del 3-nov-2026):** el trabajo mac corre solo si el último commit que llega a main tiene «[mac]» en el mensaje
-(o workflow_dispatch con mac=true). Al publicar la v0.22.0, si el último commit ya no trae «[mac]», crear uno vacío (`git commit --allow-empty -m "Publicar v0.22.0 [mac]"`) antes del merge a main. Las publicaciones siguientes, solo Windows como siempre; no poner «[mac]» salvo que él lo pida.
+**Mac SOLO CUANDO ÉL LO PIDA (3-nov-2026):** primero pidió Mac una vez y luego dijo «no hagas para Mac en este momento, solo Windows».
+El trabajo mac corre solo si el último commit que llega a main tiene «[mac]» en el mensaje (o workflow_dispatch con mac=true). Hoy NO
+se publica para Mac: no poner «[mac]» en ningún commit hasta que él lo pida. La construcción para Mac ya está probada y lista para entonces.
 Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó
