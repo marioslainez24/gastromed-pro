@@ -254,7 +254,7 @@ def _annotated_jpeg(raw: bytes, annotations: list, max_px=900) -> bytes:
     return out.getvalue()
 
 
-def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, endo=None) -> bytes:
+def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, endo=None, allergies=()) -> bytes:
     from reportlab.platypus import Image as RLImage
     buf = io.BytesIO()
     pagesize = LETTER if size == "carta" else A4
@@ -280,10 +280,34 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
                               ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
     story += [Spacer(1, 2 * mm), head]
-    pt = Table([[Paragraph(f"<b>Paciente:</b> {_e(p['first_names'])} {_e(p['last_names'])} · {_e(p['mrn'])}", ST["body"]),
-                 Paragraph(f"<b>Edad:</b> {_e(age(p['birth_date']))} · {_e(label('sex', p['sex']))}", ST["body"])]],
-               colWidths=[width * 0.62, width * 0.38])
-    pt.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eef4f3")), ("LEFTPADDING", (0, 0), (-1, -1), 6)]))
+    # Datos del paciente (v0.22.0, pedido del Dr. Lainez): DNI, fecha de nacimiento, edad el día del estudio y más
+    from datetime import date as _date
+    try:
+        on = _date.fromisoformat(pr["performed_on"])
+    except (TypeError, ValueError):
+        on = None
+    doc_cell = "<b>Identidad:</b> sin documento" if p["document_type"] in (None, "", "sin_documento") else \
+        f"<b>{_e(label('document_type', p['document_type']))}:</b> {_e(p['document_number'] or '—')}"
+    if p["allergy_status"] == "con_alergias" and allergies:
+        alg = "; ".join(f"{a['substance']}" for a in allergies)
+    else:
+        alg = label("allergy_status", p["allergy_status"]) if p["allergy_status"] else ""
+    cells = [(f"<b>Paciente:</b> {_e(p['first_names'])} {_e(p['last_names'])}", f"<b>Expediente:</b> {_e(p['mrn'])}"),
+             (doc_cell, f"<b>Fecha de nacimiento:</b> {_e(fmt_birth(p['birth_date'])) if p['birth_date'] else 'no registrada'}"),
+             (f"<b>Edad:</b> {_e(age(p['birth_date'], on))}", f"<b>Sexo:</b> {_e(label('sex', p['sex']))}")]
+    extra = [x for x in [f"<b>Teléfono:</b> {_e(p['phone'])}" if p["phone"] else None,
+                         f"<b>Procedencia:</b> {_e(p['origin'])}" if p["origin"] else None,
+                         f"<b>Médico que refiere:</b> {_e(p['referring_physician'])}" if p["referring_physician"] else None,
+                         f"<b>Aseguradora:</b> {_e(p['payer'])}" if p["payer"] else None] if x]
+    while extra:
+        cells.append((extra.pop(0), extra.pop(0) if extra else ""))
+    rows = [[Paragraph(a, ST["body"]), Paragraph(b, ST["body"])] for a, b in cells]
+    if alg:
+        rows.append([Paragraph(f"<b>Alergias:</b> {_e(alg)}", ST["body"]), ""])
+    pt = Table(rows, colWidths=[width * 0.55, width * 0.45])
+    pt.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#eef4f3")), ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                            ("TOPPADDING", (0, 0), (-1, -1), 1.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.5)]
+                           + ([("SPAN", (0, len(rows) - 1), (1, len(rows) - 1))] if alg else [])))
     story += [Spacer(1, 2 * mm), pt, Spacer(1, 3 * mm)]
 
     def sec(t, body):

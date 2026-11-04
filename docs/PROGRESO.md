@@ -44,10 +44,12 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
     nombre sin «· imagen N») salen en UNA fila plegada: «Endoscopia digestiva alta · 03/11/2026 · 7 imágenes» con 3 miniaturas; al
     tocar «Ver estudio» se abre la cuadrícula. Visor en grande propio (`app.js`, sin librerías): pantalla completa, flechas, teclas ←/→,
     Esc, deslizar con el dedo en el celular, tira de miniaturas, «Descargar». Capturas `evidencia/capturas/v022-*.png`.
+  - **Datos del paciente en el informe de endoscopia:** nombre, expediente, documento (DNI), fecha de nacimiento, edad el día del
+    estudio, sexo, y si existen teléfono, procedencia, médico que refiere, aseguradora y alergias.
 - **Mac solo esta vez** (pedido del 3-nov-2026): la CI construye Mac únicamente si el último commit trae «[mac]» (o a mano con mac=true).
   Las próximas versiones salen solo para Windows.
 - Si se copia la carpeta `datos` de Windows a la Mac, `adapt_paths()` corrige las rutas guardadas sin tocar las claves.
-- Pruebas: `tests/test_v022.py` (215 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
+- Pruebas: `tests/test_v022.py` (216 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
   y Mac Intel correctos (pruebas + prueba completa del programa). Falta probar en una Mac real.
 
 ## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · PUBLICADA 2-nov-2026)

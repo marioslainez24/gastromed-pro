@@ -120,3 +120,22 @@ def test_estudios_se_agrupan_por_fecha_y_nombre(env):
     assert html.count('class="file-group"') == 1 and "5 imágenes" in html and "Ver las imágenes en grande" in html
     key = by[("Endoscopia digestiva alta", "2026-11-03")]["key"]
     assert html.count(f'data-gal="{key}"') == 5 and f'data-gal-open="{key}"' in html and "Pruebas hepáticas" in html
+
+
+def test_informe_muestra_dni_nacimiento_edad_y_mas(env):
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import new_proc
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    db = env["db"]
+    db.execute("UPDATE patients SET birth_date = '1980-05-15', document_type = 'dni', document_number = '0801-1980-99999', "
+               "referring_physician = 'Dr. Remitente Ficticio' WHERE id = ?", (pid,))
+    db.commit()
+    proc = new_proc(med, pid, tok, "eda")
+    db.execute("UPDATE procedures SET performed_on = '2026-11-03' WHERE id = ?", (proc,))
+    db.commit()
+    txt = " ".join(_pdf_text(med.get(f"/procedimientos/{proc}/pdf").data).split())
+    for x in ("0801-1980-99999", "Fecha de nacimiento: 15/05/1980", "Edad: 46 años", "Expediente:", "Sexo:",
+              "Médico que refiere: Dr. Remitente Ficticio"):
+        assert x in txt, x

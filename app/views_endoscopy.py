@@ -591,7 +591,8 @@ def proc_pdf(proc_id):
     from .views_extras import load_assets
     pdata = json.loads(pr["data"])
     data = procedure_pdf(pr, pdata, p, s, size, imgs, scope, addenda, D, load_assets(g.user["org_id"]),
-                         endo=endoscopist_info(db, g.user["org_id"], pdata.get("endoscopist"), s))
+                         endo=endoscopist_info(db, g.user["org_id"], pdata.get("endoscopist"), s),
+                         allergies=db.execute("SELECT * FROM patient_allergies WHERE patient_id = ? AND active = 1", (p["id"],)).fetchall())
     audit("procedimiento_pdf", "procedimiento", pr["id"])
     resp = make_response(data)
     resp.headers["Content-Type"] = "application/pdf"
