@@ -54,8 +54,8 @@ v0.23.0 (descartar informes de endoscopia FINALIZADOS con motivo; migración 001
 v0.24.0 (licencia por computadora con clave firmada Ed25519; secreto GitHub `GM_LICENCIA_CLAVE`; workflow «Activar una computadora»;
 titular en pie de programa y PDF) se publicó el 4-nov-2026 tras su «ya» como v0.24.0-30 (el secreto `GM_LICENCIA_CLAVE` ya existe en GitHub;
 sin él la CI falla a propósito). El 4-nov el repositorio SEGUÍA PÚBLICO: recordarle hacerlo privado (Settings → Danger Zone). Lo siguiente, en `desarrollo` hasta su «ya». Desde aquí NO se pueden cambiar ajustes ni secretos del repositorio (proxy).
-v0.24.1 (documentos SIN pie «Generado con GastroMed Pro…» ni «Licencia de uso»: no volver a ponerlos; el titular solo en la pantalla) en `desarrollo`, espera su «ya».
-v0.25.0 (número de expediente = DNI; sin DNI, GM-…; los existentes se convierten al iniciar con auditoría) en `desarrollo`, espera su «ya» (incluye v0.24.1).
+v0.24.1 (documentos SIN pie «Generado con GastroMed Pro…» ni «Licencia de uso»: no volver a ponerlos; el titular solo en la pantalla) publicada dentro de la v0.25.0.
+v0.25.0 (número de expediente = DNI; sin DNI, GM-…; los existentes se convierten al iniciar con auditoría) se publicó el 4-nov-2026 tras su «ya» como v0.25.0-31 (incluye v0.24.1; repositorio aún público). Lo siguiente, en `desarrollo` hasta su «ya».
 Para activar una PC: él copia el código de equipo y corre el workflow (o lo hace Claude si tiene la llave en la sesión). La llave privada NUNCA va al código.
 La CI tiene trabajos windows, mac (matriz) y publicar (solo en main; sube el .exe y los .zip de Mac que salieron bien). `macos-latest` se quedó sin máquinas: usar `macos-14`.
 **Mac SOLO CUANDO ÉL LO PIDA (3-nov-2026):** primero pidió Mac una vez y luego dijo «no hagas para Mac en este momento, solo Windows».

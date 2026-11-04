@@ -20,7 +20,7 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
-## Etapa 25 · 4-nov-2026 · Número de expediente = DNI (v0.25.0 · en «desarrollo», falta su «ya»; incluye v0.24.1)
+## Etapa 25 · 4-nov-2026 · Número de expediente = DNI (v0.25.0 · PUBLICADA 4-nov-2026 como v0.25.0-31; incluye v0.24.1)
 
 **Pedido del Dr. Lainez:** «que el número de expediente sea el mismo que el DNI».
 - Paciente nuevo con DNI → `mrn` = DNI tal como queda guardado (formato 0801-1980-12345). Sin DNI (pasaporte, otro, sin documento) →
@@ -31,7 +31,7 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
   `search_text`). Los documentos ya impresos con el número viejo no cambian.
 - Exportación: carpeta de adjuntos con el expediente saneado. Texto de ayuda en el formulario. Pruebas `tests/test_v025.py` (238).
 
-## Etapa 24.1 · 4-nov-2026 · Documentos sin pie de programa (v0.24.1 · en «desarrollo», falta su «ya»)
+## Etapa 24.1 · 4-nov-2026 · Documentos sin pie de programa (v0.24.1 · publicada dentro de la v0.25.0)
 
 **Pedido del Dr. Lainez** (con captura del pie del informe): que en el informe de endoscopia y en cualquier documento generado NO salgan
 «Licencia de uso: …» ni «Generado con GastroMed Pro. Informe finalizado; requiere firma manuscrita.». Se quitaron de TODOS los PDF
