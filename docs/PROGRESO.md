@@ -20,7 +20,7 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
-## Etapa 24 · 4-nov-2026 · Protección contra copia: licencia por computadora (v0.24.0 · en «desarrollo», falta su «ya»)
+## Etapa 24 · 4-nov-2026 · Protección contra copia: licencia por computadora (v0.24.0 · PUBLICADA 4-nov-2026 como v0.24.0-30, solo Windows)
 
 **Pedido del Dr. Lainez:** «que tenga más seguridad para que nadie me lo robe y pueda usarlo en su clínica». Eligió las tres medidas:
 1. **Repositorio privado.** Hallazgo: el repositorio era PÚBLICO (cualquiera podía bajar el .exe y ver el código). Desde aquí no se puede
@@ -39,7 +39,8 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
    - Límite honesto: detiene la copia normal; un experto con mucho tiempo podría modificar el ejecutable.
 3. **Titular visible:** «Licencia de uso: <titular>» (tomado de la clave firmada, no editable) en el pie del programa y en todos los PDF
    (receta, órdenes, informe, documentos, hojas).
-- Pruebas: `tests/test_v024.py` (233 en total).
+- Pruebas: `tests/test_v024.py` (233 en total). Primera construcción falló a propósito sin el secreto; él lo creó y la
+  repetición pasó (activación probada en Windows real). Repositorio todavía público al publicar: pendiente que lo haga privado.
 
 ## Etapa 23 · 3-nov-2026 · Descartar informes de endoscopia finalizados (v0.23.0 · PUBLICADA 3-nov-2026 como v0.23.0-29, solo Windows)
 

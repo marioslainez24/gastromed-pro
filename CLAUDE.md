@@ -52,8 +52,8 @@ v0.22.0 (versión para Mac preparada pero NO publicada: chip Apple en `macos-14`
 firmado por el endoscopista elegido (no por el usuario); estudios agrupados por fecha con visor en grande; DNI, nacimiento y más datos del paciente en el informe; tipo de atención (consulta externa/sala/emergencia, cama, hospital); ningún documento muestra folio (no volver a ponerlo); Endoscopista 1 y 2 con dos firmas, endoscopistas y asistentes en negrita; 3 estilos de informe en Ajustes (migración 0018). Lo siguiente, en `desarrollo` hasta su «ya».
 v0.23.0 (descartar informes de endoscopia FINALIZADOS con motivo; migración 0019 `procedure_voids`; no se borran) se publicó el 3-nov-2026 tras su «ya» como v0.23.0-29 (solo Windows). Lo siguiente, en `desarrollo` hasta su «ya».
 v0.24.0 (licencia por computadora con clave firmada Ed25519; secreto GitHub `GM_LICENCIA_CLAVE`; workflow «Activar una computadora»;
-titular en pie de programa y PDF) en `desarrollo`, espera su «ya». **Antes de publicar** él debe: (1) hacer PRIVADO el repositorio y (2) crear el
-secreto `GM_LICENCIA_CLAVE` (sin el secreto la CI falla a propósito). Desde aquí NO se pueden cambiar ajustes ni secretos del repositorio (proxy).
+titular en pie de programa y PDF) se publicó el 4-nov-2026 tras su «ya» como v0.24.0-30 (el secreto `GM_LICENCIA_CLAVE` ya existe en GitHub;
+sin él la CI falla a propósito). El 4-nov el repositorio SEGUÍA PÚBLICO: recordarle hacerlo privado (Settings → Danger Zone). Lo siguiente, en `desarrollo` hasta su «ya». Desde aquí NO se pueden cambiar ajustes ni secretos del repositorio (proxy).
 Para activar una PC: él copia el código de equipo y corre el workflow (o lo hace Claude si tiene la llave en la sesión). La llave privada NUNCA va al código.
 La CI tiene trabajos windows, mac (matriz) y publicar (solo en main; sube el .exe y los .zip de Mac que salieron bien). `macos-latest` se quedó sin máquinas: usar `macos-14`.
 **Mac SOLO CUANDO ÉL LO PIDA (3-nov-2026):** primero pidió Mac una vez y luego dijo «no hagas para Mac en este momento, solo Windows».
