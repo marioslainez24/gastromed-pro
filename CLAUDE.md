@@ -52,7 +52,7 @@ v0.22.0 (versión para Mac: chip Apple en `macos-14` e Intel en `macos-15-intel`
 firmado por el endoscopista elegido (no por el usuario); estudios agrupados por fecha con visor en grande. Espera su «ya».
 La CI tiene trabajos windows, mac (matriz) y publicar (solo en main; sube el .exe y los .zip de Mac que salieron bien). `macos-latest` se quedó sin máquinas: usar `macos-14`.
 **Mac SOLO UNA VEZ (pedido del 3-nov-2026):** el trabajo mac corre solo si el último commit que llega a main tiene «[mac]» en el mensaje
-(o workflow_dispatch con mac=true). La v0.22.0 lleva «[mac]». Las publicaciones siguientes, solo Windows como siempre; no poner «[mac]» salvo que él lo pida.
+(o workflow_dispatch con mac=true). Al publicar la v0.22.0, si el último commit ya no trae «[mac]», crear uno vacío (`git commit --allow-empty -m "Publicar v0.22.0 [mac]"`) antes del merge a main. Las publicaciones siguientes, solo Windows como siempre; no poner «[mac]» salvo que él lo pida.
 Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó
