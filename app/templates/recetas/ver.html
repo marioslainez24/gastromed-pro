@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-head">
   <div><h1>Receta · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
-  <p class="muted small">Emitida {{ fmt_dt(r.issued_at) }} por {{ r.author }} · Folio <span class="mono">{{ r.id[:8]|upper }}</span></p></div>
+  <p class="muted small">Emitida {{ fmt_dt(r.issued_at) }} por {{ r.author }}</p></div>
   {% if r.status == 'anulada' %}<span class="tag tag-danger big">Anulada</span>{% endif %}
 </div>
 {% if r.status == 'anulada' %}<div class="flash flash-error">Anulada el {{ fmt_dt(r.voided_at) }}. Motivo: {{ r.void_reason }}</div>{% endif %}

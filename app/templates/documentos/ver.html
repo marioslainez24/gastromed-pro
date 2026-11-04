@@ -3,7 +3,7 @@
 {% block content %}
 <div class="page-head">
   <div><h1>{{ KINDS[d.kind] }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
-  <p class="muted small">Emitido {{ fmt_dt(d.issued_at) }} por {{ d.author }} · Folio <span class="mono">{{ d.id[:8]|upper }}</span></p></div>
+  <p class="muted small">Emitido {{ fmt_dt(d.issued_at) }} por {{ d.author }}</p></div>
   <span class="tag big {{ 'tag-danger' if d.status == 'anulado' else 'tag-ok' }}">{{ 'Anulado' if d.status == 'anulado' else 'Emitido' }}</span>
 </div>
 {% if d.status == 'anulado' %}<div class="flash flash-error">Anulado {{ fmt_dt(d.voided_at) }}: {{ d.void_reason }}</div>{% endif %}

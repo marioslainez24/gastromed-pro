@@ -51,12 +51,13 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
     hospital o lugar (vacío = su clínica; se autocompletan los usados antes) y n.º de expediente en ese hospital. Se guarda en
     `procedures.data` (care_setting, ward, bed, facility, facility_record; sin migración). Sale en el PDF (recuadro del paciente), en
     la vista, en las listas de estudios y en Estadísticas («Estudios por tipo de atención y lugar» + hoja de Excel «Atención y lugar»).
-  - **Sin folio** en el informe de endoscopia (PDF y pantalla), a pedido. Recetas, órdenes, documentos y etiquetas de frascos lo conservan.
+  - **Sin folio en ningún documento** (a pedido): informe de endoscopia, recetas, órdenes de laboratorio, constancias/documentos y
+    etiquetas de frascos, tanto en el PDF como en pantalla. La identificación interna de cada registro no cambia.
 - **Mac en espera** (3-nov-2026): el Dr. Lainez dijo «no hagas para Mac en este momento, solo para Windows». La construcción para Mac
   queda preparada y probada, pero la CI solo la hace si el último commit trae «[mac]» (o a mano con mac=true). Por ahora, solo Windows.
 - **Letra 12** (3-nov-2026, a pedido): texto de los PDF en 12 puntos (títulos 13.5, letra chica 10, documentos 12.5, hojas 12).
 - Si se copia la carpeta `datos` de Windows a la Mac, `adapt_paths()` corrige las rutas guardadas sin tocar las claves.
-- Pruebas: `tests/test_v022.py` (219 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
+- Pruebas: `tests/test_v022.py` (220 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
   y Mac Intel correctos (pruebas + prueba completa del programa). Falta probar en una Mac real.
 
 ## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · PUBLICADA 2-nov-2026)

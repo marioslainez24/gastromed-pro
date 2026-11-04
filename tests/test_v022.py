@@ -199,3 +199,12 @@ def test_informe_sin_folio(env):
     proc = new_proc(med, create_patient(med), tok, "eda")
     assert "Folio" not in _pdf_text(med.get(f"/procedimientos/{proc}/pdf").data)
     assert "Folio" not in med.get(f"/procedimientos/{proc}").get_data(as_text=True)
+
+
+def test_ningun_documento_muestra_folio():
+    import inspect
+    from pathlib import Path
+    from app import pdf
+    assert "Folio" not in inspect.getsource(pdf)
+    root = Path(pdf.__file__).parent / "templates"
+    assert not [p.name for p in root.rglob("*.html") if "folio" in p.read_text(encoding="utf-8").lower()]

@@ -13,7 +13,7 @@
       <label class="field">Informe adjunto (opcional)
         <select name="file_id"><option value="">— Ninguno —</option>{% for f in files %}<option value="{{ f.id }}" {% if form.get('file_id') == f.id %}selected{% endif %}>{{ f.title }}{% if f.study_date %} · {{ fmt_birth(f.study_date) }}{% endif %}</option>{% endfor %}</select>
       </label>
-      {% if order %}<div class="field"><span>Orden</span><span class="small">{{ fmt_dt(order.created_at, false) }} · folio {{ order.id[:8]|upper }}</span></div>{% endif %}
+      {% if order %}<div class="field"><span>Orden</span><span class="small">{{ fmt_dt(order.created_at, false) }}</span></div>{% endif %}
     </div>
     <p class="muted small">Copie los valores y los <b>rangos de referencia del informe del laboratorio</b>. El sistema no inventa rangos: si los deja vacíos, el resultado se guarda sin marca alto/bajo. Los resultados quedan <b>pendientes de revisión médica</b>.</p>
   </section>

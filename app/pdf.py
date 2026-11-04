@@ -79,7 +79,7 @@ def prescription_pdf(r, items, p, s, size: str, allergies, assets=None) -> bytes
     story.append(Spacer(1, 4 * mm))
 
     head = Table([[Paragraph("RECETA MÉDICA", ST["title"]),
-                   Paragraph(f"Fecha: {issued:%d/%m/%Y}<br/>Folio: {r['id'][:8].upper()}", ST["subr"])]],
+                   Paragraph(f"Fecha: {issued:%d/%m/%Y}", ST["subr"])]],
                  colWidths=[width * 0.6, width * 0.4])
     head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("ALIGN", (1, 0), (1, 0), "RIGHT"),
                               ("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0),
@@ -173,7 +173,7 @@ def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str, a
     story = _with_logo(story, assets, width)
     story.append(Spacer(1, 4 * mm))
     head = Table([[Paragraph(f"SOLICITUD DE {_e(type_label.upper())}", ST["title"]),
-                   Paragraph(f"Fecha: {issued:%d/%m/%Y}<br/>Folio: {o['id'][:8].upper()}<br/>Prioridad: {_e(priority_label)}", ST["subr"])]],
+                   Paragraph(f"Fecha: {issued:%d/%m/%Y}<br/>Prioridad: {_e(priority_label)}", ST["subr"])]],
                  colWidths=[width * 0.6, width * 0.4])
     head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
                               ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
@@ -476,7 +476,7 @@ def document_pdf(d, p, s, size, assets=None) -> bytes:
     story = _with_logo(story, assets, width)
     tz = ZoneInfo(s["timezone"])
     issued = parse_utc(d["issued_at"]).astimezone(tz)
-    head = Table([[Paragraph(_e(d["title"]), ST["title"]), Paragraph(f"Fecha: {issued:%d/%m/%Y}<br/>Folio: {d['id'][:8].upper()}", ST["subr"])]],
+    head = Table([[Paragraph(_e(d["title"]), ST["title"]), Paragraph(f"Fecha: {issued:%d/%m/%Y}", ST["subr"])]],
                  colWidths=[width * 0.65, width * 0.35])
     head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
                               ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
@@ -538,8 +538,6 @@ def jar_labels_pdf(pr, d, p, s, size, kind_label) -> bytes:
         c.setFillColor(INK)
         c.setFont("Helvetica-Bold", 13)
         c.drawString(tx, ty, f"FRASCO {j['jar']}")
-        c.setFont("Helvetica", 8)
-        c.drawRightString(x + w - 5 * mm, ty, f"Folio {pr['id'][:8].upper()}")
         c.setFont("Helvetica-Bold", 10.5)
         name = f"{p['last_names']}, {p['first_names']}"
         c.drawString(tx, ty - 5.5 * mm, name[:46])
