@@ -153,7 +153,28 @@ def archive(file_id):
     return redirect(url_for("patients.view", patient_id=f["patient_id"]) + "#archivos")
 
 
+def group_files(files):
+    """Agrupa los archivos del mismo estudio (misma categoría, misma fecha y mismo nombre sin «· imagen N») (v0.22.0).
+
+    Devuelve una lista de grupos en el mismo orden: {"title", "date", "category", "files", "images"}."""
+    import re
+    groups, index = [], {}
+    for f in files:
+        base = re.sub(r"\s*[·\-]\s*imagen\s*\d+\s*$", "", f["title"] or "", flags=re.I).strip() or (f["title"] or "")
+        date = f["study_date"] or (f["uploaded_at"] or "")[:10]
+        key = (f["category"], date, base.lower())
+        if key not in index:
+            index[key] = {"title": base, "date": date, "has_study_date": bool(f["study_date"]), "category": f["category"],
+                          "files": [], "images": 0, "key": f"g{len(groups)}"}
+            groups.append(index[key])
+        grp = index[key]
+        grp["files"].append(f)
+        if f["mime"] in ("image/jpeg", "image/png"):
+            grp["images"] += 1
+    return groups
+
+
 def list_files(db, patient_id):
     return db.execute("SELECT f.*, u.full_name AS uploader FROM files f JOIN users u ON u.id = f.uploaded_by"
                       " WHERE f.patient_id = ? AND f.archived_at IS NULL ORDER BY COALESCE(f.study_date, substr(f.uploaded_at,1,10)) DESC,"
-                      " f.uploaded_at DESC", (patient_id,)).fetchall()
+                      " f.uploaded_at DESC, f.title", (patient_id,)).fetchall()

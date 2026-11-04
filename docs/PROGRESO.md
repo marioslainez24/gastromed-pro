@@ -40,8 +40,12 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
     (`endoscopist_info()` en `views_endoscopy.py`). Si es el médico de Ajustes, con su especialidad, colegiación y firma escaneada; si es
     otro médico de la lista, con su especialidad y la línea de firma en blanco (nunca la firma escaneada de otra persona). También en la
     pantalla del informe y en la lista de estudios del paciente.
+  - **Estudios y archivos agrupados** (`group_files()` en `views_files.py`): las imágenes del mismo estudio (misma categoría, fecha y
+    nombre sin «· imagen N») salen en UNA fila plegada: «Endoscopia digestiva alta · 03/11/2026 · 7 imágenes» con 3 miniaturas; al
+    tocar «Ver estudio» se abre la cuadrícula. Visor en grande propio (`app.js`, sin librerías): pantalla completa, flechas, teclas ←/→,
+    Esc, deslizar con el dedo en el celular, tira de miniaturas, «Descargar». Capturas `evidencia/capturas/v022-*.png`.
 - Si se copia la carpeta `datos` de Windows a la Mac, `adapt_paths()` corrige las rutas guardadas sin tocar las claves.
-- Pruebas: `tests/test_v022.py` (214 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
+- Pruebas: `tests/test_v022.py` (215 en total). Construcción de prueba desde `desarrollo` (ejecución 41525632786): Windows, Mac chip Apple
   y Mac Intel correctos (pruebas + prueba completa del programa). Falta probar en una Mac real.
 
 ## Etapa 21 · 2-nov-2026 · Hojas educativas y agenda en el calendario del celular (v0.21.0 · PUBLICADA 2-nov-2026)

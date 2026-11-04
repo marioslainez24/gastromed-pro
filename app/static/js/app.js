@@ -793,4 +793,69 @@
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(function () {});
   }
+  // ---- Visor de imágenes en grande (v0.22): estudios agrupados del expediente ----
+  (function () {
+    var links = $$("a[data-gal]");
+    if (!links.length) return;
+    var ov = document.createElement("div");
+    ov.className = "gal-overlay"; ov.hidden = true;
+    ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-label", "Imágenes del estudio");
+    ov.innerHTML = '<div class="gal-top"><span class="gal-cap"></span><span><a class="gal-dl" href="#">Descargar</a> ' +
+      '<button type="button" class="gal-btn gal-close" aria-label="Cerrar">✕</button></span></div>' +
+      '<div class="gal-stage"><button type="button" class="gal-btn gal-prev" aria-label="Anterior">‹</button><img alt="">' +
+      '<button type="button" class="gal-btn gal-next" aria-label="Siguiente">›</button></div><div class="gal-bottom"></div>';
+    document.body.appendChild(ov);
+    var img = $(".gal-stage img", ov), cap = $(".gal-cap", ov), strip = $(".gal-bottom", ov), dl = $(".gal-dl", ov);
+    var items = [], cur = 0, last = null;
+    function show(i) {
+      cur = (i + items.length) % items.length;
+      var a = items[cur];
+      img.src = a.getAttribute("href"); img.alt = a.getAttribute("data-cap") || "";
+      cap.textContent = (a.getAttribute("data-cap") || "") + "  ·  " + (cur + 1) + " de " + items.length;
+      dl.href = a.getAttribute("href") + (a.getAttribute("href").indexOf("?") < 0 ? "?" : "&") + "descargar=1";
+      $$("img", strip).forEach(function (t, k) { t.classList.toggle("on", k === cur); if (k === cur && t.scrollIntoView) t.scrollIntoView({block: "nearest", inline: "center"}); });
+      var multi = items.length > 1;
+      $(".gal-prev", ov).hidden = !multi; $(".gal-next", ov).hidden = !multi; strip.hidden = !multi;
+    }
+    function open(key, start) {
+      items = links.filter(function (a) { return a.getAttribute("data-gal") === key; });
+      if (!items.length) return;
+      strip.innerHTML = "";
+      items.forEach(function (a, k) {
+        var t = document.createElement("img"); t.src = a.getAttribute("href"); t.alt = "Imagen " + (k + 1);
+        t.addEventListener("click", function () { show(k); }); strip.appendChild(t);
+      });
+      last = document.activeElement;
+      ov.hidden = false; document.body.style.overflow = "hidden";
+      show(start || 0);
+      $(".gal-close", ov).focus();
+    }
+    function close() { ov.hidden = true; img.removeAttribute("src"); document.body.style.overflow = ""; if (last && last.focus) last.focus(); }
+    links.forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+        e.preventDefault();
+        var key = a.getAttribute("data-gal");
+        open(key, links.filter(function (x) { return x.getAttribute("data-gal") === key; }).indexOf(a));
+      });
+    });
+    $$("[data-gal-open]").forEach(function (b) { b.addEventListener("click", function () { open(b.getAttribute("data-gal-open"), 0); }); });
+    $(".gal-close", ov).addEventListener("click", close);
+    $(".gal-prev", ov).addEventListener("click", function () { show(cur - 1); });
+    $(".gal-next", ov).addEventListener("click", function () { show(cur + 1); });
+    ov.addEventListener("click", function (e) { if (e.target === ov || e.target.classList.contains("gal-stage")) close(); });
+    document.addEventListener("keydown", function (e) {
+      if (ov.hidden) return;
+      if (e.key === "Escape") close();
+      else if (e.key === "ArrowLeft") show(cur - 1);
+      else if (e.key === "ArrowRight") show(cur + 1);
+    });
+    var x0 = null;
+    img.addEventListener("touchstart", function (e) { x0 = e.touches.length === 1 ? e.touches[0].clientX : null; }, {passive: true});
+    img.addEventListener("touchend", function (e) {
+      if (x0 === null || !e.changedTouches.length) return;
+      var dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) > 50) show(cur + (dx < 0 ? 1 : -1));
+    });
+  })();
 })();

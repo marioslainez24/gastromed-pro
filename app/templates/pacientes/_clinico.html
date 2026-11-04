@@ -89,14 +89,8 @@
 <section class="card" id="archivos">
   <div class="row-between"><h2>Estudios y archivos</h2>{% if can('clinico.editar') %}<a class="btn btn-sm" href="{{ url_for('files.upload', patient_id=p.id) }}">＋ Agregar estudio</a>{% endif %}</div>
   {% if files %}
-  <ul class="file-list">{% for f in files %}
-    <li>
-      {% if f.mime in ('image/jpeg','image/png') %}<a href="{{ url_for('files.download', file_id=f.id) }}" target="_blank" rel="noopener"><img class="thumb" src="{{ url_for('files.download', file_id=f.id) }}" alt="{{ f.title }}" loading="lazy"></a>
-      {% else %}<span class="thumb thumb-doc" aria-hidden="true">{{ 'PDF' if f.mime == 'application/pdf' else 'IMG' }}</span>{% endif %}
-      <div>
-        <a class="strong" href="{{ url_for('files.download', file_id=f.id) }}" target="_blank" rel="noopener">{{ f.title }}</a>
-        <div class="small muted">{{ {'laboratorio':'Laboratorio','imagen':'Imagenología','endoscopia':'Endoscopia','patologia':'Patología','referencia':'Referencia','documento':'Documento','otro':'Otro'}[f.category] }}
-          · {{ f.study_date and fmt_birth(f.study_date) or 'sin fecha de estudio' }}{% if f.institution %} · {{ f.institution }}{% endif %} · {{ (f.size_bytes / 1024)|round|int }} KB · subido por {{ f.uploader }}</div>
+  {% set CAT = {'laboratorio':'Laboratorio','imagen':'Imagenología','endoscopia':'Endoscopia','patologia':'Patología','referencia':'Referencia','documento':'Documento','otro':'Otro'} %}
+  {% macro file_actions(f) %}
         <a class="small" href="{{ url_for('files.download', file_id=f.id, descargar=1) }}">Descargar</a>
         {% if can('clinico.editar') %}
         <details class="inline-details"><summary class="small link-like">Retirar</summary>
@@ -106,7 +100,40 @@
             <button class="btn btn-sm" type="submit">Retirar del expediente</button>
           </form>
         </details>{% endif %}
+  {% endmacro %}
+  <ul class="file-list">{% for grp in file_groups %}
+    {% if grp.files|length == 1 %}{% set f = grp.files[0] %}
+    <li>
+      {% if f.mime in ('image/jpeg','image/png') %}<a href="{{ url_for('files.download', file_id=f.id) }}" data-gal="{{ grp.key }}" data-cap="{{ f.title }} · {{ fmt_birth(grp.date) }}"><img class="thumb" src="{{ url_for('files.download', file_id=f.id) }}" alt="{{ f.title }}" loading="lazy"></a>
+      {% else %}<span class="thumb thumb-doc" aria-hidden="true">{{ 'PDF' if f.mime == 'application/pdf' else 'IMG' }}</span>{% endif %}
+      <div>
+        <a class="strong" href="{{ url_for('files.download', file_id=f.id) }}" target="_blank" rel="noopener">{{ f.title }}</a>
+        <div class="small muted">{{ CAT[f.category] }}
+          · {{ f.study_date and fmt_birth(f.study_date) or 'sin fecha de estudio' }}{% if f.institution %} · {{ f.institution }}{% endif %} · {{ (f.size_bytes / 1024)|round|int }} KB · subido por {{ f.uploader }}</div>
+        {{ file_actions(f) }}
       </div>
-    </li>{% endfor %}</ul>
+    </li>
+    {% else %}
+    <li class="file-group">
+      <details>
+        <summary>
+          <span class="file-group-thumbs" aria-hidden="true">{% for f in grp.files if f.mime in ('image/jpeg','image/png') %}{% if loop.index <= 3 %}<img src="{{ url_for('files.download', file_id=f.id) }}" alt="" loading="lazy">{% endif %}{% endfor %}{% if grp.images == 0 %}<span class="thumb thumb-doc">PDF</span>{% endif %}</span>
+          <span><span class="strong">{{ grp.title }}</span>
+            <span class="small muted d-block">{{ CAT[grp.category] }} · {{ fmt_birth(grp.date) if grp.has_study_date else 'subido el ' ~ fmt_birth(grp.date) }}
+              · {% if grp.images %}{{ grp.images }} {{ 'imagen' if grp.images == 1 else 'imágenes' }}{% endif %}{% if grp.files|length > grp.images %}{{ ' y ' if grp.images }}{{ grp.files|length - grp.images }} documento(s){% endif %}</span>
+            <span class="small link-like">Ver estudio ▾</span></span>
+        </summary>
+        {% if grp.images %}<p class="mt"><button type="button" class="btn btn-sm" data-gal-open="{{ grp.key }}">🔍 Ver las imágenes en grande</button></p>{% endif %}
+        <ul class="file-grid">{% for f in grp.files %}
+          <li>
+            {% if f.mime in ('image/jpeg','image/png') %}<a href="{{ url_for('files.download', file_id=f.id) }}" data-gal="{{ grp.key }}" data-cap="{{ f.title }} · {{ fmt_birth(grp.date) }}"><img src="{{ url_for('files.download', file_id=f.id) }}" alt="{{ f.title }}" loading="lazy"></a>
+            {% else %}<a class="thumb thumb-doc file-grid-doc" href="{{ url_for('files.download', file_id=f.id) }}" target="_blank" rel="noopener">{{ 'PDF' if f.mime == 'application/pdf' else 'IMG' }}</a>{% endif %}
+            <div class="small">{{ f.title|replace(grp.title, '')|trim(' ·-')|capitalize or f.title }}</div>
+            {{ file_actions(f) }}
+          </li>{% endfor %}</ul>
+        <p class="small muted">{% if grp.files[0].institution %}{{ grp.files[0].institution }} · {% endif %}subido por {{ grp.files[0].uploader }}</p>
+      </details>
+    </li>
+    {% endif %}{% endfor %}</ul>
   {% else %}<p class="muted small">Sin estudios adjuntos.</p>{% endif %}
 </section>

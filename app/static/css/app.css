@@ -535,3 +535,32 @@ ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15r
 .anat-dot { display: inline-block; width: .8rem; height: .8rem; border-radius: 50%; vertical-align: -1px; }
 .anat-dot.k-lesion { background: #c62828; } .anat-dot.k-biopsia { background: #1565c0; } .anat-dot.k-reseccion { background: #2e7d32; } .anat-dot.k-otro { background: #6d4c41; }
 .staff-edit { margin-top: 0; align-items: center; } .staff-edit input { flex: 1 1 140px; } .staff-list li { padding: .35rem 0; border-bottom: 1px dashed var(--line); }
+
+/* ---- v0.22: estudios agrupados y visor de imágenes en grande ---- */
+.d-block { display: block; }
+.file-list li.file-group { display: block; }
+.file-group > details > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto 1fr; gap: .75rem; align-items: center; }
+.file-group > details > summary::-webkit-details-marker { display: none; }
+.file-group > details[open] .link-like { display: none; }
+.file-group-thumbs { display: flex; }
+.file-group-thumbs img, .file-group-thumbs .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 2px solid var(--surface); }
+.file-group-thumbs img + img { margin-left: -22px; }
+.file-grid { list-style: none; padding: 0; margin: .6rem 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .6rem; }
+.file-list .file-grid li { display: grid; grid-template-columns: 1fr; gap: .2rem; align-content: start; border: 0; padding: 0; }
+.file-grid img, .file-grid-doc { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in; }
+.file-grid-doc { height: auto; text-decoration: none; cursor: pointer; }
+.gal-overlay { position: fixed; inset: 0; z-index: 1000; background: #0b1114; display: grid; grid-template-rows: auto 1fr auto; color: #fff; }
+.gal-overlay[hidden] { display: none; }
+.gal-top { display: flex; justify-content: space-between; align-items: center; padding: .6rem 1rem; gap: 1rem; font-size: .95rem; }
+.gal-top > span:last-child { display: flex; align-items: center; gap: .8rem; flex: none; }
+.gal-stage { position: relative; min-height: 0; overflow: hidden; }
+.gal-stage img { position: absolute; top: 0; left: 3.5rem; width: calc(100% - 7rem); height: 100%; object-fit: contain; border-radius: 4px; touch-action: pan-y pinch-zoom; }
+.gal-btn { background: rgba(255, 255, 255, .14); color: #fff; border: 0; border-radius: 999px; min-width: 44px; min-height: 44px; font-size: 1.4rem; cursor: pointer; }
+.gal-btn:hover, .gal-btn:focus-visible { background: rgba(255, 255, 255, .28); outline: 2px solid #fff; }
+.gal-prev, .gal-next { position: absolute; top: 50%; transform: translateY(-50%); z-index: 1; }
+.gal-prev { left: .6rem; } .gal-next { right: .6rem; }
+.gal-bottom { display: flex; gap: .4rem; overflow-x: auto; padding: .5rem 1rem .8rem; justify-content: center; }
+.gal-bottom img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; opacity: .55; cursor: pointer; border: 2px solid transparent; flex: none; }
+.gal-bottom img.on { opacity: 1; border-color: #fff; }
+.gal-top a { color: #fff; }
+@media (max-width: 600px) { .gal-stage img { left: .3rem; width: calc(100% - .6rem); height: calc(100% - 3.5rem); } .gal-prev, .gal-next { top: auto; bottom: .3rem; transform: none; } }

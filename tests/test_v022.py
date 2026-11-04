@@ -98,3 +98,25 @@ def test_informe_sin_endoscopista_usa_medico_de_ajustes(env):
 def test_letra_mas_grande_en_los_pdf():
     from app.pdf import ST
     assert ST["body"].fontSize >= 11.5 and ST["small"].fontSize >= 9.5 and ST["title"].fontSize >= 13
+
+
+def test_estudios_se_agrupan_por_fecha_y_nombre(env):
+    from conftest import create_patient, login
+    from tests.test_expediente_archivos import JPG, PDF_OK, upload
+    from app.views_files import group_files, list_files
+    med = login(env["app"], "propietario")
+    pid = create_patient(med)
+    for i in range(1, 6):
+        assert upload(med, pid, JPG + bytes([i]), name=f"f{i}.jpg", category="endoscopia", title=f"Endoscopia digestiva alta · imagen {i}",
+                      study_date="2026-11-03").status_code == 302
+    upload(med, pid, JPG + b"x", name="o.jpg", category="endoscopia", title="Endoscopia digestiva alta · imagen 1", study_date="2026-09-01")
+    upload(med, pid, PDF_OK, category="laboratorio", title="Pruebas hepáticas", study_date="2026-11-03")
+    groups = group_files(list_files(env["db"], pid))
+    by = {(g["title"], g["date"]): g for g in groups}
+    assert len(groups) == 3
+    assert by[("Endoscopia digestiva alta", "2026-11-03")]["images"] == 5
+    assert len(by[("Endoscopia digestiva alta", "2026-09-01")]["files"]) == 1
+    html = med.get(f"/pacientes/{pid}").get_data(as_text=True)
+    assert html.count('class="file-group"') == 1 and "5 imágenes" in html and "Ver las imágenes en grande" in html
+    key = by[("Endoscopia digestiva alta", "2026-11-03")]["key"]
+    assert html.count(f'data-gal="{key}"') == 5 and f'data-gal-open="{key}"' in html and "Pruebas hepáticas" in html
