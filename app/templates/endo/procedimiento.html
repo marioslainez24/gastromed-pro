@@ -7,7 +7,7 @@
 <div class="page-head">
   <div>
     <h1>{{ D.KINDS[pr.kind] }} · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
-    <p class="muted small">{{ p.mrn }} · {{ age(p.birth_date) }} · {{ label('sex', p.sex) }} · Endoscopista: {{ d.endoscopist or endoscopist or pr.author }}</p>
+    <p class="muted small">{{ p.mrn }} · {{ age(p.birth_date) }} · {{ label('sex', p.sex) }} · Endoscopista{{ ' 1' if d.endoscopist_2 }}: {{ d.endoscopist or endoscopist or pr.author }}{% if d.endoscopist_2 %} · Endoscopista 2: {{ d.endoscopist_2 }}{% endif %}</p>
   </div>
   <span class="tag big {{ 'tag-ok' if pr.status == 'finalizado' else 'tag-warn' }}">{{ 'Finalizado' if pr.status == 'finalizado' else 'Borrador' }}</span>
 </div>
@@ -115,9 +115,13 @@
 
   <fieldset class="card"><legend>Equipo, personal y técnica</legend>
     <div class="grid4">
-      <label class="field">Endoscopista<select name="endoscopist"><option value="">—</option>
-        {% for n in staff_med %}<option value="{{ n }}" {% if n == endoscopist %}selected{% endif %}>{{ n }}</option>{% endfor %}
-        {% if endoscopist and endoscopist not in staff_med %}<option value="{{ endoscopist }}" selected>{{ endoscopist }}</option>{% endif %}</select></label>
+      {% for nm, cur in (('endoscopist', endoscopist), ('endoscopist_2', d.endoscopist_2 or '')) %}
+      <label class="field">Endoscopista {{ loop.index }}<select name="{{ nm }}"><option value="">—</option>
+        {% for n in staff_med %}<option value="{{ n }}" {% if n == cur %}selected{% endif %}>{{ n }}</option>{% endfor %}
+        {% if cur and cur not in staff_med %}<option value="{{ cur }}" selected>{{ cur }}</option>{% endif %}</select></label>
+      {% endfor %}
+    </div>
+    <div class="grid4">
       {% for i in range(3) %}{% set cur = asis[i] %}
       <label class="field">Asistente {{ i + 1 }}<select name="assistant_{{ i + 1 }}"><option value="">—</option>
         {% for n in staff_asi %}<option value="{{ n }}" {% if n == cur %}selected{% endif %}>{{ n }}</option>{% endfor %}
@@ -317,7 +321,7 @@
     <p class="small">Consentimiento: {{ 'obtenido' if d.consent_obtained else 'no registrado' }}{% if d.consent_version %} ({{ d.consent_version }}){% endif %}
       {% if d.asa %} · ASA {{ d.asa }}{% endif %} · Sedación: {{ D.SEDATION.get(d.sedation_type, 'no registrada') }}{% if d.sedation_agents %} · {{ d.sedation_agents }}{% endif %}
       {% if d.sedation_by %} · por {{ d.sedation_by }}{% endif %}{% if scope %} · Equipo: {{ scope.name }}{% endif %}</p>
-    <p class="small">Endoscopista: {{ d.endoscopist or endoscopist or pr.author }}{% if d.assistants %} · Asistentes: {{ d.assistants }}{% endif %}</p>
+    <p class="small">Endoscopista{{ ' 1' if d.endoscopist_2 }}: {{ d.endoscopist or endoscopist or pr.author }}{% if d.endoscopist_2 %} · Endoscopista 2: {{ d.endoscopist_2 }}{% endif %}{% if d.assistants %} · Asistentes: {{ d.assistants }}{% endif %}</p>
     <h2>Técnica</h2>
     <p class="small">Extensión: {{ dict(D.EXTENT[pr.kind]).get(pr.extent, '—') }}{% if pr.complete is not none %} · {{ 'Completo' if pr.complete else 'Incompleto' }}{% endif %}
       {% if pr.withdrawal_minutes is not none %} · Retirada {{ '%g' % pr.withdrawal_minutes }} min{% endif %}

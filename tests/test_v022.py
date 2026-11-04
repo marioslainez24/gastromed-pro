@@ -208,3 +208,31 @@ def test_ningun_documento_muestra_folio():
     assert "Folio" not in inspect.getsource(pdf)
     root = Path(pdf.__file__).parent / "templates"
     assert not [p.name for p in root.rglob("*.html") if "folio" in p.read_text(encoding="utf-8").lower()]
+
+
+def test_dos_endoscopistas_y_tres_asistentes(env):
+    import json
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import full_form, new_proc, version
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    db = env["db"]
+    owner = db.execute("SELECT doctor_display_name FROM clinic_settings WHERE org_id = ?", (env["org"]["org_id"],)).fetchone()[0]
+    med.post("/ajustes/personal-endoscopia", data={"csrf_token": tok, "action": "agregar", "role": "medico", "name": "Dra. Segunda Ficticia"})
+    med.post("/ajustes/personal-endoscopia", data={"csrf_token": tok, "action": "agregar", "role": "asistente", "name": "Enf. Uno Ficticia"})
+    pid = create_patient(med)
+    proc = new_proc(med, pid, tok, "eda")
+    html = med.get(f"/procedimientos/{proc}").get_data(as_text=True)
+    assert "Endoscopista 1<select" in html and "Endoscopista 2<select" in html and "Asistente 3<select" in html
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), endoscopist=owner,
+                                                               endoscopist_2="Dra. Segunda Ficticia", assistant_1="Enf. Uno Ficticia"))
+    d = json.loads(db.execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])
+    assert d["endoscopist_2"] == "Dra. Segunda Ficticia" and d["assistants"] == "Enf. Uno Ficticia"
+    txt = " ".join(_pdf_text(med.get(f"/procedimientos/{proc}/pdf").data).split())
+    assert f"Endoscopista 1: {owner}" in txt and "Endoscopista 2: Dra. Segunda Ficticia" in txt and "Asistentes: Enf. Uno Ficticia" in txt
+    assert "Endoscopista 1 · Nombre, firma y sello" in txt and "Endoscopista 2 · Nombre, firma y sello" in txt
+    # el mismo médico en los dos puestos: el 2 se descarta
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), endoscopist=owner, endoscopist_2=owner))
+    assert json.loads(db.execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])["endoscopist_2"] is None
+    txt = " ".join(_pdf_text(med.get(f"/procedimientos/{proc}/pdf").data).split())
+    assert "Endoscopista 2" not in txt and "Endoscopista · Nombre, firma y sello" in txt

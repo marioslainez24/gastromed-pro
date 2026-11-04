@@ -166,3 +166,4 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | Estudios y archivos agrupados por estudio y fecha, con visor de imágenes en grande (PC y celular) | ✅ probado (pruebas + navegador); se publica con su «ya» |
 | Informe de endoscopia con DNI, fecha de nacimiento, edad y demás datos del paciente | ✅ probado; se publica con su «ya» |
 | Tipo de atención en el informe (consulta externa / sala / emergencia, sala y cama, hospital) para usarlo también en hospitales | ✅ probado (pruebas + navegador); se publica con su «ya» |
+| Endoscopista 1 y Endoscopista 2 (dos firmas) + Asistentes 1 a 3 en el informe | ✅ probado (pruebas + navegador + PDF); se publica con su «ya» |

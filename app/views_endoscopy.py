@@ -217,6 +217,7 @@ def parse_form(kind, f):
         "sedation_type": f.get("sedation_type") if f.get("sedation_type") in D.SEDATION else None,
         "sedation_agents": _txt(f, "sedation_agents", 500), "sedation_by": _txt(f, "sedation_by", 200), "monitoring": _txt(f, "monitoring", 500),
         "endoscopist": _txt(f, "endoscopist", 120),
+        "endoscopist_2": _txt(f, "endoscopist_2", 120),
         "care_setting": f.get("care_setting") if f.get("care_setting") in D.CARE_SETTINGS else None,
         "ward": _txt(f, "ward", 120) if f.get("care_setting") in ("sala", "emergencia") else None,
         "bed": _txt(f, "bed", 20) if f.get("care_setting") in ("sala", "emergencia") else None,
@@ -280,6 +281,8 @@ def parse_form(kind, f):
         data["stents"].append({"kind": kd, "desc": _txt(f, f"stent-{i}-desc", 300), "review_due": due})
     # v0.20.0: asistentes elegidos de la lista de Ajustes; «assistants» queda como texto para el PDF y los informes anteriores
     data["assistants"] = ", ".join(dict.fromkeys(data["assistants_list"])) or None
+    if data.get("endoscopist_2") and (data["endoscopist_2"] or "").lower() == (data.get("endoscopist") or "").lower():
+        data["endoscopist_2"] = None          # el mismo médico no puede ser endoscopista 1 y 2
     from . import anatomy as A
     data["marks"], merr = A.parse_marks(kind, f)
     errors += merr
@@ -600,6 +603,7 @@ def proc_pdf(proc_id):
     pdata = json.loads(pr["data"])
     data = procedure_pdf(pr, pdata, p, s, size, imgs, scope, addenda, D, load_assets(g.user["org_id"]),
                          endo=endoscopist_info(db, g.user["org_id"], pdata.get("endoscopist"), s),
+                         endo2=endoscopist_info(db, g.user["org_id"], pdata.get("endoscopist_2"), s) if pdata.get("endoscopist_2") else None,
                          allergies=db.execute("SELECT * FROM patient_allergies WHERE patient_id = ? AND active = 1", (p["id"],)).fetchall())
     audit("procedimiento_pdf", "procedimiento", pr["id"])
     resp = make_response(data)

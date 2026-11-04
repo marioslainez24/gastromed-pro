@@ -254,7 +254,7 @@ def _annotated_jpeg(raw: bytes, annotations: list, max_px=900) -> bytes:
     return out.getvalue()
 
 
-def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, endo=None, allergies=()) -> bytes:
+def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, endo=None, allergies=(), endo2=None) -> bytes:
     from reportlab.platypus import Image as RLImage
     buf = io.BytesIO()
     pagesize = LETTER if size == "carta" else A4
@@ -265,8 +265,9 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     # Encabezado y firma con el ENDOSCOPISTA elegido en el informe (v0.22.0); si es otro médico, sin la firma escaneada del dueño
     endo = endo or {"name": s["doctor_display_name"], "owner": True, "detail": None}
     signer = endo["name"] or s["doctor_display_name"]
+    all_assets = assets or {}
     if not endo["owner"]:
-        assets = {k: v for k, v in (assets or {}).items() if k != "firma"}
+        assets = {k: v for k, v in all_assets.items() if k != "firma"}
     story = [Paragraph(_e(signer), ST["doctor"])]
     sub = [x for x in ([s["specialty"], f"Colegiación: {s['license_number']}" if s["license_number"] else None] if endo["owner"] else [endo.get("detail")])
            + [s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
@@ -337,7 +338,8 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
                (f" · administrada por {d['sedation_by']}" if d.get("sedation_by") else ""))
     if d.get("monitoring"):
         pre.append(f"Monitorización: {d['monitoring']}")
-    eq = [x for x in [f"Endoscopista: {d['endoscopist']}" if d.get("endoscopist") else None,
+    eq = [x for x in [f"Endoscopista{' 1' if d.get('endoscopist_2') else ''}: {d['endoscopist']}" if d.get("endoscopist") else None,
+                      f"Endoscopista 2: {d['endoscopist_2']}" if d.get("endoscopist_2") else None,
                       f"Equipo: {scope['name']}" + (f" (serie {scope['serial']})" if scope and scope['serial'] else "") if scope else None,
                       f"Asistentes: {d['assistants']}" if d.get("assistants") else None,
                       f"Horario: {d.get('start_time') or '?'}–{d.get('end_time') or '?'}" if d.get("start_time") else None] if x]
@@ -406,8 +408,8 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
                                              (f" · revisión/retiro previsto: {fmt_birth(x['review_due'])}" if x.get("review_due") else "") for x in d["stents"]))
     sec("Conclusión", d.get("conclusion"))
     sec("Recomendaciones", d.get("recommendations"))
-    sec("Seguimiento", (d.get("follow_up") or "") + (f"\nControl / vigilancia indicada para: {fmt_birth(pr['surveillance_due'])}"
-                                                     if pr["surveillance_due"] else ""))
+    sec("Seguimiento", "\n".join(x for x in [d.get("follow_up") or "", f"Control / vigilancia indicada para: {fmt_birth(pr['surveillance_due'])}"
+                                              if pr["surveillance_due"] else ""] if x))
     if images:
         story.append(Paragraph("Imágenes", ST["title"]))
         cells, row = [], []
@@ -433,12 +435,23 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     for a in addenda:
         sec(f"Adenda · {a['full_name']} · {a['created_at'][:10]}", a["text"])
     signed = pr["status"] == "finalizado"
-    sig = Table([[_sig_img(assets)], [Paragraph(f"<b>{_e(signer)}</b><br/>Endoscopista · Nombre, firma y sello", ST["sub"])]],
-                colWidths=[80 * mm], rowHeights=[16 * mm, None])
-    sig.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("ALIGN", (0, 1), (0, 1), "CENTER"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
-    outer = Table([[sig]], colWidths=[width])
-    outer.setStyle(TableStyle([("ALIGN", (0, 0), (0, 0), "RIGHT")]))
-    story += [Spacer(1, 6 * mm), KeepTogether([outer])]
+    def sig_block(name, role, own_assets):
+        img = _sig_img(own_assets)
+        t = Table([[img], [Paragraph(f"<b>{_e(name)}</b><br/>{role} · Nombre, firma y sello", ST["sub"])]],
+                  colWidths=[78 * mm], rowHeights=[16 * mm if img else 13 * mm, None])
+        t.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.8, INK), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+        return t
+
+    if endo2:
+        # Dos endoscopistas: dos firmas lado a lado; la firma escaneada solo en la del médico de Ajustes
+        a2 = all_assets if endo2["owner"] else {k: v for k, v in all_assets.items() if k != "firma"}
+        outer = Table([[sig_block(signer, "Endoscopista 1", assets), sig_block(endo2["name"], "Endoscopista 2", a2)]],
+                      colWidths=[width / 2, width / 2])
+        outer.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "BOTTOM"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+    else:
+        outer = Table([[sig_block(signer, "Endoscopista", assets)]], colWidths=[width])
+        outer.setStyle(TableStyle([("ALIGN", (0, 0), (0, 0), "RIGHT")]))
+    story += [Spacer(1, 3 * mm), KeepTogether([outer])]
 
     def on_page(canvas, dd):
         canvas.saveState()
