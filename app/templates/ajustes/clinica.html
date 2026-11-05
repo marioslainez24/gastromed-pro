@@ -39,9 +39,11 @@
   <div class="actions"><button class="btn btn-primary" type="submit">Guardar ajustes</button></div>
 </form>
 <section class="card" id="imagenes">
-  <h2>Logo y firma para recetas, órdenes e informes</h2>
-  <div class="grid2">
-  {% for kind, title in [('logo','Logo del consultorio'), ('firma','Imagen de su firma')] %}
+  <h2>Logos y firma para informes, recetas y documentos</h2>
+  <p class="muted small">Puede cargar hasta <b>3 logos</b> (por ejemplo: su consultorio, el hospital y la institución). Con un solo logo sale a
+    la izquierda de su nombre; con dos o tres, salen grandes en una fila arriba del informe, en este orden.</p>
+  <div class="grid2 assets-grid">
+  {% for kind, title in [('logo','Logo 1'), ('logo2','Logo 2'), ('logo3','Logo 3'), ('firma','Imagen de su firma')] %}
     <div class="stack">
       <h3>{{ title }}</h3>
       {% if assets.get(kind) %}<img class="asset-preview" src="{{ url_for('extras.assets_view', kind=kind) }}" alt="{{ title }} actual">{% else %}<p class="muted small">No cargado.</p>{% endif %}

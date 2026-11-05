@@ -37,12 +37,33 @@ def _img_flowable(data: bytes, max_w, max_h):
     return RLImage(io.BytesIO(data), width=w * k, height=h * k)
 
 
-def _with_logo(story, assets, width):
-    """Coloca el logo de la clínica a la izquierda del encabezado (si fue cargado en Ajustes)."""
-    if not assets or not assets.get("logo"):
+def _logos(assets) -> list:
+    """Logos cargados en Ajustes, en orden (logo 1, 2 y 3). v0.27.0: hasta 3."""
+    return [assets[k] for k in ("logo", "logo2", "logo3") if assets and assets.get(k)]
+
+
+def _logo_row(logos, width, max_h):
+    """Fila con 2 o 3 logos grandes, repartidos a lo ancho de la hoja."""
+    n = len(logos)
+    cw = width / n
+    imgs = [_img_flowable(data, cw - 8 * mm, max_h) for data in logos]
+    t = Table([imgs], colWidths=[cw] * n)
+    t.setStyle(TableStyle([("ALIGN", (0, 0), (-1, -1), "CENTER"), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                           ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                           ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 2)]))
+    return t
+
+
+def _with_logo(story, assets, width, big=False):
+    """Logos de la clínica en el encabezado. Uno: a la izquierda del nombre. Dos o tres: fila arriba, grandes."""
+    logos = _logos(assets)
+    if not logos:
         return story
-    logo = _img_flowable(assets["logo"], 30 * mm, 22 * mm)
-    t = Table([[logo, story]], colWidths=[34 * mm, width - 34 * mm])
+    if len(logos) > 1:
+        return [_logo_row(logos, width, (30 if big else 20) * mm), Spacer(1, 2 * mm)] + story
+    lw, lh = ((48, 32) if big else (30, 22))
+    logo = _img_flowable(logos[0], lw * mm, lh * mm)
+    t = Table([[logo, story]], colWidths=[(lw + 4) * mm, width - (lw + 4) * mm])
     t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
     return [t]
 
@@ -283,8 +304,11 @@ def _report_header(style, X, name, sub, title, date_txt, assets, width):
     """Encabezado del informe según el estilo elegido en Ajustes."""
     if style == "formal":
         out = []
-        if assets and assets.get("logo"):
-            logo = _img_flowable(assets["logo"], 30 * mm, 20 * mm)
+        logos = _logos(assets)
+        if len(logos) > 1:
+            out += [_logo_row(logos, width, 30 * mm), Spacer(1, 2 * mm)]
+        elif logos:
+            logo = _img_flowable(logos[0], 55 * mm, 30 * mm)
             logo.hAlign = "CENTER"
             out.append(logo)
         out.append(Paragraph(_e(name), X["doctor"]))
@@ -296,9 +320,10 @@ def _report_header(style, X, name, sub, title, date_txt, assets, width):
         return out + [Spacer(1, 2 * mm), t, Spacer(1, 1 * mm), Paragraph(date_txt, X["subr"])]
     if style == "moderno":
         txt = [Paragraph(_e(name), X["doctor"])] + ([Paragraph(_e(" · ".join(sub)), X["sub"])] if sub else [])
-        if assets and assets.get("logo"):
-            logo = _img_flowable(assets["logo"], 26 * mm, 18 * mm)
-            band = Table([[txt, logo]], colWidths=[width - 34 * mm, 34 * mm])
+        logos = _logos(assets)
+        if len(logos) == 1:
+            logo = _img_flowable(logos[0], 40 * mm, 26 * mm)
+            band = Table([[txt, logo]], colWidths=[width - 46 * mm, 46 * mm])
         else:
             band = Table([[txt]], colWidths=[width])
         band.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), ACCENT), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -308,11 +333,12 @@ def _report_header(style, X, name, sub, title, date_txt, assets, width):
         head = Table([[Paragraph(_e(title), X["head"]), Paragraph(date_txt, X["subr"])]], colWidths=[width * 0.65, width * 0.35])
         head.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "BOTTOM"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                                   ("TOPPADDING", (0, 0), (-1, -1), 6)]))
-        return [band, Spacer(1, 1 * mm), head]
+        top = [_logo_row(logos, width, 30 * mm), Spacer(1, 2 * mm)] if len(logos) > 1 else []
+        return top + [band, Spacer(1, 1 * mm), head]
     story = [Paragraph(_e(name), X["doctor"])]
     if sub:
         story.append(Paragraph(_e(" · ".join(sub)), X["sub"]))
-    story = _with_logo(story, assets, width)
+    story = _with_logo(story, assets, width, big=True)
     head = Table([[Paragraph(_e(title), X["title"]), Paragraph(date_txt, X["subr"])]], colWidths=[width * 0.6, width * 0.4])
     head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
                               ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))

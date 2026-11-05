@@ -123,12 +123,13 @@ def whatsapp(appt_id):
     return redirect(link)
 
 
-# ------------------------------------------------------------------------------------------------ logo y firma
+# ------------------------------------------------------------------------------------------------ logos (hasta 3) y firma
+ASSET_KINDS = ("logo", "logo2", "logo3", "firma")
 @bp.route("/ajustes/imagenes", methods=["POST"])
 @require("ajustes.editar")
 def assets_upload():
     kind = request.form.get("kind")
-    if kind not in ("logo", "firma"):
+    if kind not in ASSET_KINDS:
         abort(400)
     db = get_db()
     if request.form.get("remove") == "1":
@@ -149,14 +150,14 @@ def assets_upload():
                    " updated_at = excluded.updated_at, updated_by = excluded.updated_by",
                    (g.user["org_id"], kind, mime, current_app.config["GM_FERNET"].encrypt(data), utcnow(), g.user["id"]))
         audit(f"{kind}_cargado", "ajustes", g.user["org_id"], db=db)
-    flash("Imagen guardada. Aparecerá en recetas, órdenes e informes.", "ok")
+    flash("Imagen guardada. Aparecerá en el informe de endoscopia, recetas, órdenes y documentos.", "ok")
     return redirect(url_for("settings.clinic") + "#imagenes")
 
 
 @bp.route("/ajustes/imagenes/<kind>")
 @require("ajustes.editar")
 def assets_view(kind):
-    if kind not in ("logo", "firma"):
+    if kind not in ASSET_KINDS:
         abort(404)
     r = get_db().execute("SELECT mime FROM clinic_assets WHERE org_id = ? AND kind = ?", (g.user["org_id"], kind)).fetchone() or abort(404)
     resp = make_response(load_assets(g.user["org_id"])[kind])

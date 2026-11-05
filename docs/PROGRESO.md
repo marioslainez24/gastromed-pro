@@ -20,6 +20,16 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
+## Etapa 27 · 5-nov-2026 · Hasta 3 logos, grandes en el informe (v0.27.0 · publicada el mismo día: «hazlo ya»)
+
+**Pedido del Dr. Lainez:** «que se puedan poner 3 logos y que se vean grandes en el informe. Hazlo ya».
+- Migración 0021: `clinic_assets` acepta `logo`, `logo2`, `logo3` y `firma` (tabla recreada; se copian las imágenes ya cargadas).
+- Ajustes → Clínica y documentos: «Logo 1», «Logo 2», «Logo 3» y firma (cargar / quitar).
+- PDF (`_logos`, `_logo_row`, `_with_logo(big=)`): con 1 logo, a la izquierda del nombre y más grande en el informe (hasta 48×32 mm;
+  antes 30×22); con 2 o 3, una fila arriba con los logos grandes (hasta 30 mm de alto) repartidos a lo ancho. En los tres estilos del
+  informe (Clásico, Formal y Moderno). Recetas, órdenes y documentos también muestran los 2–3 logos (fila de hasta 20 mm).
+- Pruebas `tests/test_v027.py` (245).
+
 ## Etapa 26 · 4-nov-2026 · Plantillas de hallazgos por patología (v0.26.0 · PUBLICADA 4-nov-2026 como v0.26.0-32)
 
 **Pedido del Dr. Lainez** (envió su Word «Endo NIC» con notas predeterminadas por diagnóstico): igual que el botón «Normal», un menú

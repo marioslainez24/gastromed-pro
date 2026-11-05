@@ -174,3 +174,4 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | Titular de la licencia visible en el programa (los PDF ya no llevan pie, a pedido, v0.24.1) | ✅ probado |
 | Número de expediente igual al DNI (sin DNI: número automático GM-…) | ✅ probado; publicado en v0.25.0 |
 | Plantillas de hallazgos por patología (56: 55 de su Word + metaplasia intestinal gástrica redactada para su revisión) con menú en cada segmento del informe y página para editarlas | ✅ probado (pruebas + navegador); publicado en v0.26.0 |
+| Hasta 3 logos, grandes en el informe (los 3 estilos) y en los demás documentos | ✅ probado (pruebas + PDF); publicado en v0.27.0 |
