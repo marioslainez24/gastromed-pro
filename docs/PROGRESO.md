@@ -20,7 +20,7 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
-## Etapa 26 · 4-nov-2026 · Plantillas de hallazgos por patología (v0.26.0 · en «desarrollo», falta su «ya»)
+## Etapa 26 · 4-nov-2026 · Plantillas de hallazgos por patología (v0.26.0 · PUBLICADA 4-nov-2026 como v0.26.0-32)
 
 **Pedido del Dr. Lainez** (envió su Word «Endo NIC» con notas predeterminadas por diagnóstico): igual que el botón «Normal», un menú
 desplegable por cada situación patológica.
