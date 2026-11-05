@@ -87,6 +87,13 @@ SEED = [
     ("eda", "estomago", "GIST (lesión submucosa)",
      "Hacia cara … y curvatura … se observa una lesión tumoral de aspecto submucoso de aproximadamente 3 cm de diámetro, que protruye "
      "hacia la luz, con superficie lisa y mucosa rosada que es similar a la circundante.", "GIST de …"),
+    ("eda", "estomago", "Metaplasia intestinal gástrica",
+     "Píloro simétrico, central, que deja el paso del equipo sin dificultad. En antro e incisura angular se observan áreas "
+     "ligeramente sobreelevadas, de color blanquecino grisáceo, distribuidas en parches, con patrón mucoso afelpado; a la evaluación "
+     "con NBI se observa patrón tubulovelloso con cresta azul clara (light blue crest). Se toman biopsias según el protocolo de Sídney "
+     "(antro, incisura angular y cuerpo, en frascos separados), con sangrado autolimitado. Lago gástrico claro y escaso. En maniobra de "
+     "retroversión fundus y cardias de características normales.",
+     "Hallazgos endoscópicos sugestivos de metaplasia intestinal gástrica, pendiente de histología"),
     ("eda", "estomago", "Tumor gástrico",
      "Píloro simétrico, central, que deja el paso del equipo sin dificultad. Desde el área prepilórica se observa lesión de aspecto "
      "tumoral, mamelonante e infiltrativa, con múltiples lesiones ulcerosas de bordes mal definidos, confluentes sobre su superficie, "
@@ -354,16 +361,24 @@ SEED = [
 ]
 
 
+def seed_key(kind, title) -> str:
+    return f"{kind}:{title}"
+
+
 def ensure_seed(db, org_id) -> int:
-    """La primera vez carga las plantillas del documento del Dr. Lainez (si la clínica aún no tiene ninguna)."""
-    if db.execute("SELECT 1 FROM endo_templates WHERE org_id = ? LIMIT 1", (org_id,)).fetchone():
+    """Carga las plantillas del programa que la clínica todavía no tiene (la primera vez, todas; después, solo las nuevas que se
+    agreguen en una actualización). Nunca toca las que el médico ya editó o quitó del menú."""
+    have = {r[0] for r in db.execute("SELECT seed_key FROM endo_templates WHERE org_id = ? AND seed_key IS NOT NULL", (org_id,))}
+    missing = [(i, x) for i, x in enumerate(SEED) if seed_key(x[0], x[2]) not in have]
+    if not missing:
         return 0
     now = utcnow()
     with write_tx(db):
-        for i, (kind, sec, title, body, concl) in enumerate(SEED):
-            db.execute("INSERT INTO endo_templates(id, org_id, kind, section, title, body, conclusion, position, active, created_at, updated_at)"
-                       " VALUES (?,?,?,?,?,?,?,?,1,?,?)", (new_id(), org_id, kind, sec, title, body, concl or None, i, now, now))
-    return len(SEED)
+        for i, (kind, sec, title, body, concl) in missing:
+            db.execute("INSERT INTO endo_templates(id, org_id, kind, section, title, body, conclusion, position, active, created_at,"
+                       " updated_at, seed_key) VALUES (?,?,?,?,?,?,?,?,1,?,?,?)",
+                       (new_id(), org_id, kind, sec, title, body, concl or None, i, now, now, seed_key(kind, title)))
+    return len(missing)
 
 
 def for_kind(db, org_id, kind):

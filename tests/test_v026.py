@@ -66,3 +66,21 @@ def test_carga_una_sola_vez(env):
         org = env["org"]["org_id"]
         assert ET.ensure_seed(db, org) == len(ET.SEED)
         assert ET.ensure_seed(db, org) == 0
+
+
+def test_metaplasia_intestinal_y_agregar_nuevas_sin_duplicar(env):
+    mi = next(x for x in ET.SEED if x[2] == "Metaplasia intestinal gástrica")
+    assert mi[1] == "estomago" and "Sídney" in mi[3] and "pendiente de histología" in mi[4]
+    with env["app"].app_context():
+        from app.db import get_db
+        db = get_db()
+        org = env["org"]["org_id"]
+        assert ET.ensure_seed(db, org) == len(ET.SEED)
+        # el médico cambia el título de una: no se vuelve a agregar la original
+        db.execute("UPDATE endo_templates SET title = 'Mi acalasia' WHERE org_id = ? AND title = 'Acalasia'", (org,))
+        db.commit()
+        assert ET.ensure_seed(db, org) == 0
+        # una plantilla nueva del programa (simulada: falta en la clínica) se agrega sola, una vez
+        db.execute("DELETE FROM endo_templates WHERE org_id = ? AND title = 'Metaplasia intestinal gástrica'", (org,))
+        db.commit()
+        assert ET.ensure_seed(db, org) == 1 and ET.ensure_seed(db, org) == 0

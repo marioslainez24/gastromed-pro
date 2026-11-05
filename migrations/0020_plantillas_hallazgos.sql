@@ -12,6 +12,7 @@ CREATE TABLE endo_templates (
   active      INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
   created_at  TEXT NOT NULL,
   updated_at  TEXT NOT NULL,
-  updated_by  TEXT REFERENCES users(id)
+  updated_by  TEXT REFERENCES users(id),
+  seed_key    TEXT               -- plantilla original del programa (para agregar las nuevas sin duplicar); NULL = creada por el médico
 ) STRICT;
 CREATE INDEX endo_templates_kind ON endo_templates(org_id, kind, active, position);

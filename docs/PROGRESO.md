@@ -24,18 +24,21 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 
 **Pedido del Dr. Lainez** (envió su Word «Endo NIC» con notas predeterminadas por diagnóstico): igual que el botón «Normal», un menú
 desplegable por cada situación patológica.
-- `app/endo_templates.py`: 55 plantillas transcritas del Word (EDA: 11 esófago, 1 UEG, 15 estómago, 5 duodeno, 2 recomendaciones —
+- `app/endo_templates.py`: 56 plantillas transcritas del Word (EDA: 11 esófago, 1 UEG, 16 estómago, 5 duodeno, 2 recomendaciones —
   cuidados post ligadura y post PEG—; colonoscopia: 20; rectosigmoidoscopia: 1). Se corrigieron solo errores de tipeo evidentes
   (midazolan, Sifmoide, perístasis, explocación, trocart, gastrectomía→gastrostomía en PEG, «infiltra»→«infla» la sonda). Los «…» quedan
   para completar. Algunas traen conclusión sugerida (estenosis grado III, úlcera gigante + estenosis de bulbo, GIST de …, pangastritis).
-  Omitidos por estar repetidos o vacíos en el Word: «Metaplasia intestinal» (sin texto), segundas copias de divertículo de bulbo y de
-  metaplasia esofágica, y los textos normales (ya existen en el botón Normal).
+  Omitidos por estar repetidos en el Word: segundas copias de divertículo de bulbo y de metaplasia esofágica, y los textos normales
+  (ya existen en el botón Normal). «Metaplasia intestinal» estaba VACÍA en el Word; a pedido se agregó «Metaplasia intestinal gástrica»
+  REDACTADA por Claude con el estilo de sus textos (áreas blanquecinas en parches, patrón afelpado, NBI con cresta azul clara, biopsias
+  según Sídney) y conclusión «sugestivos de …, pendiente de histología»: el Dr. Lainez debe revisarla. Total 56.
+  `seed_key` en la tabla: las plantillas nuevas del programa se agregan solas en actualizaciones sin duplicar ni tocar las editadas.
 - Migración 0020 `endo_templates` (por clínica; se cargan solas la primera vez con `ensure_seed`).
 - En el informe: menú «📋 Plantillas ▾» junto a «Normal» en cada segmento y en Recomendaciones. Al elegir: si el campo está vacío o con
   el texto normal, lo reemplaza; si ya tiene texto, lo agrega debajo; la conclusión sugerida se agrega a la Conclusión sin repetir.
 - Página «Mis plantillas de hallazgos» (Endoscopia → Plantillas por patología; enlace también en el informe): editar título, sección,
   texto y conclusión, agregar nuevas, quitar del menú / volver a ponerlas. Auditoría de cada cambio.
-- Pruebas `tests/test_v026.py` (242). Capturas `evidencia/capturas/v026-*.png`.
+- Pruebas `tests/test_v026.py` (243). Capturas `evidencia/capturas/v026-*.png`.
 
 ## Etapa 25 · 4-nov-2026 · Número de expediente = DNI (v0.25.0 · PUBLICADA 4-nov-2026 como v0.25.0-31; incluye v0.24.1)
 
