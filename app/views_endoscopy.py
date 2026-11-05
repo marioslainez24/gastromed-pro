@@ -142,7 +142,10 @@ def proc_view(proc_id):
         " AND COALESCE(json_extract(data, '$.facility'), '') <> '' GROUP BY f ORDER BY MAX(created_at) DESC LIMIT 20",
         (g.user["org_id"],))] if editable else []
     asis = list(data.get("assistants_list") or ([data["assistants"]] if data.get("assistants") else []))
+    from . import endo_templates as ET
+    tpl = ET.for_kind(db, g.user["org_id"], pr["kind"]) if editable and pr["kind"] in ET.KINDS else {}
     return (render_template("endo/procedimiento.html", pr=pr, p=p, d=data, D=D, editable=editable, prev=prev, A=A, can_void=can_void,
+                           tpl=tpl, tpl_json=ET.as_json(tpl) if tpl else "{}",
                            staff_med=staff_med, staff_asi=staff_asi, asis=(asis + ["", "", ""])[:3], facilities=facilities,
                            endoscopist=data.get("endoscopist") or (staff_med[0] if staff_med else ""),
                            anat_svg=Markup(A.svg(pr["kind"], data.get("marks") or [], interactive=editable)),
@@ -939,6 +942,55 @@ def normal_texts_edit():
         return redirect(url_for("endo.normal_texts_edit"))
     sec, concl = D.normal_texts(st["endo_normal_texts"])
     return render_template("endo/textos_normales.html", D=D, sec=sec, concl=concl)
+
+
+# ------------------------------------------------------------------------------------------------ plantillas por patología (v0.26)
+@bp.route("/endoscopia/plantillas", methods=["GET", "POST"])
+@require("clinico.editar", "notas.finalizar")
+def templates_edit():
+    from . import endo_templates as ET
+    db = get_db()
+    org = g.user["org_id"]
+    ET.ensure_seed(db, org)
+    kind = request.values.get("tipo") if request.values.get("tipo") in ET.KINDS else "eda"
+    if request.method == "POST":
+        action = request.form.get("action")
+        tid = request.form.get("id") or ""
+        sec = request.form.get("section")
+        title = _txt(request.form, "title", 120)
+        body = _txt(request.form, "body", 8000)
+        concl = _txt(request.form, "conclusion", 1000)
+        valid_secs = {k for k, _ in ET.SECTIONS[kind]}
+        if action in ("guardar", "agregar") and (sec not in valid_secs or not title or not body):
+            flash("Escriba el título y el texto, y elija la sección.", "error")
+            return redirect(url_for("endo.templates_edit", tipo=kind))
+        now = utcnow()
+        with write_tx(db):
+            if action == "agregar":
+                pos = db.execute("SELECT COALESCE(MAX(position), 0) + 1 FROM endo_templates WHERE org_id = ?", (org,)).fetchone()[0]
+                db.execute("INSERT INTO endo_templates(id, org_id, kind, section, title, body, conclusion, position, active, created_at,"
+                           " updated_at, updated_by) VALUES (?,?,?,?,?,?,?,?,1,?,?,?)",
+                           (new_id(), org, kind, sec, title, body, concl, pos, now, now, g.user["id"]))
+                audit("plantilla_endoscopia_agregada", "ajustes", org, {"titulo": title}, db=db)
+                msg = f"Plantilla «{title}» agregada."
+            elif _id_ok(tid) and action in ("guardar", "desactivar", "activar"):
+                row = db.execute("SELECT * FROM endo_templates WHERE id = ? AND org_id = ?", (tid, org)).fetchone() or abort(404)
+                if action == "guardar":
+                    db.execute("UPDATE endo_templates SET section = ?, title = ?, body = ?, conclusion = ?, updated_at = ?, updated_by = ?"
+                               " WHERE id = ?", (sec, title, body, concl, now, g.user["id"], tid))
+                    msg = f"Plantilla «{title}» guardada."
+                else:
+                    db.execute("UPDATE endo_templates SET active = ?, updated_at = ?, updated_by = ? WHERE id = ?",
+                               (1 if action == "activar" else 0, now, g.user["id"], tid))
+                    msg = f"Plantilla «{row['title']}» " + ("activada." if action == "activar" else "quitada del menú.")
+                audit("plantilla_endoscopia_" + action, "ajustes", org, {"titulo": row["title"]}, db=db)
+            else:
+                abort(400)
+        flash(msg, "ok")
+        return redirect(url_for("endo.templates_edit", tipo=kind) + (f"#t-{tid}" if tid else ""))
+    rows = db.execute("SELECT * FROM endo_templates WHERE org_id = ? AND kind = ? ORDER BY active DESC, position, title",
+                      (org, kind)).fetchall()
+    return render_template("endo/plantillas.html", ET=ET, kind=kind, rows=rows, secs=dict(ET.SECTIONS[kind]))
 
 
 # ------------------------------------------------------------------------------------------------ recomendaciones por diagnóstico

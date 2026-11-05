@@ -147,16 +147,19 @@
     {% endif %}
   </fieldset>
 
+  <div id="plantillas-data" data-tpl="{{ tpl_json }}" hidden></div>
   <div id="frases-data" data-frases="{{ phrases_json }}" data-admin="{{ url_for('texts.phrases') }}" hidden></div>
   <fieldset class="card" id="hallazgos" data-efind-url="{{ url_for('endo.finding_compose', proc_id=pr.id) }}"><legend>Hallazgos por segmento</legend>
     <div class="row-between normal-bar">
-      <p class="muted small">Describa lo que observa en cada segmento. El botón <b>Normal</b> escribe la descripción normal, que usted puede editar (<a href="{{ url_for('endo.normal_texts_edit') }}" target="_blank" rel="noopener">cambiar mis textos normales</a>).</p>
+      <p class="muted small">Describa lo que observa en cada segmento. El botón <b>Normal</b> escribe la descripción normal, que usted puede editar (<a href="{{ url_for('endo.normal_texts_edit') }}" target="_blank" rel="noopener">cambiar mis textos normales</a>).
+        El menú <b>📋 Plantillas</b> escribe sus textos por patología (<a href="{{ url_for('endo.templates_edit', tipo=pr.kind) }}" target="_blank" rel="noopener">ver y editar mis plantillas</a>).</p>
       <button type="button" class="btn btn-sm btn-normal" data-fill-all-normal>✓ Todo normal</button>
     </div>
     {% for key, lab in D.NARRATIVE[pr.kind] %}
     <div class="narr-sec">
       <div class="row-between"><label for="nar-{{ key }}" class="narr-label">{{ lab }}</label>
-        <button type="button" class="btn btn-quiet btn-sm" data-fill-normal="nar-{{ key }}" data-normal="{{ normal_sec[key] }}">Normal</button></div>
+        <span class="btn-row">{% if tpl.get(key) %}{% set target = 'nar-' ~ key %}{% set rows = tpl[key] %}{% include "endo/_plantilla_select.html" %}{% endif %}
+        <button type="button" class="btn btn-quiet btn-sm" data-fill-normal="nar-{{ key }}" data-normal="{{ normal_sec[key] }}">Normal</button></span></div>
       {% if key == 'ueg' %}
       <div class="grid4 zline">
         <label class="field">Línea Z{{ sel('zline', D.ZLINE.items(), d.zline) }}</label>
@@ -296,7 +299,8 @@
     </div>
     <textarea id="conclusion" data-phrase-field="endo:conclusion" name="conclusion" rows="3" data-grow>{{ d.conclusion or '' }}</textarea>
     <div class="dx-suggest rec-suggest" data-rec-suggest data-recs="{{ recs_json }}" hidden><span class="small"><b>Recomendaciones sugeridas</b> (según la conclusión; <a href="{{ url_for('endo.recs_edit') }}" target="_blank" rel="noopener">editar las mías</a>):</span></div>
-    <label class="field">Recomendaciones<textarea name="recommendations" id="recommendations" data-phrase-field="endo:recommendations" rows="3" data-grow>{{ d.recommendations or '' }}</textarea></label>
+    {% if tpl.get('recomendaciones') %}<div class="row-between"><span class="narr-label">Recomendaciones</span>{% set target = 'recommendations' %}{% set rows = tpl['recomendaciones'] %}{% include "endo/_plantilla_select.html" %}</div>{% endif %}
+    <label class="field">{% if not tpl.get('recomendaciones') %}Recomendaciones{% endif %}<textarea name="recommendations" id="recommendations" data-phrase-field="endo:recommendations" rows="3" data-grow>{{ d.recommendations or '' }}</textarea></label>
     <div class="grid2">
       <label class="field">Seguimiento (texto)<input name="follow_up" maxlength="500" value="{{ d.follow_up or '' }}" placeholder="Ej.: colonoscopia de vigilancia según patología"></label>
       <label class="field">Fecha de control / vigilancia<input type="date" name="surveillance_due" value="{{ pr.surveillance_due or '' }}"></label>

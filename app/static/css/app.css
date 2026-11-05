@@ -578,3 +578,6 @@ ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15r
 .void-form input { min-width: 16rem; }
 .machine-code { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
 .machine-code .mono { font-size: 1.35rem; letter-spacing: .06em; padding: .35rem .6rem; background: var(--surface-2); border-radius: 8px; }
+.tpl-select { width: auto; max-width: 15rem; min-height: 0; padding: .3rem .5rem; font-size: .88rem; }
+.tpl-item { border-bottom: 1px solid var(--line); padding: .5rem 0; }
+.tpl-item > summary { cursor: pointer; }

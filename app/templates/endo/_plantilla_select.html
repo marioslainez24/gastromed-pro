@@ -1,0 +1,5 @@
+{# Menú de plantillas del médico (v0.26.0): al elegir una, se escribe en el campo «target» #}
+<select class="tpl-select" data-tpl-target="{{ target }}" aria-label="Plantillas para {{ target }}">
+  <option value="">📋 Plantillas ▾</option>
+  {% for r in rows %}<option value="{{ r.id }}">{{ r.title }}</option>{% endfor %}
+</select>

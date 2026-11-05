@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Plantillas de hallazgos{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Mis plantillas de hallazgos</h1>
+  <a class="btn btn-quiet" href="{{ url_for('endo.index') }}">← Endoscopia</a></div>
+<p class="muted">Textos para cada patología, tomados de su documento de Word. En el informe aparecen en el menú <b>📋 Plantillas</b> de
+  cada segmento: al elegir una se escribe en ese segmento (y su conclusión, si la tiene). Puede corregirlas, agregar nuevas o quitarlas
+  del menú. Los «…» son para completar (cara, curvatura, tamaño). Los informes ya finalizados no cambian.</p>
+<nav class="seg tabs" aria-label="Tipo de estudio">
+  {% for k, v in ET.KINDS.items() %}<a href="{{ url_for('endo.templates_edit', tipo=k) }}" {% if k == kind %}aria-current="page"{% endif %}>{{ v }}</a>{% endfor %}
+</nav>
+
+<details class="card mt"><summary><b>＋ Agregar una plantilla</b></summary>
+  <form method="post" class="stack mt">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="tipo" value="{{ kind }}">
+    <div class="grid2">
+      <label class="field">Título (lo que se ve en el menú)<input name="title" required maxlength="120"></label>
+      <label class="field">Sección<select name="section">{% for k, v in secs.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+    </div>
+    <label class="field">Texto<textarea name="body" rows="5" required data-grow></textarea></label>
+    <label class="field"><span>Conclusión sugerida <span class="muted">· opcional, una por línea</span></span><textarea name="conclusion" rows="2" data-grow></textarea></label>
+    <div><button class="btn btn-primary" type="submit" name="action" value="agregar">Agregar</button></div>
+  </form>
+</details>
+
+{% for sk, sv in secs.items() %}{% set group = rows|selectattr('section', 'equalto', sk)|list %}
+{% if group %}
+<section class="card"><h2>{{ sv }} <span class="count">{{ group|selectattr('active')|list|length }}</span></h2>
+  {% for r in group %}
+  <details class="tpl-item {% if not r.active %}muted{% endif %}" id="t-{{ r.id }}"><summary><b>{{ r.title }}</b>{% if not r.active %} · <span class="tag">Fuera del menú</span>{% endif %}
+    <span class="small muted">· {{ r.body[:90] }}{% if r.body|length > 90 %}…{% endif %}</span></summary>
+    <form method="post" class="stack mt">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="tipo" value="{{ kind }}"><input type="hidden" name="id" value="{{ r.id }}">
+      <div class="grid2">
+        <label class="field">Título<input name="title" required maxlength="120" value="{{ r.title }}"></label>
+        <label class="field">Sección<select name="section">{% for k, v in secs.items() %}<option value="{{ k }}" {% if k == r.section %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+      </div>
+      <label class="field">Texto<textarea name="body" rows="6" required data-grow>{{ r.body }}</textarea></label>
+      <label class="field"><span>Conclusión sugerida <span class="muted">· opcional, una por línea</span></span><textarea name="conclusion" rows="2" data-grow>{{ r.conclusion or '' }}</textarea></label>
+      <div class="btn-row"><button class="btn btn-primary btn-sm" type="submit" name="action" value="guardar">Guardar</button>
+        {% if r.active %}<button class="btn btn-quiet btn-sm" type="submit" name="action" value="desactivar" formnovalidate>Quitar del menú</button>
+        {% else %}<button class="btn btn-sm" type="submit" name="action" value="activar" formnovalidate>Volver a ponerla en el menú</button>{% endif %}</div>
+    </form>
+  </details>
+  {% endfor %}
+</section>
+{% endif %}{% endfor %}
+{% endblock %}

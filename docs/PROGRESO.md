@@ -20,6 +20,23 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
+## Etapa 26 · 4-nov-2026 · Plantillas de hallazgos por patología (v0.26.0 · en «desarrollo», falta su «ya»)
+
+**Pedido del Dr. Lainez** (envió su Word «Endo NIC» con notas predeterminadas por diagnóstico): igual que el botón «Normal», un menú
+desplegable por cada situación patológica.
+- `app/endo_templates.py`: 55 plantillas transcritas del Word (EDA: 11 esófago, 1 UEG, 15 estómago, 5 duodeno, 2 recomendaciones —
+  cuidados post ligadura y post PEG—; colonoscopia: 20; rectosigmoidoscopia: 1). Se corrigieron solo errores de tipeo evidentes
+  (midazolan, Sifmoide, perístasis, explocación, trocart, gastrectomía→gastrostomía en PEG, «infiltra»→«infla» la sonda). Los «…» quedan
+  para completar. Algunas traen conclusión sugerida (estenosis grado III, úlcera gigante + estenosis de bulbo, GIST de …, pangastritis).
+  Omitidos por estar repetidos o vacíos en el Word: «Metaplasia intestinal» (sin texto), segundas copias de divertículo de bulbo y de
+  metaplasia esofágica, y los textos normales (ya existen en el botón Normal).
+- Migración 0020 `endo_templates` (por clínica; se cargan solas la primera vez con `ensure_seed`).
+- En el informe: menú «📋 Plantillas ▾» junto a «Normal» en cada segmento y en Recomendaciones. Al elegir: si el campo está vacío o con
+  el texto normal, lo reemplaza; si ya tiene texto, lo agrega debajo; la conclusión sugerida se agrega a la Conclusión sin repetir.
+- Página «Mis plantillas de hallazgos» (Endoscopia → Plantillas por patología; enlace también en el informe): editar título, sección,
+  texto y conclusión, agregar nuevas, quitar del menú / volver a ponerlas. Auditoría de cada cambio.
+- Pruebas `tests/test_v026.py` (242). Capturas `evidencia/capturas/v026-*.png`.
+
 ## Etapa 25 · 4-nov-2026 · Número de expediente = DNI (v0.25.0 · PUBLICADA 4-nov-2026 como v0.25.0-31; incluye v0.24.1)
 
 **Pedido del Dr. Lainez:** «que el número de expediente sea el mismo que el DNI».

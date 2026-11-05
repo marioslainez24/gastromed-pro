@@ -878,4 +878,39 @@
         try { document.execCommand("copy"); done(); } catch (e) {} document.body.removeChild(ta); }
     });
   });
+  // ---- Plantillas de hallazgos por patología (v0.26): menú en cada segmento ----
+  (function () {
+    var holder = $("#plantillas-data");
+    if (!holder) return;
+    var data = {};
+    try { data = JSON.parse(holder.getAttribute("data-tpl") || "{}"); } catch (e) { return; }
+    $$("select[data-tpl-target]").forEach(function (sel) {
+      sel.addEventListener("change", function () {
+        var t = data[sel.value], ta = document.getElementById(sel.getAttribute("data-tpl-target"));
+        sel.value = "";
+        if (!t || !ta) return;
+        var cur = ta.value.trim();
+        var nb = document.querySelector("[data-fill-normal='" + ta.id + "']");
+        var normal = nb ? (nb.getAttribute("data-normal") || "").trim() : "";
+        // campo vacío o con el texto normal → se reemplaza; si ya tiene otro texto → se agrega debajo
+        ta.value = (!cur || cur === normal) ? t.b : ta.value.replace(/\s+$/, "") + "\n" + t.b;
+        ta.dispatchEvent(new Event("input", { bubbles: true }));
+        if (t.c) {
+          var cc = document.getElementById("conclusion");
+          if (cc) {
+            var cnb = document.querySelector("[data-fill-normal='conclusion']");
+            var cn = cnb ? (cnb.getAttribute("data-normal") || "").trim() : "";
+            var cv = cc.value.trim();
+            var add = t.c.split("\n").filter(function (l) { return l.trim() && cv.indexOf(l.trim()) < 0; });
+            if (add.length) {
+              cc.value = (!cv || cv === cn) ? add.join("\n") : cc.value.replace(/\s+$/, "") + "\n" + add.join("\n");
+              cc.dispatchEvent(new Event("input", { bubbles: true }));
+            }
+          }
+        }
+        dirty = true;
+        ta.focus();
+      });
+    });
+  })();
 })();
