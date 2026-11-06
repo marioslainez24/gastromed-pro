@@ -103,3 +103,24 @@ def test_mover_un_logo_cambia_su_posicion_en_el_pdf():
     x0, y0 = build(0, 0)
     x1, y1 = build(10, 6)
     assert abs((y0 - y1) - 10 * mm) < 0.5 and abs((x1 - x0) - 6 * mm) < 0.5     # bajó 10 mm y se movió 6 mm a la derecha
+
+
+def test_servicio_menu_y_sin_alergias_en_el_informe(env):
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import full_form, new_proc, version
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    pid = create_patient(med)
+    env["db"].execute("UPDATE patients SET allergy_status = 'sin_alergias_conocidas' WHERE id = ?", (pid,))
+    env["db"].commit()
+    proc = new_proc(med, pid, tok, "eda")
+    html = med.get(f"/procedimientos/{proc}").get_data(as_text=True)
+    assert 'name="service"' in html and "Medicina interna" in html and "Otro (escribir)" in html
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting="sala", service="otro",
+                                                               ward="Unidad de quemados", bed="4"))
+    txt = " ".join("".join(pg.extract_text() for pg in PdfReader(io.BytesIO(med.get(f"/procedimientos/{proc}/pdf").data)).pages).split())
+    assert "Atención: Sala (hospitalizado) · cama 4" in txt and "Servicio: Unidad de quemados" in txt
+    assert "Alergias" not in txt
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting="externa", service="inventado"))
+    d = json.loads(env["db"].execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])
+    assert d["ward"] is None

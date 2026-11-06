@@ -58,7 +58,7 @@ v0.24.1 (documentos SIN pie «Generado con GastroMed Pro…» ni «Licencia de u
 v0.25.0 (número de expediente = DNI; sin DNI, GM-…; los existentes se convierten al iniciar con auditoría) se publicó el 4-nov-2026 tras su «ya» como v0.25.0-31 (incluye v0.24.1; repositorio aún público). Lo siguiente, en `desarrollo` hasta su «ya».
 v0.26.0 (plantillas de hallazgos por patología del Word «Endo NIC»: menú «📋 Plantillas» por segmento; migración 0020 `endo_templates`; página Endoscopia → Plantillas por patología; incluye «Metaplasia intestinal gástrica» redactada por Claude, a revisar por él) se publicó el 4-nov-2026 tras su «ya» como v0.26.0-32 (repositorio aún público). Lo siguiente, en `desarrollo` hasta su «ya».
 v0.27.0 (hasta 3 logos —logo, logo2, logo3—, grandes en el informe; migración 0021) publicada el 5-nov-2026 por su «hazlo ya». Lo siguiente, en `desarrollo` hasta su «ya».
-v0.28.0 (elegir posición izquierda/centro/derecha, tamaño y mover ▲▼◀▶ cada logo; migración 0022 `logo_layout`) en `desarrollo`, espera su «ya».
+v0.28.0 (elegir posición izquierda/centro/derecha, tamaño y mover ▲▼◀▶ cada logo; migración 0022 `logo_layout`; informe sin alergias; menú «Servicio») en `desarrollo`, espera su «ya».
 Para activar una PC: él copia el código de equipo y corre el workflow (o lo hace Claude si tiene la llave en la sesión). La llave privada NUNCA va al código.
 La CI tiene trabajos windows, mac (matriz) y publicar (solo en main; sube el .exe y los .zip de Mac que salieron bien). `macos-latest` se quedó sin máquinas: usar `macos-14`.
 **Mac SOLO CUANDO ÉL LO PIDA (3-nov-2026):** primero pidió Mac una vez y luego dijo «no hagas para Mac en este momento, solo Windows».
@@ -68,7 +68,7 @@ Los cambios solo de `*.md` o `docs/` en `main` no disparan la construcción.
 
 ## Flujo de trabajo que funcionó
 1. Crear tareas, programar y escribir pruebas pytest para cada función nueva. Ejemplo: un servidor SMTP falso en localhost; nunca simular un éxito.
-2. Correr `python3 -m pytest -q` (248 pruebas en v0.28.0).
+2. Correr `python3 -m pytest -q` (249 pruebas en v0.28.0).
 3. Revisar en el navegador con Playwright y guardar capturas en `evidencia/capturas/`.
 4. Correr la prueba del exe en local: `build/smoke_exe.py` con un script que ejecute `python3 gastromed_exe.py`. Si waitress no está instalado, usar un sustituto con `werkzeug.make_server` en `PYTHONPATH`.
 5. Actualizar `docs/PROGRESO.md` y `docs/MATRIZ.md` (y `INSTALACION_WINDOWS.md` si cambia el uso). Copiarlos al Proyecto con `project_write`.

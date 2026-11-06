@@ -176,3 +176,4 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | Plantillas de hallazgos por patología (56: 55 de su Word + metaplasia intestinal gástrica redactada para su revisión) con menú en cada segmento del informe y página para editarlas | ✅ probado (pruebas + navegador); publicado en v0.26.0 |
 | Hasta 3 logos, grandes en el informe (los 3 estilos) y en los demás documentos | ✅ probado (pruebas + PDF); publicado en v0.27.0 |
 | Elegir dónde va cada logo (izquierda, centro, derecha), su tamaño y moverlo arriba/abajo/lados | ✅ probado (pruebas + navegador + PDF); se publica con su «ya» |
+| Informe de endoscopia sin alergias; menú «Servicio» además de «Atención» | ✅ probado (pruebas + navegador); se publica con su «ya» |

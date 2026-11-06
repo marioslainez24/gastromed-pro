@@ -222,7 +222,9 @@ def parse_form(kind, f):
         "endoscopist": _txt(f, "endoscopist", 120),
         "endoscopist_2": _txt(f, "endoscopist_2", 120),
         "care_setting": f.get("care_setting") if f.get("care_setting") in D.CARE_SETTINGS else None,
-        "ward": _txt(f, "ward", 120) if f.get("care_setting") in ("sala", "emergencia") else None,
+        # v0.28: «Servicio» es un menú (o «Otro» escrito a mano) y sirve para cualquier tipo de atención
+        "ward": (_txt(f, "ward", 120) if f.get("service") == "otro" else
+                 (f.get("service") if f.get("service") in D.SERVICES else (_txt(f, "ward", 120) if "service" not in f else None))),
         "bed": _txt(f, "bed", 20) if f.get("care_setting") in ("sala", "emergencia") else None,
         "facility": _txt(f, "facility", 160), "facility_record": _txt(f, "facility_record", 40),
         "assistants_list": [a for a in (_txt(f, f"assistant_{i}", 120) for i in (1, 2, 3)) if a],

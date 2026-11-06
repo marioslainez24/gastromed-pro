@@ -157,15 +157,15 @@ def test_tipo_de_atencion_sala_o_consulta_externa(env):
     d = json.loads(env["db"].execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])
     assert (d["care_setting"], d["ward"], d["bed"], d["facility"], d["facility_record"]) == ("sala", "Medicina interna", "12", "Hospital Ficticio", "H-555")
     txt = " ".join(_pdf_text(med.get(f"/procedimientos/{proc}/pdf").data).split())
-    assert "Atención: Sala (hospitalizado) · Medicina interna · cama 12" in txt and "Lugar: Hospital Ficticio" in txt and "Exp. del hospital: H-555" in txt
+    assert "Atención: Sala (hospitalizado) · cama 12" in txt and "Servicio: Medicina interna" in txt and "Lugar: Hospital Ficticio" in txt and "Exp. del hospital: H-555" in txt
     assert "Hospital Ficticio" in med.get(f"/pacientes/{pid}/procedimientos").get_data(as_text=True)
     assert ">Sala<" in med.get("/endoscopia").get_data(as_text=True)
-    # consulta externa: la sala y la cama no se guardan aunque vengan escritas
-    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting="externa", ward="X", bed="9"))
+    # consulta externa: la cama no se guarda; el servicio sí (v0.28: el servicio vale para cualquier atención)
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting="externa", service="Gastroenterología", bed="9"))
     d = json.loads(env["db"].execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])
-    assert d["care_setting"] == "externa" and d["ward"] is None and d["bed"] is None
+    assert d["care_setting"] == "externa" and d["ward"] == "Gastroenterología" and d["bed"] is None
     txt = " ".join(_pdf_text(med.get(f"/procedimientos/{proc}/pdf").data).split())
-    assert "Atención: Consulta externa" in txt and "cama" not in txt
+    assert "Atención: Consulta externa" in txt and "Servicio: Gastroenterología" in txt and "cama" not in txt
     # valor no válido: no se guarda
     med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting="inventado"))
     assert json.loads(env["db"].execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])["care_setting"] is None

@@ -34,7 +34,13 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
   (Pequeño, Mediano, Grande, Muy grande 44 mm) y botones ▲ ▼ ◀ ▶ que lo mueven de 2 en 2 mm (máximo 20 mm hacia cada lado), con
   texto «4 mm arriba · 2 mm a la derecha». El movimiento no cambia el espacio que ocupa (`_Shifted`): si se mueve mucho puede tapar
   texto, por eso el botón «Guardar y ver el informe» abre el ejemplo en otra pestaña. JSON: `logo`, `logo_size`, `logo_dx`, `logo_dy`…
-- Pruebas `tests/test_v028.py` (248).
+- **Informe sin alergias y menú «Servicio»** (pedido el mismo día): el PDF del informe de endoscopia ya no muestra «Alergias» (la
+  receta sí). En «Tipo de atención y lugar»: «Atención» (menú) + **«Servicio»** (menú `D.SERVICES`: Gastroenterología, Medicina interna,
+  Cirugía general, Emergencia, UCI, Pediatría, Ginecología y obstetricia, Ortopedia, Neurología, Cardiología, Nefrología, Neumología,
+  Oncología, Hematología, Infectología, Geriatría, Consulta externa; «Otro (escribir)…» abre un cuadro). El servicio se guarda en
+  `ward` y vale para cualquier tipo de atención; la cama sigue solo para sala/emergencia. PDF: «Atención: Sala (hospitalizado) · cama 4»
+  y aparte «Servicio: …».
+- Pruebas `tests/test_v028.py` (249).
 
 ## Etapa 27 · 5-nov-2026 · Hasta 3 logos, grandes en el informe (v0.27.0 · publicada el mismo día: «hazlo ya»)
 

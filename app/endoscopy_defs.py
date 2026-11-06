@@ -50,17 +50,20 @@ EXTENT = {
 CARE_SETTINGS = {"externa": "Consulta externa", "sala": "Sala (hospitalizado)", "emergencia": "Emergencia"}
 
 
+# Servicio (v0.28.0, pedido del Dr. Lainez: menú desplegable aparte de «Atención»). «otro» = escribirlo.
+SERVICES = ["Gastroenterología", "Medicina interna", "Cirugía general", "Emergencia", "Unidad de cuidados intensivos", "Pediatría",
+            "Ginecología y obstetricia", "Ortopedia", "Neurología", "Cardiología", "Nefrología", "Neumología", "Oncología",
+            "Hematología", "Infectología", "Geriatría", "Consulta externa"]
+
+
 def care_text(d):
-    """Texto corto del tipo de atención para el informe: «Sala (hospitalizado) · Medicina interna · cama 12»."""
+    """Texto corto del tipo de atención para el informe: «Sala (hospitalizado) · cama 12». El servicio va aparte."""
     cs = CARE_SETTINGS.get((d or {}).get("care_setting") or "")
     if not cs:
         return ""
     parts = [cs]
-    if d.get("care_setting") in ("sala", "emergencia"):
-        if d.get("ward"):
-            parts.append(d["ward"])
-        if d.get("bed"):
-            parts.append(f"cama {d['bed']}")
+    if d.get("care_setting") in ("sala", "emergencia") and d.get("bed"):
+        parts.append(f"cama {d['bed']}")
     return " · ".join(parts)
 
 

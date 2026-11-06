@@ -522,15 +522,13 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
         on = None
     doc_cell = "<b>Identidad:</b> sin documento" if p["document_type"] in (None, "", "sin_documento") else \
         f"<b>{_e(label('document_type', p['document_type']))}:</b> {_e(p['document_number'] or '—')}"
-    if p["allergy_status"] == "con_alergias" and allergies:
-        alg = "; ".join(f"{a['substance']}" for a in allergies)
-    else:
-        alg = label("allergy_status", p["allergy_status"]) if p["allergy_status"] else ""
+    alg = ""      # v0.28: el informe de endoscopia ya no muestra alergias (pedido del Dr. Lainez); la receta sí
     cells = [(f"<b>Paciente:</b> {_e(p['first_names'])} {_e(p['last_names'])}", f"<b>Expediente:</b> {_e(p['mrn'])}"),
              (doc_cell, f"<b>Fecha de nacimiento:</b> {_e(fmt_birth(p['birth_date'])) if p['birth_date'] else 'no registrada'}"),
              (f"<b>Edad:</b> {_e(age(p['birth_date'], on))}", f"<b>Sexo:</b> {_e(label('sex', p['sex']))}")]
     care = D.care_text(d)
     extra = [x for x in [f"<b>Atención:</b> {_e(care)}" if care else None,
+                         f"<b>Servicio:</b> {_e(d['ward'])}" if d.get("ward") else None,
                          f"<b>Lugar:</b> {_e(d['facility'])}" if d.get("facility") else None,
                          f"<b>Exp. del hospital:</b> {_e(d['facility_record'])}" if d.get("facility_record") else None,
                          f"<b>Teléfono:</b> {_e(p['phone'])}" if p["phone"] else None,

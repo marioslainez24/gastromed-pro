@@ -868,6 +868,12 @@
     };
     sel.addEventListener("change", upd); upd();
   });
+  // Servicio (v0.28): «Otro» muestra el cuadro para escribirlo
+  $$("[data-service-select]").forEach(function (sel) {
+    var other = $("[data-service-other]");
+    var upd = function () { if (other) { other.hidden = sel.value !== "otro"; if (sel.value !== "otro") { var i = $("input", other); if (i) i.value = ""; } } };
+    sel.addEventListener("change", upd);
+  });
   // ---- Botón «Copiar» de un texto fijo (v0.24: código de equipo) ----
   $$("[data-copy-text]").forEach(function (b) {
     b.addEventListener("click", function () {

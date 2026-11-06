@@ -63,7 +63,11 @@
   <fieldset class="card"><legend>Tipo de atención y lugar</legend>
     <div class="grid4" data-care>
       <label class="field">Atención<select name="care_setting" data-care-select>{% for k, v in D.CARE_SETTINGS.items() %}<option value="{{ k }}" {% if (d.care_setting or 'externa') == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
-      <label class="field" data-care-sala {% if d.care_setting not in ('sala', 'emergencia') %}hidden{% endif %}>Sala o servicio<input name="ward" maxlength="120" value="{{ d.ward or '' }}" placeholder="Ej.: Medicina interna"></label>
+      {% set svc_other = d.ward and d.ward not in D.SERVICES %}
+      <label class="field">Servicio<select name="service" data-service-select><option value="">—</option>
+        {% for sv in D.SERVICES %}<option value="{{ sv }}" {% if d.ward == sv %}selected{% endif %}>{{ sv }}</option>{% endfor %}
+        <option value="otro" {% if svc_other %}selected{% endif %}>Otro (escribir)…</option></select></label>
+      <label class="field" data-service-other {% if not svc_other %}hidden{% endif %}>Otro servicio<input name="ward" maxlength="120" value="{{ d.ward if svc_other else '' }}" placeholder="Escriba el servicio"></label>
       <label class="field" data-care-sala {% if d.care_setting not in ('sala', 'emergencia') %}hidden{% endif %}>Cama<input name="bed" maxlength="20" value="{{ d.bed or '' }}"></label>
     </div>
     <div class="grid2">
@@ -319,7 +323,7 @@
 {% else %}
   {# ---------------- Vista de solo lectura ---------------- #}
   <section class="card note-read">
-    {% if d.care_setting or d.facility %}<h2>Atención</h2><p>{{ D.care_text(d) }}{% if d.facility %}{{ ' · ' if d.care_setting }}{{ d.facility }}{% endif %}{% if d.facility_record %} · Exp. hospital {{ d.facility_record }}{% endif %}</p>{% endif %}
+    {% if d.care_setting or d.facility %}<h2>Atención</h2><p>{{ D.care_text(d) }}{% if d.ward %} · Servicio: {{ d.ward }}{% endif %}{% if d.facility %}{{ ' · ' if d.care_setting }}{{ d.facility }}{% endif %}{% if d.facility_record %} · Exp. hospital {{ d.facility_record }}{% endif %}</p>{% endif %}
     <h2>Indicación</h2><p>{{ D.INDICATION_CATEGORIES.get(pr.indication_category, '') }}{% if d.indication %} · {{ d.indication }}{% endif %}</p>
     <h2>Evaluación previa y sedación</h2>
     <p class="small">Consentimiento: {{ 'obtenido' if d.consent_obtained else 'no registrado' }}{% if d.consent_version %} ({{ d.consent_version }}){% endif %}
