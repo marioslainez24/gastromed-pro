@@ -40,7 +40,9 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
   Oncología, Hematología, Infectología, Geriatría, Consulta externa; «Otro (escribir)…» abre un cuadro). El servicio se guarda en
   `ward` y vale para cualquier tipo de atención; la cama sigue solo para sala/emergencia. PDF: «Atención: Sala (hospitalizado) · cama 4»
   y aparte «Servicio: …».
-- Pruebas `tests/test_v028.py` (249).
+- **Indicación sin explicación** (pedido): en el informe y en la vista sale solo «Diagnóstica. …» / «Tamizaje.» / «Vigilancia.» /
+  «Terapéutica.» (`D.INDICATION_SHORT`); el menú del formulario conserva la explicación entre paréntesis para elegir.
+- Pruebas `tests/test_v028.py` (250).
 
 ## Etapa 27 · 5-nov-2026 · Hasta 3 logos, grandes en el informe (v0.27.0 · publicada el mismo día: «hazlo ya»)
 

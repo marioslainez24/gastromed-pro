@@ -553,7 +553,7 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
             story.append(KeepTogether([H(t), Paragraph(_e(body).replace("\n", "<br/>"), X["body"])]))
             story.append(Spacer(1, 2 * mm))
 
-    sec("Indicación", (D.INDICATION_CATEGORIES.get(pr["indication_category"] or "", "") + ". " if pr["indication_category"] else "") + (d.get("indication") or ""))
+    sec("Indicación", (D.INDICATION_SHORT.get(pr["indication_category"] or "", "") + ". " if pr["indication_category"] else "") + (d.get("indication") or ""))
     pre = []
     pre.append("Consentimiento informado: " + ("obtenido" if d.get("consent_obtained") else "NO registrado") +
                (f" ({d['consent_version']})" if d.get("consent_version") else ""))

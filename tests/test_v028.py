@@ -124,3 +124,15 @@ def test_servicio_menu_y_sin_alergias_en_el_informe(env):
     med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting="externa", service="inventado"))
     d = json.loads(env["db"].execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])
     assert d["ward"] is None
+
+
+def test_indicacion_solo_la_palabra_en_el_informe(env):
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import full_form, new_proc, version
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    proc = new_proc(med, create_patient(med), tok, "eda")
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), indication_category="diagnostica",
+                                                               indication="SANGRADO DIGESTIVO ALTO"))
+    txt = " ".join("".join(pg.extract_text() for pg in PdfReader(io.BytesIO(med.get(f"/procedimientos/{proc}/pdf").data)).pages).split())
+    assert "Diagnóstica. SANGRADO DIGESTIVO ALTO" in txt and "síntomas o hallazgos" not in txt

@@ -324,7 +324,7 @@
   {# ---------------- Vista de solo lectura ---------------- #}
   <section class="card note-read">
     {% if d.care_setting or d.facility %}<h2>Atención</h2><p>{{ D.care_text(d) }}{% if d.ward %} · Servicio: {{ d.ward }}{% endif %}{% if d.facility %}{{ ' · ' if d.care_setting }}{{ d.facility }}{% endif %}{% if d.facility_record %} · Exp. hospital {{ d.facility_record }}{% endif %}</p>{% endif %}
-    <h2>Indicación</h2><p>{{ D.INDICATION_CATEGORIES.get(pr.indication_category, '') }}{% if d.indication %} · {{ d.indication }}{% endif %}</p>
+    <h2>Indicación</h2><p>{{ D.INDICATION_SHORT.get(pr.indication_category, '') }}{% if d.indication %} · {{ d.indication }}{% endif %}</p>
     <h2>Evaluación previa y sedación</h2>
     <p class="small">Consentimiento: {{ 'obtenido' if d.consent_obtained else 'no registrado' }}{% if d.consent_version %} ({{ d.consent_version }}){% endif %}
       {% if d.asa %} · ASA {{ d.asa }}{% endif %} · Sedación: {{ D.SEDATION.get(d.sedation_type, 'no registrada') }}{% if d.sedation_agents %} · {{ d.sedation_agents }}{% endif %}

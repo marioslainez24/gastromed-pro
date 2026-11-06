@@ -69,6 +69,8 @@ def care_text(d):
 
 INDICATION_CATEGORIES = {"diagnostica": "Diagnóstica (síntomas o hallazgos)", "tamizaje": "Tamizaje (persona asintomática)",
                          "vigilancia": "Vigilancia (antecedente de pólipos, cáncer, EII, Barrett…)", "terapeutica": "Terapéutica"}
+# En el informe solo la palabra (v0.28, pedido del Dr. Lainez): «Diagnóstica», sin «(síntomas o hallazgos)»
+INDICATION_SHORT = {k: v.split(" (")[0] for k, v in INDICATION_CATEGORIES.items()}
 
 SEDATION = {"ninguna": "Sin sedación", "topica": "Anestesia tópica faríngea", "minima": "Sedación mínima",
             "moderada": "Sedación moderada (consciente)", "profunda": "Sedación profunda", "general": "Anestesia general"}
