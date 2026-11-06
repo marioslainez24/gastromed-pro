@@ -20,6 +20,18 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
+## Etapa 28 · 5-nov-2026 · Elegir dónde va cada logo y su tamaño (v0.28.0 · en «desarrollo», falta su «ya»)
+
+**Pedido del Dr. Lainez:** «una opción para colocar los logos».
+- Ajustes → Clínica y documentos → «¿Dónde va cada logo?»: cada logo cargado en Izquierda / Centro / Derecha y Tamaño (Pequeño 18 mm,
+  Mediano 26 mm, Grande 34 mm de alto en el informe; 65 % en recetas y documentos). Botones «Ver cómo queda el informe» (ejemplo
+  ficticio con su estilo) y «Volver a la colocación automática». Migración 0022 `clinic_settings.logo_layout` (JSON; NULL = automático
+  como en v0.27). `load_assets` pasa la colocación como `_layout`.
+- PDF `_letterhead`: sin logo al centro → [logos izq.] [nombre y datos] [logos der.] (nombre centrado si hay logos a ambos lados);
+  con logo al centro → fila izq./centro/der. y el nombre debajo, centrado. Varios logos en el mismo lado se ponen uno al lado del otro.
+  En los 3 estilos (en Moderno los logos van arriba de la franja) y en recetas, órdenes, documentos y hojas.
+- Pruebas `tests/test_v028.py` (247).
+
 ## Etapa 27 · 5-nov-2026 · Hasta 3 logos, grandes en el informe (v0.27.0 · publicada el mismo día: «hazlo ya»)
 
 **Pedido del Dr. Lainez:** «que se puedan poner 3 logos y que se vean grandes en el informe. Hazlo ya».

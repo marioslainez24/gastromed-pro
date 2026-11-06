@@ -66,7 +66,14 @@ def clinic():
             return redirect(url_for("settings.clinic"))
     tzs = sorted(t for t in available_timezones() if t.startswith("America/"))
     from .views_extras import load_assets
-    return render_template("ajustes/clinica.html", data=data, errors=errors, tzs=tzs, assets=load_assets(g.user["org_id"])), 422 if errors else 200
+    from .pdf import LOGO_POSITIONS, LOGO_SIZES
+    assets = load_assets(g.user["org_id"])
+    lay = assets.get("_layout") or {}
+    layout = {"logo": lay.get("logo", "izquierda"), "logo2": lay.get("logo2", "derecha"), "logo3": lay.get("logo3", "centro"),
+              "size": lay.get("size", "grande"), "custom": bool(lay)}
+    style = db.execute("SELECT report_style FROM clinic_settings WHERE org_id = ?", (g.user["org_id"],)).fetchone()[0]
+    return render_template("ajustes/clinica.html", data=data, errors=errors, tzs=tzs, assets=assets, layout=layout,
+                           LOGO_POSITIONS=LOGO_POSITIONS, LOGO_SIZES=LOGO_SIZES, report_style=style), 422 if errors else 200
 
 
 @bp.route("/usuarios")

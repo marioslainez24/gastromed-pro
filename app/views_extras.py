@@ -1,4 +1,5 @@
 """Recordatorios de citas, logo/firma, horarios de atención y bloqueos."""
+import json
 import re
 from datetime import date, datetime, timedelta, timezone
 
@@ -22,6 +23,14 @@ def load_assets(org_id) -> dict:
             out[r["kind"]] = f.decrypt(r["data_enc"])
         except Exception:  # noqa: BLE001
             pass
+    # v0.28.0: dónde va cada logo y su tamaño (si el médico lo eligió)
+    row = get_db().execute("SELECT logo_layout FROM clinic_settings WHERE org_id = ?", (org_id,)).fetchone()
+    try:
+        lay = json.loads(row["logo_layout"]) if row and row["logo_layout"] else None
+    except ValueError:
+        lay = None
+    if isinstance(lay, dict):
+        out["_layout"] = lay
     return out
 
 
@@ -151,6 +160,28 @@ def assets_upload():
                    (g.user["org_id"], kind, mime, current_app.config["GM_FERNET"].encrypt(data), utcnow(), g.user["id"]))
         audit(f"{kind}_cargado", "ajustes", g.user["org_id"], db=db)
     flash("Imagen guardada. Aparecerá en el informe de endoscopia, recetas, órdenes y documentos.", "ok")
+    return redirect(url_for("settings.clinic") + "#imagenes")
+
+
+@bp.route("/ajustes/logos-posicion", methods=["POST"])
+@require("ajustes.editar")
+def logos_layout():
+    """Guarda dónde va cada logo (izquierda / centro / derecha) y el tamaño (v0.28.0)."""
+    from .pdf import LOGO_POSITIONS, LOGO_SIZES
+    db = get_db()
+    if request.form.get("action") == "automatico":
+        value = None
+    else:
+        lay = {k: request.form.get(f"pos-{k}") for k in ("logo", "logo2", "logo3")}
+        size = request.form.get("size")
+        if any(v not in LOGO_POSITIONS for v in lay.values()) or size not in LOGO_SIZES:
+            abort(400)
+        value = json.dumps(dict(lay, size=size))
+    with write_tx(db):
+        db.execute("UPDATE clinic_settings SET logo_layout = ?, updated_at = ?, updated_by = ?, version = version + 1 WHERE org_id = ?",
+                   (value, utcnow(), g.user["id"], g.user["org_id"]))
+        audit("logos_posicion", "ajustes", g.user["org_id"], {"posicion": value}, db=db)
+    flash("Colocación de los logos guardada." if value else "Logos en colocación automática.", "ok")
     return redirect(url_for("settings.clinic") + "#imagenes")
 
 

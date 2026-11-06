@@ -40,8 +40,8 @@
 </form>
 <section class="card" id="imagenes">
   <h2>Logos y firma para informes, recetas y documentos</h2>
-  <p class="muted small">Puede cargar hasta <b>3 logos</b> (por ejemplo: su consultorio, el hospital y la institución). Con un solo logo sale a
-    la izquierda de su nombre; con dos o tres, salen grandes en una fila arriba del informe, en este orden.</p>
+  <p class="muted small">Puede cargar hasta <b>3 logos</b> (por ejemplo: su consultorio, el hospital y la institución). Después de cargarlos, abajo
+    puede elegir <b>dónde va cada uno</b> (izquierda, centro o derecha) y su <b>tamaño</b>.</p>
   <div class="grid2 assets-grid">
   {% for kind, title in [('logo','Logo 1'), ('logo2','Logo 2'), ('logo3','Logo 3'), ('firma','Imagen de su firma')] %}
     <div class="stack">
@@ -56,6 +56,24 @@
     </div>
   {% endfor %}
   </div>
+  {% if assets.get('logo') or assets.get('logo2') or assets.get('logo3') %}
+  <form method="post" action="{{ url_for('extras.logos_layout') }}" class="card logo-layout mt">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <h3>¿Dónde va cada logo?</h3>
+    <p class="muted small">{% if layout.custom %}Usando su colocación.{% else %}Ahora en colocación automática (un logo a la izquierda; dos o tres en
+      fila arriba). Elija aquí para ponerlos donde usted quiera.{% endif %} Con un logo al <b>centro</b>, su nombre va debajo de los logos;
+      sin logo al centro, su nombre queda en medio.</p>
+    <div class="grid4">
+      {% for k, t in [('logo', 'Logo 1'), ('logo2', 'Logo 2'), ('logo3', 'Logo 3')] %}{% if assets.get(k) %}
+      <label class="field">{{ t }}<select name="pos-{{ k }}">{% for pk, pv in LOGO_POSITIONS.items() %}<option value="{{ pk }}" {% if layout[k] == pk %}selected{% endif %}>{{ pv }}</option>{% endfor %}</select></label>
+      {% else %}<input type="hidden" name="pos-{{ k }}" value="{{ layout[k] }}">{% endif %}{% endfor %}
+      <label class="field">Tamaño<select name="size">{% for sk, sv in LOGO_SIZES.items() %}<option value="{{ sk }}" {% if layout.size == sk %}selected{% endif %}>{{ sv[0] }}</option>{% endfor %}</select></label>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Guardar colocación</button>
+      <a class="btn btn-sm" href="{{ url_for('settings.report_style_sample', estilo=report_style) }}" target="_blank" rel="noopener">👁 Ver cómo queda el informe</a>
+      {% if layout.custom %}<button class="btn btn-quiet btn-sm" type="submit" name="action" value="automatico" formnovalidate>Volver a la colocación automática</button>{% endif %}</div>
+  </form>
+  {% endif %}
   <p class="muted small">PNG o JPG, máximo 2 MB. Para la firma, use una foto de su firma en papel blanco (idealmente PNG con fondo transparente). Una imagen de firma no equivale a una firma electrónica verificable.</p>
 </section>
 {% endblock %}

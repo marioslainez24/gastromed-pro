@@ -54,11 +54,83 @@ def _logo_row(logos, width, max_h):
     return t
 
 
+LOGO_POSITIONS = {"izquierda": "Izquierda", "centro": "Centro", "derecha": "Derecha"}
+LOGO_SIZES = {"pequeno": ("Pequeño", 18), "mediano": ("Mediano", 26), "grande": ("Grande", 34)}   # alto máximo en el informe (mm)
+
+
+def _layout(assets):
+    """Colocación elegida en Ajustes (v0.28.0) o None si el médico no eligió (se usa la colocación automática)."""
+    lay = (assets or {}).get("_layout")
+    return lay if isinstance(lay, dict) and lay else None
+
+
+def _letterhead(text, assets, width, big):
+    """Encabezado con los logos donde el médico los puso: izquierda / centro / derecha.
+
+    - Centro libre: [logos izq.] [nombre y datos] [logos der.].
+    - Con logo al centro: fila [izq. | centro | der.] y debajo el nombre y los datos."""
+    lay = _layout(assets)
+    slots = {"izquierda": [], "centro": [], "derecha": []}
+    for k in ("logo", "logo2", "logo3"):
+        if assets and assets.get(k):
+            slots[lay.get(k) if lay.get(k) in slots else "izquierda"].append(assets[k])
+    h = LOGO_SIZES.get(lay.get("size"), LOGO_SIZES["grande"])[1] * (1 if big else 0.65) * mm
+
+    def cell(imgs, w, align):
+        if not imgs:
+            return ""
+        each = (w - 2 * mm * (len(imgs) - 1)) / len(imgs)
+        flow = [_img_flowable(d, each, h) for d in imgs]
+        if len(flow) == 1:
+            flow[0].hAlign = align
+            return flow[0]
+        t = Table([flow], colWidths=[each + 2 * mm] * len(flow))
+        t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                               ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+        t.hAlign = align
+        return t
+
+    def centered(flows):
+        out = []
+        for f in flows:
+            if isinstance(f, Paragraph):
+                st = ParagraphStyle(f.style.name + "-c", parent=f.style, alignment=1)
+                out.append(Paragraph(f.text, st))
+            else:
+                out.append(f)
+        return out
+
+    base = [("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]
+    L, C, R = slots["izquierda"], slots["centro"], slots["derecha"]
+    if not (L or C or R):
+        return text
+    if C:
+        third = width / 3
+        row = Table([[cell(L, third - 4 * mm, "LEFT"), cell(C, third, "CENTER"), cell(R, third - 4 * mm, "RIGHT")]],
+                    colWidths=[third] * 3)
+        row.setStyle(TableStyle(base + [("ALIGN", (0, 0), (0, 0), "LEFT"), ("ALIGN", (1, 0), (1, 0), "CENTER"),
+                                        ("ALIGN", (2, 0), (2, 0), "RIGHT")]))
+        return [row, Spacer(1, 2 * mm)] + (centered(text) if text else [])
+    side = width * (0.26 if big else 0.22)
+    cols, widths = [], []
+    if L:
+        cols.append(cell(L, side - 3 * mm, "LEFT")); widths.append(side)
+    cols.append(centered(text) if (L and R) else text); widths.append(width - side * ((1 if L else 0) + (1 if R else 0)))
+    if R:
+        cols.append(cell(R, side - 3 * mm, "RIGHT")); widths.append(side)
+    t = Table([cols], colWidths=widths)
+    t.setStyle(TableStyle(base + ([("ALIGN", (-1, 0), (-1, 0), "RIGHT")] if R else [])))
+    return [t]
+
+
 def _with_logo(story, assets, width, big=False):
-    """Logos de la clínica en el encabezado. Uno: a la izquierda del nombre. Dos o tres: fila arriba, grandes."""
+    """Logos de la clínica en el encabezado. Uno: a la izquierda del nombre. Dos o tres: fila arriba, grandes.
+    Si el médico eligió posiciones en Ajustes (v0.28.0), se respetan."""
     logos = _logos(assets)
     if not logos:
         return story
+    if _layout(assets):
+        return _letterhead(story, assets, width, big)
     if len(logos) > 1:
         return [_logo_row(logos, width, (30 if big else 20) * mm), Spacer(1, 2 * mm)] + story
     lw, lh = ((48, 32) if big else (30, 22))
@@ -305,6 +377,12 @@ def _report_header(style, X, name, sub, title, date_txt, assets, width):
     if style == "formal":
         out = []
         logos = _logos(assets)
+        if logos and _layout(assets):
+            text = [Paragraph(_e(name), X["doctor"])] + ([Paragraph(_e(" · ".join(sub)), X["sub"])] if sub else [])
+            t = Table([[Paragraph(_e(title), X["head"])]], colWidths=[width])
+            t.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.5, colors.black), ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.black),
+                                   ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
+            return _letterhead(text, assets, width, True) + [Spacer(1, 2 * mm), t, Spacer(1, 1 * mm), Paragraph(date_txt, X["subr"])]
         if len(logos) > 1:
             out += [_logo_row(logos, width, 30 * mm), Spacer(1, 2 * mm)]
         elif logos:
@@ -321,6 +399,8 @@ def _report_header(style, X, name, sub, title, date_txt, assets, width):
     if style == "moderno":
         txt = [Paragraph(_e(name), X["doctor"])] + ([Paragraph(_e(" · ".join(sub)), X["sub"])] if sub else [])
         logos = _logos(assets)
+        if logos and _layout(assets):
+            logos = logos * 2      # con posiciones elegidas: logos en su fila arriba de la franja (no dentro)
         if len(logos) == 1:
             logo = _img_flowable(logos[0], 40 * mm, 26 * mm)
             band = Table([[txt, logo]], colWidths=[width - 46 * mm, 46 * mm])
@@ -333,7 +413,10 @@ def _report_header(style, X, name, sub, title, date_txt, assets, width):
         head = Table([[Paragraph(_e(title), X["head"]), Paragraph(date_txt, X["subr"])]], colWidths=[width * 0.65, width * 0.35])
         head.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "BOTTOM"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                                   ("TOPPADDING", (0, 0), (-1, -1), 6)]))
-        top = [_logo_row(logos, width, 30 * mm), Spacer(1, 2 * mm)] if len(logos) > 1 else []
+        if _layout(assets):
+            top = _letterhead([], assets, width, True) + [Spacer(1, 2 * mm)] if _logos(assets) else []
+        else:
+            top = [_logo_row(logos, width, 30 * mm), Spacer(1, 2 * mm)] if len(logos) > 1 else []
         return top + [band, Spacer(1, 1 * mm), head]
     story = [Paragraph(_e(name), X["doctor"])]
     if sub:
