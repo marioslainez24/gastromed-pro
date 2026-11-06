@@ -167,20 +167,31 @@ def assets_upload():
 @require("ajustes.editar")
 def logos_layout():
     """Guarda dónde va cada logo (izquierda / centro / derecha) y el tamaño (v0.28.0)."""
-    from .pdf import LOGO_POSITIONS, LOGO_SIZES
+    from .pdf import LOGO_OFFSET_MAX, LOGO_POSITIONS, LOGO_SIZES
     db = get_db()
     if request.form.get("action") == "automatico":
         value = None
     else:
-        lay = {k: request.form.get(f"pos-{k}") for k in ("logo", "logo2", "logo3")}
-        size = request.form.get("size")
-        if any(v not in LOGO_POSITIONS for v in lay.values()) or size not in LOGO_SIZES:
-            abort(400)
-        value = json.dumps(dict(lay, size=size))
+        lay = {}
+        for k in ("logo", "logo2", "logo3"):
+            pos, size = request.form.get(f"pos-{k}"), request.form.get(f"size-{k}") or request.form.get("size") or "grande"
+            if pos not in LOGO_POSITIONS or size not in LOGO_SIZES:
+                abort(400)
+            lay[k], lay[f"{k}_size"] = pos, size
+            for ax in ("dx", "dy"):
+                try:
+                    v = round(float((request.form.get(f"{ax}-{k}") or "0").replace(",", ".")), 1)
+                except ValueError:
+                    abort(400)
+                lay[f"{k}_{ax}"] = max(-LOGO_OFFSET_MAX, min(LOGO_OFFSET_MAX, v))
+        value = json.dumps(lay)
     with write_tx(db):
         db.execute("UPDATE clinic_settings SET logo_layout = ?, updated_at = ?, updated_by = ?, version = version + 1 WHERE org_id = ?",
                    (value, utcnow(), g.user["id"], g.user["org_id"]))
         audit("logos_posicion", "ajustes", g.user["org_id"], {"posicion": value}, db=db)
+    if request.form.get("action") == "ver":
+        st = db.execute("SELECT report_style FROM clinic_settings WHERE org_id = ?", (g.user["org_id"],)).fetchone()[0]
+        return redirect(url_for("settings.report_style_sample", estilo=st))
     flash("Colocación de los logos guardada." if value else "Logos en colocación automática.", "ok")
     return redirect(url_for("settings.clinic") + "#imagenes")
 

@@ -581,3 +581,9 @@ ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15r
 .tpl-select { width: auto; max-width: 15rem; min-height: 0; padding: .3rem .5rem; font-size: .88rem; }
 .tpl-item { border-bottom: 1px solid var(--line); padding: .5rem 0; }
 .tpl-item > summary { cursor: pointer; }
+.logo-rows { display: grid; gap: .8rem; margin: .6rem 0; }
+.logo-row { display: grid; grid-template-columns: 70px minmax(140px, 1fr) minmax(120px, 1fr) minmax(220px, 1.4fr); gap: .7rem; align-items: end; }
+.logo-thumb { width: 70px; height: 50px; object-fit: contain; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.nudge { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; }
+.nudge .btn { min-width: 36px; justify-content: center; }
+@media (max-width: 700px) { .logo-row { grid-template-columns: 1fr 1fr; } .logo-row .logo-thumb, .logo-row > div.field { grid-column: 1 / -1; } }

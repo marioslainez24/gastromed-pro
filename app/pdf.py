@@ -55,13 +55,39 @@ def _logo_row(logos, width, max_h):
 
 
 LOGO_POSITIONS = {"izquierda": "Izquierda", "centro": "Centro", "derecha": "Derecha"}
-LOGO_SIZES = {"pequeno": ("Pequeño", 18), "mediano": ("Mediano", 26), "grande": ("Grande", 34)}   # alto máximo en el informe (mm)
+LOGO_SIZES = {"pequeno": ("Pequeño", 18), "mediano": ("Mediano", 26), "grande": ("Grande", 34),
+              "muy_grande": ("Muy grande", 44)}   # alto máximo en el informe (mm)
 
 
 def _layout(assets):
     """Colocación elegida en Ajustes (v0.28.0) o None si el médico no eligió (se usa la colocación automática)."""
     lay = (assets or {}).get("_layout")
     return lay if isinstance(lay, dict) and lay else None
+
+
+class _Shifted:
+    """Imagen movida unos milímetros (arriba/abajo, izquierda/derecha) sin cambiar el espacio que ocupa (v0.28.0)."""
+    def __new__(cls, img, dx_mm=0, dy_mm=0):
+        from reportlab.platypus.flowables import Flowable
+
+        class Shifted(Flowable):
+            def __init__(self):
+                super().__init__()
+                self.img, self.dx, self.dy = img, dx_mm * mm, dy_mm * mm
+                self.hAlign = getattr(img, "hAlign", "LEFT")
+
+            def wrap(self, aw, ah):
+                self.width, self.height = self.img.wrap(aw, ah)
+                return self.width, self.height
+
+            def draw(self):
+                # dy positivo = bajar; en PDF el eje Y crece hacia arriba
+                self.img.drawOn(self.canv, self.dx, -self.dy)
+
+        return Shifted()
+
+
+LOGO_OFFSET_MAX = 20     # mm que se puede mover cada logo en cada dirección
 
 
 def _letterhead(text, assets, width, big):
@@ -71,16 +97,29 @@ def _letterhead(text, assets, width, big):
     - Con logo al centro: fila [izq. | centro | der.] y debajo el nombre y los datos."""
     lay = _layout(assets)
     slots = {"izquierda": [], "centro": [], "derecha": []}
+    scale = 1 if big else 0.65
+
+    def num(v):
+        try:
+            return max(-LOGO_OFFSET_MAX, min(LOGO_OFFSET_MAX, float(v or 0)))
+        except (TypeError, ValueError):
+            return 0.0
+
     for k in ("logo", "logo2", "logo3"):
         if assets and assets.get(k):
-            slots[lay.get(k) if lay.get(k) in slots else "izquierda"].append(assets[k])
-    h = LOGO_SIZES.get(lay.get("size"), LOGO_SIZES["grande"])[1] * (1 if big else 0.65) * mm
+            size = LOGO_SIZES.get(lay.get(f"{k}_size") or lay.get("size"), LOGO_SIZES["grande"])[1]
+            slots[lay.get(k) if lay.get(k) in slots else "izquierda"].append(
+                (assets[k], size * scale * mm, num(lay.get(f"{k}_dx")) * scale, num(lay.get(f"{k}_dy")) * scale))
 
     def cell(imgs, w, align):
         if not imgs:
             return ""
         each = (w - 2 * mm * (len(imgs) - 1)) / len(imgs)
-        flow = [_img_flowable(d, each, h) for d in imgs]
+        flow = []
+        for d, h, dx, dy in imgs:
+            im = _img_flowable(d, each, h)
+            im.hAlign = align
+            flow.append(_Shifted(im, dx, dy) if (dx or dy) else im)
         if len(flow) == 1:
             flow[0].hAlign = align
             return flow[0]

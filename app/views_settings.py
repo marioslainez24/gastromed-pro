@@ -70,7 +70,11 @@ def clinic():
     assets = load_assets(g.user["org_id"])
     lay = assets.get("_layout") or {}
     layout = {"logo": lay.get("logo", "izquierda"), "logo2": lay.get("logo2", "derecha"), "logo3": lay.get("logo3", "centro"),
-              "size": lay.get("size", "grande"), "custom": bool(lay)}
+              "custom": bool(lay)}
+    for k in ("logo", "logo2", "logo3"):
+        layout[f"{k}_size"] = lay.get(f"{k}_size") or lay.get("size") or "grande"
+        layout[f"{k}_dx"] = lay.get(f"{k}_dx", 0) or 0
+        layout[f"{k}_dy"] = lay.get(f"{k}_dy", 0) or 0
     style = db.execute("SELECT report_style FROM clinic_settings WHERE org_id = ?", (g.user["org_id"],)).fetchone()[0]
     return render_template("ajustes/clinica.html", data=data, errors=errors, tzs=tzs, assets=assets, layout=layout,
                            LOGO_POSITIONS=LOGO_POSITIONS, LOGO_SIZES=LOGO_SIZES, report_style=style), 422 if errors else 200

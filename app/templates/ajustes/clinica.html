@@ -63,14 +63,29 @@
     <p class="muted small">{% if layout.custom %}Usando su colocación.{% else %}Ahora en colocación automática (un logo a la izquierda; dos o tres en
       fila arriba). Elija aquí para ponerlos donde usted quiera.{% endif %} Con un logo al <b>centro</b>, su nombre va debajo de los logos;
       sin logo al centro, su nombre queda en medio.</p>
-    <div class="grid4">
+    <div class="logo-rows">
       {% for k, t in [('logo', 'Logo 1'), ('logo2', 'Logo 2'), ('logo3', 'Logo 3')] %}{% if assets.get(k) %}
-      <label class="field">{{ t }}<select name="pos-{{ k }}">{% for pk, pv in LOGO_POSITIONS.items() %}<option value="{{ pk }}" {% if layout[k] == pk %}selected{% endif %}>{{ pv }}</option>{% endfor %}</select></label>
-      {% else %}<input type="hidden" name="pos-{{ k }}" value="{{ layout[k] }}">{% endif %}{% endfor %}
-      <label class="field">Tamaño<select name="size">{% for sk, sv in LOGO_SIZES.items() %}<option value="{{ sk }}" {% if layout.size == sk %}selected{% endif %}>{{ sv[0] }}</option>{% endfor %}</select></label>
+      <div class="logo-row" data-logo-row>
+        <img class="logo-thumb" src="{{ url_for('extras.assets_view', kind=k) }}" alt="{{ t }}">
+        <label class="field">{{ t }} · lugar<select name="pos-{{ k }}">{% for pk, pv in LOGO_POSITIONS.items() %}<option value="{{ pk }}" {% if layout[k] == pk %}selected{% endif %}>{{ pv }}</option>{% endfor %}</select></label>
+        <label class="field">Tamaño<select name="size-{{ k }}">{% for sk, sv in LOGO_SIZES.items() %}<option value="{{ sk }}" {% if layout[k ~ '_size'] == sk %}selected{% endif %}>{{ sv[0] }}</option>{% endfor %}</select></label>
+        <div class="field"><span>Mover (mm)</span>
+          <div class="nudge">
+            <button type="button" class="btn btn-sm" data-nudge="dy-{{ k }}" data-step="-2" title="Subir" aria-label="Subir {{ t }}">▲</button>
+            <button type="button" class="btn btn-sm" data-nudge="dy-{{ k }}" data-step="2" title="Bajar" aria-label="Bajar {{ t }}">▼</button>
+            <button type="button" class="btn btn-sm" data-nudge="dx-{{ k }}" data-step="-2" title="A la izquierda" aria-label="Mover {{ t }} a la izquierda">◀</button>
+            <button type="button" class="btn btn-sm" data-nudge="dx-{{ k }}" data-step="2" title="A la derecha" aria-label="Mover {{ t }} a la derecha">▶</button>
+            <span class="small muted" data-nudge-label="{{ k }}"></span>
+          </div>
+          <input type="hidden" name="dy-{{ k }}" id="dy-{{ k }}" value="{{ '%g' % layout[k ~ '_dy'] }}">
+          <input type="hidden" name="dx-{{ k }}" id="dx-{{ k }}" value="{{ '%g' % layout[k ~ '_dx'] }}">
+        </div>
+      </div>
+      {% else %}<input type="hidden" name="pos-{{ k }}" value="{{ layout[k] }}"><input type="hidden" name="size-{{ k }}" value="{{ layout[k ~ '_size'] }}">{% endif %}{% endfor %}
     </div>
+    <p class="muted small">Cada clic en ▲ ▼ ◀ ▶ mueve el logo 2 mm (máximo 20 mm hacia cada lado). Pulse «Guardar y ver» para revisar.</p>
     <div class="btn-row"><button class="btn btn-primary btn-sm" type="submit">Guardar colocación</button>
-      <a class="btn btn-sm" href="{{ url_for('settings.report_style_sample', estilo=report_style) }}" target="_blank" rel="noopener">👁 Ver cómo queda el informe</a>
+      <button class="btn btn-sm" type="submit" name="action" value="ver" formtarget="_blank">👁 Guardar y ver el informe</button>
       {% if layout.custom %}<button class="btn btn-quiet btn-sm" type="submit" name="action" value="automatico" formnovalidate>Volver a la colocación automática</button>{% endif %}</div>
   </form>
   {% endif %}

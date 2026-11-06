@@ -39,10 +39,17 @@ def test_colocacion_izquierda_centro_derecha(env):
     proc = new_proc(med, pid, tok, "eda")
     med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc)))
     r = med.post("/ajustes/logos-posicion", data={"csrf_token": tok, "pos-logo": "derecha", "pos-logo2": "izquierda",
-                                                  "pos-logo3": "centro", "size": "mediano"})
+                                                  "pos-logo3": "centro", "size": "mediano", "size-logo3": "muy_grande",
+                                                  "dy-logo": "-4", "dx-logo2": "6", "dy-logo3": "99"})
     assert r.status_code == 302
     lay = json.loads(env["db"].execute("SELECT logo_layout FROM clinic_settings").fetchone()[0])
-    assert lay == {"logo": "derecha", "logo2": "izquierda", "logo3": "centro", "size": "mediano"}
+    assert (lay["logo"], lay["logo2"], lay["logo3"]) == ("derecha", "izquierda", "centro")
+    assert lay["logo_size"] == "mediano" and lay["logo3_size"] == "muy_grande"
+    assert lay["logo_dy"] == -4 and lay["logo2_dx"] == 6 and lay["logo3_dy"] == 20          # tope de 20 mm
+    # «Guardar y ver» lleva al informe de ejemplo
+    r = med.post("/ajustes/logos-posicion", data={"csrf_token": tok, "pos-logo": "derecha", "pos-logo2": "izquierda",
+                                                  "pos-logo3": "centro", "action": "ver"})
+    assert r.status_code == 302 and "/ajustes/estilo-informe/ejemplo" in r.headers["Location"]
     for style in ("clasico", "formal", "moderno"):
         med.post("/ajustes/estilo-informe", data={"csrf_token": tok, "report_style": style})
         data = med.get(f"/procedimientos/{proc}/pdf").data
@@ -76,3 +83,23 @@ def test_orden_izquierda_derecha_en_el_pdf():
     assert left.drawHeight > 0 and right.drawHeight > 0
     # el logo 2 (verde, 301 px de alto) está en la celda izquierda
     assert abs(left.imageHeight - 301) < 2 or abs(left.drawWidth / left.drawHeight - 300 / 301) < 0.01
+
+
+def test_mover_un_logo_cambia_su_posicion_en_el_pdf():
+    from reportlab.lib.units import mm
+    from reportlab.lib.pagesizes import LETTER
+    from reportlab.platypus import Paragraph, SimpleDocTemplate
+    from app import pdf
+
+    def build(dy, dx):
+        assets = {"logo": _png("red", (300, 300)),
+                  "_layout": {"logo": "izquierda", "logo2": "derecha", "logo3": "centro", "logo_size": "grande", "logo_dy": dy, "logo_dx": dx}}
+        buf = io.BytesIO()
+        SimpleDocTemplate(buf, pagesize=LETTER).build(pdf._with_logo([Paragraph("Dr. Prueba", pdf.ST["doctor"])], assets, 180 * mm, True))
+        page = PdfReader(io.BytesIO(buf.getvalue())).pages[0]
+        pos = []
+        page.extract_text(visitor_operand_before=lambda op, args, cm, tm: pos.append((cm[4], cm[5])) if op == b"Do" else None)
+        return pos[0]
+    x0, y0 = build(0, 0)
+    x1, y1 = build(10, 6)
+    assert abs((y0 - y1) - 10 * mm) < 0.5 and abs((x1 - x0) - 6 * mm) < 0.5     # bajó 10 mm y se movió 6 mm a la derecha

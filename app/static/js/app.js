@@ -913,4 +913,26 @@
       });
     });
   })();
+  // ---- Mover logos (v0.28): ▲ ▼ ◀ ▶ de 2 mm, con indicación de cuánto se movió ----
+  (function () {
+    var btns = $$("[data-nudge]");
+    if (!btns.length) return;
+    function label(k) {
+      var el = $("[data-nudge-label='" + k + "']");
+      if (!el) return;
+      var dy = parseFloat($("#dy-" + k).value || "0"), dx = parseFloat($("#dx-" + k).value || "0"), parts = [];
+      if (dy) parts.push(Math.abs(dy) + " mm " + (dy < 0 ? "arriba" : "abajo"));
+      if (dx) parts.push(Math.abs(dx) + " mm a la " + (dx < 0 ? "izquierda" : "derecha"));
+      el.textContent = parts.length ? parts.join(" · ") : "sin mover";
+    }
+    btns.forEach(function (b) {
+      var k = b.getAttribute("data-nudge").replace(/^d[xy]-/, "");
+      label(k);
+      b.addEventListener("click", function () {
+        var inp = document.getElementById(b.getAttribute("data-nudge"));
+        var v = Math.max(-20, Math.min(20, (parseFloat(inp.value || "0") || 0) + parseFloat(b.getAttribute("data-step"))));
+        inp.value = String(v); label(k);
+      });
+    });
+  })();
 })();

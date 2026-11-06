@@ -30,7 +30,11 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - PDF `_letterhead`: sin logo al centro → [logos izq.] [nombre y datos] [logos der.] (nombre centrado si hay logos a ambos lados);
   con logo al centro → fila izq./centro/der. y el nombre debajo, centrado. Varios logos en el mismo lado se ponen uno al lado del otro.
   En los 3 estilos (en Moderno los logos van arriba de la franja) y en recetas, órdenes, documentos y hojas.
-- Pruebas `tests/test_v028.py` (247).
+- **Ajuste fino** (pedido el mismo día: «moverlo para arriba o abajo, ajustarlos a mi preferencia»): por cada logo, tamaño propio
+  (Pequeño, Mediano, Grande, Muy grande 44 mm) y botones ▲ ▼ ◀ ▶ que lo mueven de 2 en 2 mm (máximo 20 mm hacia cada lado), con
+  texto «4 mm arriba · 2 mm a la derecha». El movimiento no cambia el espacio que ocupa (`_Shifted`): si se mueve mucho puede tapar
+  texto, por eso el botón «Guardar y ver el informe» abre el ejemplo en otra pestaña. JSON: `logo`, `logo_size`, `logo_dx`, `logo_dy`…
+- Pruebas `tests/test_v028.py` (248).
 
 ## Etapa 27 · 5-nov-2026 · Hasta 3 logos, grandes en el informe (v0.27.0 · publicada el mismo día: «hazlo ya»)
 
