@@ -42,7 +42,10 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
   y aparte «Servicio: …».
 - **Indicación sin explicación** (pedido): en el informe y en la vista sale solo «Diagnóstica. …» / «Tamizaje.» / «Vigilancia.» /
   «Terapéutica.» (`D.INDICATION_SHORT`); el menú del formulario conserva la explicación entre paréntesis para elegir.
-- Pruebas `tests/test_v028.py` (250).
+- **«Técnica» → «Alcance de la exploración»** y «Extensión» → **«Se logró avanzar hasta: segunda porción del duodeno»** (pedido).
+  Opciones de EDA con porciones: tercera porción del duodeno, segunda porción, bulbo, antro gástrico, estómago, tercio distal / medio /
+  proximal del esófago (la clave antigua `esofago` = tercio proximal). `D.EXPLORATION_TITLE`, `D.EXTENT_LABEL`.
+- Pruebas `tests/test_v028.py` (251).
 
 ## Etapa 27 · 5-nov-2026 · Hasta 3 logos, grandes en el informe (v0.27.0 · publicada el mismo día: «hazlo ya»)
 

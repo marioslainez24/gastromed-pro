@@ -36,7 +36,11 @@ SEGMENTS = {
 }
 
 EXTENT = {
-    "eda": [("segunda_porcion", "Segunda porción duodenal"), ("bulbo", "Bulbo duodenal"), ("estomago", "Estómago"), ("esofago", "Esófago")],
+    # v0.28 (pedido del Dr. Lainez): hasta qué porción se llegó; en el informe sale «Se logró avanzar hasta: …»
+    "eda": [("tercera_porcion", "Tercera porción del duodeno"), ("segunda_porcion", "Segunda porción del duodeno"),
+            ("bulbo", "Bulbo duodenal"), ("antro", "Antro gástrico"), ("estomago", "Estómago"),
+            ("esofago_distal", "Tercio distal del esófago"), ("esofago_medio", "Tercio medio del esófago"),
+            ("esofago", "Tercio proximal del esófago")],
     "colonoscopia": [("ileon", "Íleon terminal"), ("ciego", "Ciego (orificio apendicular y válvula ileocecal identificados)"),
                      ("ascendente", "Colon ascendente"), ("transverso", "Colon transverso"), ("descendente", "Colon descendente"),
                      ("sigmoides", "Sigmoides"), ("recto", "Recto")],
@@ -66,6 +70,9 @@ def care_text(d):
         parts.append(f"cama {d['bed']}")
     return " · ".join(parts)
 
+
+EXPLORATION_TITLE = "Alcance de la exploración"      # antes «Técnica» (v0.28)
+EXTENT_LABEL = "Se logró avanzar hasta"             # antes «Extensión»
 
 INDICATION_CATEGORIES = {"diagnostica": "Diagnóstica (síntomas o hallazgos)", "tamizaje": "Tamizaje (persona asintomática)",
                          "vigilancia": "Vigilancia (antecedente de pólipos, cáncer, EII, Barrett…)", "terapeutica": "Terapéutica"}

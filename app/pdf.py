@@ -582,14 +582,14 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     story.append(Paragraph("<br/>".join(l.replace("\n", "<br/>") for l in lines), X["body"]))
     story.append(Spacer(1, 2 * mm))
     ext = dict(D.EXTENT[pr["kind"]]).get(pr["extent"] or "", "")
-    tech = [f"Extensión: {ext}" if ext else None,
+    tech = [f"{D.EXTENT_LABEL}: {ext[0].lower() + ext[1:] if ext[:1].isupper() and not ext.startswith(('Íleon',)) else ext}" if ext else None,
             ("Estudio completo" if pr["complete"] == 1 else ("Estudio incompleto" + (f": {d['incomplete_reason']}" if d.get("incomplete_reason") else "")))
             if pr["complete"] is not None else None,
             f"Tiempo de retirada: {pr['withdrawal_minutes']:g} min" if pr["withdrawal_minutes"] is not None else None]
     if pr["bbps_right"] is not None:
         tot = (pr["bbps_right"] or 0) + (pr["bbps_transverse"] or 0) + (pr["bbps_left"] or 0)
         tech.append(f"Preparación (escala de Boston): derecho {pr['bbps_right']}, transverso {pr['bbps_transverse']}, izquierdo {pr['bbps_left']} · total {tot}/9")
-    sec("Técnica", "\n".join(x for x in tech if x))
+    sec(D.EXPLORATION_TITLE, "\n".join(x for x in tech if x))
     nar = d.get("narrative") or {}
     if any(nar.values()) or d.get("zline"):
         story.append(H("Descripción de hallazgos"))

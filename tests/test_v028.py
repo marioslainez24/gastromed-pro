@@ -136,3 +136,17 @@ def test_indicacion_solo_la_palabra_en_el_informe(env):
                                                                indication="SANGRADO DIGESTIVO ALTO"))
     txt = " ".join("".join(pg.extract_text() for pg in PdfReader(io.BytesIO(med.get(f"/procedimientos/{proc}/pdf").data)).pages).split())
     assert "Diagnóstica. SANGRADO DIGESTIVO ALTO" in txt and "síntomas o hallazgos" not in txt
+
+
+def test_alcance_de_la_exploracion_con_la_porcion(env):
+    from conftest import create_patient, csrf, login
+    from tests.test_fase3 import full_form, new_proc, version
+    med = login(env["app"], "propietario")
+    tok = csrf(med)
+    proc = new_proc(med, create_patient(med), tok, "eda")
+    html = med.get(f"/procedimientos/{proc}").get_data(as_text=True)
+    assert "Se logró avanzar hasta" in html and "Tercera porción del duodeno" in html and "Tercio distal del esófago" in html
+    med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), extent="segunda_porcion"))
+    txt = " ".join("".join(pg.extract_text() for pg in PdfReader(io.BytesIO(med.get(f"/procedimientos/{proc}/pdf").data)).pages).split())
+    assert "Alcance de la exploración" in txt and "Se logró avanzar hasta: segunda porción del duodeno" in txt
+    assert "Técnica" not in txt and "Extensión:" not in txt

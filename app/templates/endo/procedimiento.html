@@ -135,7 +135,7 @@
     <p class="muted small">Endoscopistas y asistentes se agregan en {% if can('ajustes.editar') %}<a href="{{ url_for('settings.endo_staff_page') }}">Ajustes → Personal de endoscopia</a>{% else %}Ajustes → Personal de endoscopia{% endif %}.</p>
     <div class="grid4">
       <label class="field">Endoscopio (equipo)<select name="scope_id"><option value="">—</option>{% for s in scopes %}<option value="{{ s.id }}" {% if pr.scope_id == s.id %}selected{% endif %}>{{ s.name }}{% if s.serial %} · {{ s.serial }}{% endif %}</option>{% endfor %}</select></label>
-      <label class="field">Extensión alcanzada{{ sel('extent', D.EXTENT[pr.kind], pr.extent) }}</label>
+      <label class="field">{{ D.EXTENT_LABEL }}{{ sel('extent', D.EXTENT[pr.kind], pr.extent) }}</label>
       <label class="field">¿Estudio completo?{{ sel('complete', [('1','Sí'),('0','No')], pr.complete) }}</label>
     </div>
     <label class="field">Motivo si fue incompleto<input name="incomplete_reason" maxlength="300" value="{{ d.incomplete_reason or '' }}"></label>
@@ -330,8 +330,8 @@
       {% if d.asa %} · ASA {{ d.asa }}{% endif %} · Sedación: {{ D.SEDATION.get(d.sedation_type, 'no registrada') }}{% if d.sedation_agents %} · {{ d.sedation_agents }}{% endif %}
       {% if d.sedation_by %} · por {{ d.sedation_by }}{% endif %}{% if scope %} · Equipo: {{ scope.name }}{% endif %}</p>
     <p class="small">Endoscopista{{ ' 1' if d.endoscopist_2 }}: {{ d.endoscopist or endoscopist or pr.author }}{% if d.endoscopist_2 %} · Endoscopista 2: {{ d.endoscopist_2 }}{% endif %}{% if d.assistants %} · Asistentes: {{ d.assistants }}{% endif %}</p>
-    <h2>Técnica</h2>
-    <p class="small">Extensión: {{ dict(D.EXTENT[pr.kind]).get(pr.extent, '—') }}{% if pr.complete is not none %} · {{ 'Completo' if pr.complete else 'Incompleto' }}{% endif %}
+    <h2>{{ D.EXPLORATION_TITLE }}</h2>
+    <p class="small">{{ D.EXTENT_LABEL }}: {{ dict(D.EXTENT[pr.kind]).get(pr.extent, '—')|lower }}{% if pr.complete is not none %} · {{ 'Completo' if pr.complete else 'Incompleto' }}{% endif %}
       {% if pr.withdrawal_minutes is not none %} · Retirada {{ '%g' % pr.withdrawal_minutes }} min{% endif %}
       {% if pr.bbps_right is not none %} · Boston {{ pr.bbps_right }}/{{ pr.bbps_transverse }}/{{ pr.bbps_left }} = {{ pr.bbps_right + pr.bbps_transverse + pr.bbps_left }}{% endif %}</p>
     {% if d.narrative and d.narrative.values()|select|list or d.zline %}<h2>Descripción de hallazgos</h2>
