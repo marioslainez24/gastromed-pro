@@ -587,3 +587,15 @@ ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15r
 .nudge { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; }
 .nudge .btn { min-width: 36px; justify-content: center; }
 @media (max-width: 700px) { .logo-row { grid-template-columns: 1fr 1fr; } .logo-row .logo-thumb, .logo-row > div.field { grid-column: 1 / -1; } }
+/* ---- v0.29: espacio en disco ---- */
+.space-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .7rem; margin: .4rem 0 .8rem; }
+.space-tiles .tile { display: grid; gap: .15rem; padding: .7rem .8rem; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+.space-tiles .tile b { font-size: 1.35rem; }
+.space-bar { display: block; width: 100%; height: 16px; border-radius: 8px; border: 1px solid var(--line); }
+.sb-free { fill: var(--surface-2); } rect.sb-data { fill: var(--accent); } rect.sb-back { fill: #e0a43a; } rect.sb-other { fill: #9aa7ad; }
+.dot.sb-data { background: var(--accent); } .dot.sb-back { background: #e0a43a; } .dot.sb-other { background: #9aa7ad; }
+.dot { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; vertical-align: -1px; }
+.keep-choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; }
+.keep-choice { display: grid; gap: .2rem; cursor: pointer; }
+.keep-choice input[type=radio] { width: 1.1rem; height: 1.1rem; min-height: 0; margin: 0; accent-color: var(--accent); }
+.keep-choice.is-current { border-color: var(--accent); }

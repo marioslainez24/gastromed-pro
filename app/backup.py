@@ -230,6 +230,22 @@ def drive_candidates() -> list[str]:
     return out
 
 
+BACKUP_KEEP_CHOICES = (7, 15, 30, 60)
+
+
+def backup_keep(db_path: str, default: int) -> int:
+    """Copias que se guardan en la PC: lo elegido en Ajustes → Espacio en disco (v0.29.0) o el valor de la configuración."""
+    import sqlite3
+    con = sqlite3.connect(db_path, timeout=10)
+    try:
+        r = con.execute("SELECT backup_keep FROM clinic_settings WHERE backup_keep IS NOT NULL LIMIT 1").fetchone()
+        return int(r[0]) if r and r[0] in BACKUP_KEEP_CHOICES else default
+    except sqlite3.Error:
+        return default
+    finally:
+        con.close()
+
+
 def offsite_settings(db_path: str):
     import sqlite3
     con = sqlite3.connect(db_path, timeout=10)
@@ -297,20 +313,21 @@ def run_automatic(cfg, backup_key: bytes, data_key: bytes, app_version: str) -> 
             return False, msgs
         note(f"OK: {path.name} creado y verificado ({path.stat().st_size / 1024:.0f} KB, "
              f"{report['conteos']['patients']} pacientes, {report.get('adjuntos_verificados', 0)} adjuntos)")
+        keep = backup_keep(cfg.DATABASE_PATH, cfg.BACKUP_KEEP)
         if cfg.BACKUP_COPY_DIR:
             dest = Path(cfg.BACKUP_COPY_DIR)
             if dest.exists():
                 shutil.copy2(path, dest / path.name)
-                prune(dest, cfg.BACKUP_KEEP)
+                prune(dest, keep)
                 note(f"OK: copiado a {dest}")
             else:
                 note(f"ALERTA: no se encontró la carpeta de copia externa {dest} (¿está conectado el disco?)")
         ok_off, msg_off = offsite_copy(cfg.DATABASE_PATH, path)
         if msg_off:
             note(msg_off)
-        removed = prune(Path(cfg.BACKUP_DIR), cfg.BACKUP_KEEP)
+        removed = prune(Path(cfg.BACKUP_DIR), keep)
         if removed:
-            note(f"Se eliminaron {removed} respaldos antiguos (se conservan los últimos {cfg.BACKUP_KEEP}).")
+            note(f"Se eliminaron {removed} respaldos antiguos (se conservan los últimos {keep}).")
         return True, msgs
     except Exception as e:  # noqa: BLE001
         note(f"ERROR: {e}")

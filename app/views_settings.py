@@ -252,6 +252,70 @@ def backups():
                            sub=OFFSITE_SUBDIR)
 
 
+# ------------------------------------------------------------------------------------------------ espacio en disco (v0.29.0)
+def disk_usage_report(db, org_id, cfg):
+    """Cuánto ocupa el programa: base de datos, estudios/fotos (cifrados), respaldos y espacio libre; y por paciente."""
+    import shutil
+    from pathlib import Path
+    from .backup import backup_keep
+    dbp = Path(cfg.DATABASE_PATH)
+    db_bytes = sum(p.stat().st_size for p in (dbp, Path(str(dbp) + "-wal")) if p.exists())
+    fdir = Path(cfg.FILES_DIR)
+    per = {}
+    files_bytes = 0
+    for r in db.execute("SELECT f.patient_id, f.storage_name, f.archived_at FROM files f WHERE f.org_id = ?", (org_id,)):
+        try:
+            n = (fdir / r["storage_name"]).stat().st_size
+        except OSError:
+            continue
+        files_bytes += n
+        e = per.setdefault(r["patient_id"], {"bytes": 0, "files": 0})
+        e["bytes"] += n
+        e["files"] += 1
+    bdir = Path(cfg.BACKUP_DIR)
+    backs = sorted(bdir.glob("gastromed-*.gmbak")) if bdir.exists() else []
+    back_bytes = sum(p.stat().st_size for p in backs)
+    try:
+        du = shutil.disk_usage(str(dbp.parent if dbp.parent.exists() else Path.home()))
+        free, total = du.free, du.total
+    except OSError:
+        free = total = None
+    keep = backup_keep(cfg.DATABASE_PATH, cfg.BACKUP_KEEP)
+    last = backs[-1].stat().st_size if backs else db_bytes + files_bytes
+    pats = {r["id"]: r for r in db.execute("SELECT id, first_names, last_names, mrn FROM patients WHERE org_id = ?", (org_id,))}
+    n_pat = len(pats)
+    top = sorted(per.items(), key=lambda x: -x[1]["bytes"])[:30]
+    return {"db": db_bytes, "files": files_bytes, "data": db_bytes + files_bytes, "backups": back_bytes, "n_backups": len(backs),
+            "free": free, "total": total, "keep": keep, "backup_dir": str(bdir), "estimate_keep": last * keep,
+            "n_patients": n_pat, "avg": (db_bytes + files_bytes) / n_pat if n_pat else 0,
+            "top": [{"p": pats[pid], **v} for pid, v in top if pid in pats]}
+
+
+@bp.route("/espacio", methods=["GET", "POST"])
+@require("ajustes.editar")
+def disk_space():
+    from flask import current_app
+    from .backup import BACKUP_KEEP_CHOICES
+    db = get_db()
+    org = g.user["org_id"]
+    if request.method == "POST":
+        try:
+            keep = int(request.form.get("keep") or 0)
+        except ValueError:
+            abort(400)
+        if keep not in BACKUP_KEEP_CHOICES:
+            abort(400)
+        with write_tx(db):
+            db.execute("UPDATE clinic_settings SET backup_keep = ?, updated_at = ?, updated_by = ?, version = version + 1 WHERE org_id = ?",
+                       (keep, utcnow(), g.user["id"], org))
+            audit("respaldos_copias_cambiadas", "ajustes", org, {"copias": keep}, db=db)
+        flash(f"Se guardarán las últimas {keep} copias de respaldo. Las más viejas se borran en el próximo respaldo automático.", "ok")
+        return redirect(url_for("settings.disk_space"))
+    rep = disk_usage_report(db, org, current_app.config["GM"])
+    audit("espacio_en_disco_consultado", "ajustes", org)
+    return render_template("ajustes/espacio.html", r=rep, choices=BACKUP_KEEP_CHOICES)
+
+
 # ------------------------------------------------------------------------------------------------ personal de endoscopia (v0.20.0)
 STAFF_ROLES = {"medico": "Médicos endoscopistas", "asistente": "Asistentes"}
 

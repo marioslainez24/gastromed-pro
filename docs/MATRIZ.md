@@ -177,3 +177,5 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | Hasta 3 logos, grandes en el informe (los 3 estilos) y en los demás documentos | ✅ probado (pruebas + PDF); publicado en v0.27.0 |
 | Elegir dónde va cada logo (izquierda, centro, derecha), su tamaño y moverlo arriba/abajo/lados | ✅ probado (pruebas + navegador + PDF); publicado en v0.28.0 |
 | Informe de endoscopia sin alergias; menú «Servicio» además de «Atención» | ✅ probado (pruebas + navegador); publicado en v0.28.0 |
+| Pantalla «Espacio en disco»: cuánto ocupa cada expediente, el total, los respaldos y el espacio libre | ✅ probado (pruebas + navegador); en v0.29.0, sin publicar |
+| Elegir cuántas copias de respaldo se guardan (7, 15, 30 o 60) | ✅ probado (pruebas); en v0.29.0, sin publicar |

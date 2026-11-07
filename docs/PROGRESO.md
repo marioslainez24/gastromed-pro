@@ -20,6 +20,15 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
+## Etapa 29 · 7-nov-2026 · Espacio en disco y copias de respaldo (v0.29.0 · en `desarrollo`, espera su «ya»)
+
+- Nueva pestaña **Ajustes → Espacio en disco**: cuánto ocupan los datos de pacientes (texto), las fotos y estudios (cifrados), los
+  respaldos y cuánto queda libre en el disco, con una barra de colores; número de pacientes y promedio por expediente.
+- Tabla con los 30 expedientes que más ocupan (fotos/estudios y espacio).
+- **Elegir cuántas copias de respaldo se guardan:** 7, 15, 30 (recomendado) o 60, con el espacio aproximado que ocuparían. Las más viejas
+  se borran solas. Migración 0023 (`clinic_settings.backup_keep`); el respaldo automático la respeta. Se audita el cambio y la consulta.
+- Pruebas: 253 pasan (2 nuevas en `tests/test_v029.py`); prueba del ejecutable correcta; captura en el navegador sin errores.
+
 ## Etapa 28 · 5-nov-2026 · Elegir dónde va cada logo y su tamaño (v0.28.0 · PUBLICADA 5-nov-2026 como v0.28.0-34)
 
 **Pedido del Dr. Lainez:** «una opción para colocar los logos».

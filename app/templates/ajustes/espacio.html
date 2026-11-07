@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Espacio en disco{% endblock %}
+{% macro sz(b) -%}
+{%- if b is none %}—{% elif b >= 1073741824 %}{{ '%.1f' % (b / 1073741824) }} GB{% elif b >= 1048576 %}{{ '%.1f' % (b / 1048576) }} MB{% else %}{{ '%.0f' % (b / 1024) }} KB{% endif -%}
+{%- endmacro %}
+{% block content %}
+<div class="page-head"><h1>Ajustes</h1></div>
+{% include "ajustes/_tabs.html" %}
+
+<section class="card">
+  <h2>Cuánto ocupa el programa en esta PC</h2>
+  <div class="space-tiles">
+    <div class="tile"><span class="small muted">Datos de pacientes (texto)</span><b>{{ sz(r.db) }}</b><span class="small muted">consultas, recetas, informes…</span></div>
+    <div class="tile"><span class="small muted">Fotos y estudios</span><b>{{ sz(r.files) }}</b><span class="small muted">guardados cifrados</span></div>
+    <div class="tile"><span class="small muted">Respaldos</span><b>{{ sz(r.backups) }}</b><span class="small muted">{{ r.n_backups }} copia(s)</span></div>
+    <div class="tile"><span class="small muted">Espacio libre en el disco</span><b>{{ sz(r.free) }}</b><span class="small muted">de {{ sz(r.total) }}</span></div>
+  </div>
+  {% if r.total %}{% set used = r.total - r.free %}
+  {% set w_other = [((used - r.data - r.backups) / r.total * 100), 0]|max %}{% set w_data = r.data / r.total * 100 %}{% set w_back = r.backups / r.total * 100 %}
+  <svg class="space-bar" viewBox="0 0 100 4" preserveAspectRatio="none" role="img" aria-label="Uso del disco">
+    <rect class="sb-free" x="0" y="0" width="100" height="4"/>
+    <rect class="sb-other" x="0" y="0" width="{{ '%.3f' % w_other }}" height="4"/>
+    <rect class="sb-data" x="{{ '%.3f' % w_other }}" y="0" width="{{ '%.3f' % [w_data, 0.4]|max }}" height="4"/>
+    <rect class="sb-back" x="{{ '%.3f' % (w_other + [w_data, 0.4]|max) }}" y="0" width="{{ '%.3f' % [w_back, 0.4 if r.backups else 0]|max }}" height="4"/>
+  </svg>
+  <p class="small muted"><span class="dot sb-data"></span> Datos de GastroMed · <span class="dot sb-back"></span> Respaldos ·
+    <span class="dot sb-other"></span> Otros programas de la PC · el resto, libre.</p>{% endif %}
+  <p class="small">Pacientes: <b>{{ r.n_patients }}</b> · Promedio por expediente: <b>{{ sz(r.avg) }}</b></p>
+</section>
+
+<section class="card">
+  <h2>Copias de respaldo que se guardan</h2>
+  <p class="muted small">Cada día se hace una copia completa (datos y fotos) en <span class="mono">{{ r.backup_dir }}</span>. Se guardan las
+    últimas copias y las más viejas se borran solas. Menos copias = menos espacio; más copias = puede volver a fechas más antiguas.</p>
+  <form method="post" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="keep-choices">
+      {% for k in choices %}
+      <label class="card keep-choice {% if k == r.keep %}is-current{% endif %}"><input type="radio" name="keep" value="{{ k }}" {% if k == r.keep %}checked{% endif %}>
+        <b>{{ k }} copias</b><span class="small muted">≈ {{ k }} días atrás</span>
+        <span class="small">ocuparían ≈ <b>{{ sz(r.estimate_keep / r.keep * k) }}</b></span></label>
+      {% endfor %}
+    </div>
+    <div><button class="btn btn-primary" type="submit">Guardar</button></div>
+  </form>
+  <p class="muted small">Recomendado: 30. Si el disco se está llenando, 15 o 7. Además de estas copias, conviene la copia en Google Drive
+    (pestaña Respaldos) para no perder nada si la PC se daña.</p>
+</section>
+
+<section class="card">
+  <h2>Expedientes que más ocupan</h2>
+  {% if r.top %}<div class="table-wrap"><table class="table">
+    <thead><tr><th>Paciente</th><th>Expediente</th><th class="num">Fotos / estudios</th><th class="num">Espacio</th></tr></thead>
+    <tbody>{% for x in r.top %}<tr><td><a href="{{ url_for('patients.view', patient_id=x.p.id) }}">{{ x.p.first_names }} {{ x.p.last_names }}</a></td>
+      <td class="mono small">{{ x.p.mrn }}</td><td class="num">{{ x.files }}</td><td class="num">{{ sz(x.bytes) }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="muted small">Se muestran los 30 que más ocupan. El texto de cada expediente (consultas, recetas, informes) ocupa muy poco; lo
+    que pesa son las fotos y los estudios subidos.</p>
+  {% else %}<p class="muted small">Todavía no hay fotos ni estudios guardados.</p>{% endif %}
+</section>
+{% endblock %}
