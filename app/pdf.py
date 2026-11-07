@@ -411,8 +411,39 @@ def _report_styles(style):
     return ST
 
 
+def _logos_only(assets, width):
+    """v0.30 (pedido del Dr. Lainez, 7-nov-2026): con logos, el encabezado del informe lleva SOLO los logos (sin el nombre)."""
+    logos = _logos(assets)
+    if _layout(assets):
+        return _letterhead([], assets, width, True)
+    if len(logos) > 1:
+        return [_logo_row(logos, width, 34 * mm)]
+    logo = _img_flowable(logos[0], 70 * mm, 34 * mm)
+    logo.hAlign = "CENTER"
+    return [logo]
+
+
 def _report_header(style, X, name, sub, title, date_txt, assets, width):
-    """Encabezado del informe según el estilo elegido en Ajustes."""
+    """Encabezado del informe según el estilo elegido en Ajustes. Si hay logos, solo los logos (sin nombre ni datos)."""
+    if _logos(assets):
+        top = _logos_only(assets, width) + [Spacer(1, 2 * mm)]
+        if style == "formal":
+            t = Table([[Paragraph(_e(title), X["head"])]], colWidths=[width])
+            t.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.5, colors.black), ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.black),
+                                   ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
+            return top + [t, Spacer(1, 1 * mm), Paragraph(date_txt, X["subr"])]
+        if style == "moderno":
+            band = Table([[Paragraph(_e(title), ParagraphStyle("m-doc14", parent=X["doctor"], fontSize=14, leading=17)),
+                           Paragraph(date_txt.replace("<br/>", " · "), X["sub"])]],
+                         colWidths=[width * 0.68, width * 0.32])
+            band.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), ACCENT), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                                      ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                                      ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 8)]))
+            return top + [band]
+        head = Table([[Paragraph(_e(title), X["title"]), Paragraph(date_txt, X["subr"])]], colWidths=[width * 0.6, width * 0.4])
+        head.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 1.2, ACCENT), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                                  ("TOPPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+        return top + [head]
     if style == "formal":
         out = []
         logos = _logos(assets)
@@ -535,13 +566,21 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
                          f"<b>Procedencia:</b> {_e(p['origin'])}" if p["origin"] else None,
                          f"<b>Médico que refiere:</b> {_e(p['referring_physician'])}" if p["referring_physician"] else None,
                          f"<b>Aseguradora:</b> {_e(p['payer'])}" if p["payer"] else None] if x]
+    first_extra = len(cells)
     while extra:
         cells.append((extra.pop(0), extra.pop(0) if extra else ""))
     rows = [[Paragraph(a, X["body"]), Paragraph(b, X["body"])] for a, b in cells]
+    # v0.30: debajo de «Atención», el endoscopista (solo el 1), en negrita (pedido del Dr. Lainez, 7-nov-2026)
+    endo1 = d.get("endoscopist") or signer
+    spans = []
+    if endo1:
+        at = first_extra + 1 if care else first_extra
+        rows.insert(at, [Paragraph(f"<b>Endoscopista: {_e(endo1)}</b>", X["body"]), ""])
+        spans.append(("SPAN", (0, at), (1, at)))
     if alg:
         rows.append([Paragraph(f"<b>Alergias:</b> {_e(alg)}", X["body"]), ""])
     pt = Table(rows, colWidths=[width * 0.55, width * 0.45])
-    pt.setStyle(TableStyle(_patient_box_style(style) + ([("SPAN", (0, len(rows) - 1), (1, len(rows) - 1))] if alg else [])))
+    pt.setStyle(TableStyle(_patient_box_style(style) + spans + ([("SPAN", (0, len(rows) - 1), (1, len(rows) - 1))] if alg else [])))
     story += [Spacer(1, 2 * mm), pt, Spacer(1, 3 * mm)]
 
     def H(t):

@@ -20,6 +20,15 @@ se sustituye por una opción gratuita. Portal del paciente, reserva en línea, t
 - De la comparativa con 11 programas quedan: intervalo de vigilancia sugerido, aviso/visto bueno de patología, hoja de alta para el
   paciente con fotos, registro de enfermería, tiempos del flujo, consentimiento firmado en pantalla, cuestionario en tableta, tipos de consulta.
 
+## Etapa 30 · 7-nov-2026 · Informe: solo logos arriba y endoscopista bajo «Atención» (v0.30.0 · en `desarrollo`, espera su «ya»)
+
+- Pedido del Dr. Lainez: el nombre del médico arriba «está de más». Si hay logos cargados, el encabezado del informe de endoscopia lleva
+  SOLO los logos (en la posición elegida en Ajustes) y debajo el título y la fecha; sin nombre, especialidad, dirección ni teléfono.
+  Sin logos se mantiene el nombre (para que el informe no quede sin identificar). Los 3 estilos.
+- En el recuadro del paciente, debajo de «Atención», la línea **Endoscopista: …** en negrita, solo el endoscopista 1 (el 2 sigue en su
+  sección y en las firmas).
+- Pruebas: 254 pasan (`tests/test_v030.py`); prueba del ejecutable correcta; PDF revisado en los 3 estilos.
+
 ## Etapa 29 · 7-nov-2026 · Espacio en disco y copias de respaldo (v0.29.0 · en `desarrollo`, espera su «ya»)
 
 - Nueva pestaña **Ajustes → Espacio en disco**: cuánto ocupan los datos de pacientes (texto), las fotos y estudios (cifrados), los

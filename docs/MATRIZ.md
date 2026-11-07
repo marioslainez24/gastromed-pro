@@ -179,3 +179,4 @@ Actualizada: 1 de noviembre de 2026 · versión 0.21.0 (publicada) · ver tambi�
 | Informe de endoscopia sin alergias; menú «Servicio» además de «Atención» | ✅ probado (pruebas + navegador); publicado en v0.28.0 |
 | Pantalla «Espacio en disco»: cuánto ocupa cada expediente, el total, los respaldos y el espacio libre | ✅ probado (pruebas + navegador); en v0.29.0, sin publicar |
 | Elegir cuántas copias de respaldo se guardan (7, 15, 30 o 60) | ✅ probado (pruebas); en v0.29.0, sin publicar |
+| Informe de endoscopia: con logos, solo los logos arriba (sin nombre del médico); «Endoscopista» (solo el 1) debajo de «Atención» | ✅ probado (pruebas + PDF en 3 estilos); en v0.30.0, sin publicar |
