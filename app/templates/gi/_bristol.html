@@ -1,4 +1,4 @@
-{# Escala de Bristol: representación gráfica propia (formas simples dibujadas para GastroMed Pro). #}
+{# Escala de Bristol: representación gráfica propia (formas simples dibujadas para NeuroMed Pro). #}
 {% macro bristol_icon(n) -%}
 <svg class="bristol-icon" viewBox="0 0 80 28" aria-hidden="true">
 {%- if n == 1 -%}<circle cx="12" cy="14" r="6"/><circle cx="28" cy="13" r="5"/><circle cx="43" cy="15" r="6"/><circle cx="58" cy="13" r="5"/><circle cx="71" cy="15" r="4"/>
@@ -21,5 +21,5 @@
   {% endfor %}
   <label class="bristol-opt"><input type="radio" name="{{ name }}" value="" {% if not value %}checked{% endif %}><span class="muted">No registrado</span></label>
 </fieldset>
-<p class="muted tiny">Escala de heces de Bristol (Lewis y Heaton, 1997). Ilustraciones y descripciones propias de GastroMed Pro.</p>
+<p class="muted tiny">Escala de heces de Bristol (Lewis y Heaton, 1997). Ilustraciones y descripciones propias de NeuroMed Pro.</p>
 {%- endmacro %}

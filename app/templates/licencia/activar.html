@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Activar GastroMed Pro{% endblock %}
+{% block title %}Activar NeuroMed Pro{% endblock %}
 {% block main_class %}login-wrap{% endblock %}
 {% block content %}
 <section class="login-card setup-card">
   <div class="login-brand">
     <svg class="brand-mark lg" viewBox="0 0 32 32" aria-hidden="true"><use href="{{ url_for('static', filename='icons/sprite.svg') }}#logo"/></svg>
-    <h1>Activar GastroMed <b>Pro</b></h1>
+    <h1>Activar NeuroMed <b>Pro</b></h1>
     <p class="muted">Este programa solo funciona en computadoras autorizadas por su titular.</p>
   </div>
   {% if not local %}
-  <p>La activación solo puede hacerse <b>en la PC donde está instalado GastroMed Pro</b>.</p>
+  <p>La activación solo puede hacerse <b>en la PC donde está instalado NeuroMed Pro</b>.</p>
   {% else %}
   {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
   <div class="stack">

@@ -51,7 +51,7 @@ def send_email(settings, password: str, to: str, subject: str, body: str, timeou
     msg["Subject"] = subject
     msg["From"] = formataddr((settings["doctor_display_name"] or "Consultorio", settings["smtp_user"]))
     msg["To"] = to
-    msg["Message-ID"] = make_msgid(domain="gastromed.local")
+    msg["Message-ID"] = make_msgid(domain="neuromed.local")
     msg.set_content(body)
     for name, data in attachments:
         msg.add_attachment(data, maintype="application", subtype="pdf", filename=name)

@@ -11,7 +11,7 @@ from . import license as L
 from .views_setup import _is_local
 
 bp = Blueprint("license", __name__)
-COOKIE = "gm_activar_csrf"
+COOKIE = "nm_activar_csrf"
 
 
 @bp.route("/activar", methods=["GET", "POST"])

@@ -6,7 +6,7 @@ Clasificaciones verificadas el 30-oct-2026 contra:
 - SpringerPlus 2015, tabla 1 (Los Ángeles, redacción completa).
 - Lai EJ et al. Gastrointest Endosc 2009;69:620-5 (escala de Boston) y Calderwood AH et al. Gastrointest Endosc 2014 (definición de
   preparación adecuada: ≥2 en cada segmento).
-Las descripciones están redactadas en español para GastroMed Pro.
+Las descripciones están redactadas en español para NeuroMed Pro.
 
 Agregadas el 31-oct-2026 (v0.13.0), verificadas contra:
 - NICE: Hewett DG et al. Gastroenterology 2012;143:599-607 (PMID 22609383); tabla reproducida en Utsumi T et al. Clin Endosc 2015;48:491-7.
@@ -154,7 +154,7 @@ STENT_KINDS = ["Prótesis biliar plástica", "Prótesis biliar metálica", "Pró
 
 # ------------------------------------------------------------------------------------------------ descripción por segmento (v0.8.0)
 # Pedido del Dr. Lainez (30-oct-2026): describir con texto libre lo que se ve en cada segmento y un botón «Normal»
-# que escriba la descripción normal para ahorrar tiempo. Los textos normales son plantillas redactadas para GastroMed Pro;
+# que escriba la descripción normal para ahorrar tiempo. Los textos normales son plantillas redactadas para NeuroMed Pro;
 # el médico puede cambiarlos en Endoscopia → Textos de estudio normal y siempre revisa el texto antes de finalizar.
 NARRATIVE = {
     "eda": [("esofago", "Esófago"), ("ueg", "Unión esofagogástrica"), ("estomago", "Estómago"), ("duodeno", "Duodeno")],

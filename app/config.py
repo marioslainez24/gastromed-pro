@@ -1,4 +1,4 @@
-"""Configuración de GastroMed Pro.
+"""Configuración de NeuroMed Pro.
 
 Todos los secretos vienen de variables de entorno (o de un archivo .env que NUNCA se sube al
 repositorio). No hay secretos en el código ni en el frontend.

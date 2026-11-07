@@ -243,7 +243,7 @@ def letter_from_note(db, n, p, s):
     f = json.loads(n["fields"])
     seen = date.fromisoformat((n["finalized_at"] or n["created_at"])[:10])
     parts = [f"Estimado(a) Dr(a). {p['referring_physician'] or '______________________'}:",
-             f"Agradezco la referencia de {_who(p, seen)}, quien fue evaluado(a) en consulta de gastroenterología el {fmt_birth(seen.isoformat())}."]
+             f"Agradezco la referencia de {_who(p, seen)}, quien fue evaluado(a) en consulta de neurología el {fmt_birth(seen.isoformat())}."]
     def add(label, key_text):
         t = (key_text or "").strip()
         if t:

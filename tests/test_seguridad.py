@@ -93,17 +93,17 @@ def test_cabeceras_de_seguridad_y_cookies(env):
     assert "script-src 'self'" in csp and "unsafe-inline" not in csp and "frame-ancestors 'none'" in csp
     assert r.headers["X-Frame-Options"] == "DENY" and r.headers["Cache-Control"] == "no-store"
     med = login(env["app"], "propietario")
-    cookie = med.get_cookie("gm_sesion")
+    cookie = med.get_cookie("nm_sesion")
     assert cookie is not None and cookie.http_only and cookie.same_site == "Lax"
 
 
 def test_sesion_revocada_al_salir(env):
     med = login(env["app"], "propietario")
     tok = csrf(med)
-    cookie = med.get_cookie("gm_sesion").value
+    cookie = med.get_cookie("nm_sesion").value
     med.post("/salir", data={"csrf_token": tok})
     other = env["app"].test_client()
-    other.set_cookie("gm_sesion", cookie)  # reutilizar la cookie robada no sirve
+    other.set_cookie("nm_sesion", cookie)  # reutilizar la cookie robada no sirve
     assert other.get("/agenda/").status_code == 302
 
 

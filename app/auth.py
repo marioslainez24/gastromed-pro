@@ -11,8 +11,8 @@ from .security import (SESSION_COOKIE, audit, client_ip, create_session, dummy_v
                        revoke_current_session, verify_password, _parse)
 
 bp = Blueprint("auth", __name__)
-LOGIN_CSRF_COOKIE = "gm_login_csrf"
-MFA_COOKIE = "gm_mfa"
+LOGIN_CSRF_COOKIE = "nm_login_csrf"
+MFA_COOKIE = "nm_mfa"
 
 
 def _h(tok: str) -> str:

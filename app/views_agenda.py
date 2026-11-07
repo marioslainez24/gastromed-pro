@@ -370,15 +370,15 @@ def _ics_fold(line):
 def build_ics(rows, with_names, clinic_name, address):
     from datetime import timezone as _tz
     stamp = datetime.now(_tz.utc).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//GastroMed Pro//Agenda//ES", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
-             f"X-WR-CALNAME:{_ics_escape('Agenda ' + (clinic_name or 'GastroMed'))}"]
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//NeuroMed Pro//Agenda//ES", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+             f"X-WR-CALNAME:{_ics_escape('Agenda ' + (clinic_name or 'NeuroMed'))}"]
     for a in rows:
         title = "Cita · " + LABELS["appt_type"].get(a["appt_type"], a["appt_type"])
         if with_names:
             title += f" — {a['first_names']} {a['last_names']}"
         st = parse_utc(a["starts_at"]).strftime("%Y%m%dT%H%M%SZ")
         en = parse_utc(a["ends_at"]).strftime("%Y%m%dT%H%M%SZ")
-        lines += ["BEGIN:VEVENT", f"UID:{a['id']}@gastromed", f"DTSTAMP:{stamp}", f"DTSTART:{st}", f"DTEND:{en}",
+        lines += ["BEGIN:VEVENT", f"UID:{a['id']}@neuromed", f"DTSTAMP:{stamp}", f"DTSTART:{st}", f"DTEND:{en}",
                   f"SUMMARY:{_ics_escape(title)}", "STATUS:" + ("CONFIRMED" if a["status"] in ("confirmada", "presente", "en_consulta", "atendida") else "TENTATIVE")]
         if address:
             lines.append(f"LOCATION:{_ics_escape(address)}")

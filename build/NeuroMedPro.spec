@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
-# Construcción de GastroMed Pro para Mac (un solo archivo que se abre en la Terminal, sin instalar Python). Se ejecuta en macOS:
-#   pyinstaller build/GastroMedPro-mac.spec
+# Construcción de NeuroMedPro.exe (un solo archivo, sin instalar Python). Se ejecuta en Windows:
+#   pyinstaller build/NeuroMedPro.spec
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 datas = [("../app/templates", "app/templates"), ("../app/static", "app/static"), ("../migrations", "migrations")]
@@ -13,4 +13,5 @@ hiddenimports += collect_submodules("app") + collect_submodules("waitress") + co
 a = Analysis(["../gastromed_exe.py"], pathex=[".."], binaries=binaries, datas=datas, hiddenimports=hiddenimports,
              excludes=["tkinter", "pytest"], noarchive=False)
 pyz = PYZ(a.pure)
-exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], name="GastroMedPro", console=True, upx=False)
+exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], name="NeuroMedPro", icon="icon.ico",
+          console=True, upx=False, version="version_info.txt")

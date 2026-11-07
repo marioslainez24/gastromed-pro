@@ -1,4 +1,4 @@
-// GastroMed Pro — captura de imágenes desde capturadora de video (UVC) o señal de prueba.
+// NeuroMed Pro — captura de imágenes desde capturadora de video (UVC) o señal de prueba.
 // Reglas: confirmar paciente antes de encender la cámara; detener la cámara al salir; nada se guarda en el navegador.
 (function () {
   "use strict";

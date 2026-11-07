@@ -74,6 +74,6 @@ def totp_verify(secret: str, code: str, last_counter: int = 0, at: float | None 
     return None
 
 
-def totp_uri(secret: str, account: str, issuer="GastroMed Pro") -> str:
+def totp_uri(secret: str, account: str, issuer="NeuroMed Pro") -> str:
     from urllib.parse import quote
     return f"otpauth://totp/{quote(issuer)}:{quote(account)}?secret={secret}&issuer={quote(issuer)}&algorithm=SHA1&digits=6&period=30"

@@ -23,7 +23,7 @@
     <rect class="sb-data" x="{{ '%.3f' % w_other }}" y="0" width="{{ '%.3f' % [w_data, 0.4]|max }}" height="4"/>
     <rect class="sb-back" x="{{ '%.3f' % (w_other + [w_data, 0.4]|max) }}" y="0" width="{{ '%.3f' % [w_back, 0.4 if r.backups else 0]|max }}" height="4"/>
   </svg>
-  <p class="small muted"><span class="dot sb-data"></span> Datos de GastroMed · <span class="dot sb-back"></span> Respaldos ·
+  <p class="small muted"><span class="dot sb-data"></span> Datos de NeuroMed · <span class="dot sb-back"></span> Respaldos ·
     <span class="dot sb-other"></span> Otros programas de la PC · el resto, libre.</p>{% endif %}
   <p class="small">Pacientes: <b>{{ r.n_patients }}</b> · Promedio por expediente: <b>{{ sz(r.avg) }}</b></p>
 </section>

@@ -49,7 +49,7 @@ def reminders_settings():
                 return redirect(url_for("extras.reminders_settings"))
             try:
                 pw = current_app.config["GM_FERNET"].decrypt(s["smtp_password_enc"].encode()).decode() if s["smtp_password_enc"] else ""
-                R.send_email(s, pw, to, "Prueba de GastroMed Pro", "Este es un correo de prueba de los recordatorios de citas.")
+                R.send_email(s, pw, to, "Prueba de NeuroMed Pro", "Este es un correo de prueba de los recordatorios de citas.")
                 flash(f"Correo de prueba enviado a {to}. Revise la bandeja de entrada (y la carpeta de spam).", "ok")
                 audit("recordatorio_prueba_ok", "ajustes", g.user["org_id"])
             except Exception as e:  # noqa: BLE001

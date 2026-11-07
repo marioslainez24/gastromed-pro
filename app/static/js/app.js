@@ -1,4 +1,4 @@
-// GastroMed Pro — comportamiento de la interfaz. Sin dependencias externas.
+// NeuroMed Pro — comportamiento de la interfaz. Sin dependencias externas.
 // Regla: no se guarda información clínica en el navegador (ni localStorage ni caché).
 (function () {
   "use strict";

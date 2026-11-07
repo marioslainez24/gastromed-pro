@@ -1,0 +1,73 @@
+name: Construir NeuroMedPro (Windows)
+
+# NeuroMed Pro vive en la rama «neuro» de este repositorio. Cada envío a esa rama prueba el programa, construye
+# NeuroMedPro.exe, lo prueba de punta a punta y lo publica en «Releases» sin reemplazar la descarga de GastroMedPro.exe
+# (la versión se publica con --latest=false, así /releases/latest sigue siendo GastroMed Pro).
+on:
+  push:
+    branches: [neuro]
+    paths-ignore: ['docs/**', '*.md']
+  workflow_dispatch:
+
+permissions:
+  contents: write   # para publicar en «Releases»
+
+concurrency:
+  group: neuro-exe
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar componentes
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt "pyinstaller>=6.10,<7"
+
+      - name: Pruebas automáticas en Windows
+        run: python -m pytest -q -p no:cacheprovider tests
+
+      - name: Construir el ejecutable
+        working-directory: build
+        run: pyinstaller --noconfirm --clean NeuroMedPro.spec
+
+      - name: Probar el ejecutable (flujo completo)
+        env:
+          GM_LICENCIA_CLAVE: ${{ secrets.GM_LICENCIA_CLAVE }}
+        run: python build/smoke_exe.py build/dist/NeuroMedPro.exe
+
+      - name: Guardar el ejecutable
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeuroMedPro-exe
+          path: build/dist/NeuroMedPro.exe
+          retention-days: 30
+
+  publicar:
+    needs: [windows]
+    if: ${{ needs.windows.result == 'success' && github.ref == 'refs/heads/neuro' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: descargas
+
+      - name: Publicar versión descargable (Releases)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(python3 -c "import re;print(re.search(r'APP_VERSION = \"([^\"]+)\"', open('app/__init__.py', encoding='utf-8').read()).group(1))")
+          TAG="neuromed-v${VER}-${GITHUB_RUN_NUMBER}"
+          NOTAS="NeuroMed Pro (neurología). Probado automáticamente: pruebas del programa y flujo completo (configuración inicial, paciente, nota, receta PDF, respaldo). Descargue NeuroMedPro.exe. Usa la carpeta C:\\NeuroMed y el puerto 8100, así puede convivir con GastroMed Pro en la misma PC."
+          gh release create "$TAG" descargas/NeuroMedPro-exe/NeuroMedPro.exe --target "$GITHUB_SHA" --latest=false \
+            --title "NeuroMed Pro ${VER} (compilación ${GITHUB_RUN_NUMBER})" --notes "$NOTAS"

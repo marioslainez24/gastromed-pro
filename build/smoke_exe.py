@@ -1,6 +1,6 @@
 """Prueba de humo del ejecutable ya construido (se corre en Windows real dentro de GitHub Actions).
 
-  python build/smoke_exe.py dist/GastroMedPro.exe
+  python build/smoke_exe.py dist/NeuroMedPro.exe
 
 Arranca el .exe con una carpeta de datos temporal y recorre el flujo principal:
 configuración inicial → ingreso → paciente → cita → nota → receta PDF → respaldo automático.
@@ -22,7 +22,7 @@ B = f"http://127.0.0.1:{PORT}"
 
 
 def main(exe):
-    root = Path(tempfile.mkdtemp()) / "GastroMed"
+    root = Path(tempfile.mkdtemp()) / "NeuroMed"
     env = dict(os.environ, GASTROMED_ROOT=str(root), GASTROMED_PORT=str(PORT), GASTROMED_HOST="127.0.0.1", GASTROMED_HTTPS_PORT="8766",
                USERPROFILE=str(root.parent))
     (root.parent / "Desktop").mkdir(parents=True, exist_ok=True)
@@ -181,7 +181,7 @@ def main(exe):
         drive.mkdir(parents=True, exist_ok=True)
         post("/ajustes/respaldos/drive", {"csrf_token": csrf, "action": "activar", "folder_other": str(drive), "keep": "7"})
         post("/ajustes/respaldos/drive", {"csrf_token": csrf, "action": "copiar"})
-        assert list((drive / "GastroMed-respaldos").glob("gastromed-*.gmbak")), "Copia en Google Drive"
+        assert list((drive / "NeuroMed-respaldos").glob("neuromed-*.gmbak")), "Copia en Google Drive"
         for path in ("/endoscopia/hojas", "/endoscopia/recomendaciones"):
             assert get(path).status == 200, path
         assert "Resumen" in get(f"/pacientes/{pid}").read().decode(), "Resumen del paciente"
@@ -193,18 +193,18 @@ def main(exe):
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
         r = urllib.request.urlopen("https://127.0.0.1:8766/ingresar", context=ctx, timeout=30)
-        assert r.status == 200 and "GastroMed" in r.read().decode(), "https no responde"
+        assert r.status == 200 and "NeuroMed" in r.read().decode(), "https no responde"
         assert (root / "datos" / "https-cert.pem").exists()
         print("Flujo principal, endoscopia, recordatorios y https correctos. Esperando respaldo automático…", flush=True)
         for _ in range(60):
             lg = root / "datos" / "respaldo.log"
-            if list((root / "respaldos").glob("gastromed-*.gmbak")) and lg.exists() and "OK:" in lg.read_text(encoding="utf-8", errors="replace"):
+            if list((root / "respaldos").glob("neuromed-*.gmbak")) and lg.exists() and "OK:" in lg.read_text(encoding="utf-8", errors="replace"):
                 break
             time.sleep(2)
-        backups = list((root / "respaldos").glob("gastromed-*.gmbak"))
+        backups = list((root / "respaldos").glob("neuromed-*.gmbak"))
         assert backups, "No se creó el respaldo automático"
         assert "OK:" in (root / "datos" / "respaldo.log").read_text(encoding="utf-8")
-        assert (root.parent / "Desktop" / "GastroMed - CLAVES (copiar a USB y borrar de aqui).txt").exists()
+        assert (root.parent / "Desktop" / "NeuroMed - CLAVES (copiar a USB y borrar de aqui).txt").exists()
         print("PRUEBA DEL EJECUTABLE: CORRECTA")
     finally:
         proc.terminate()

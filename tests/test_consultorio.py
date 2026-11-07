@@ -30,10 +30,10 @@ def test_instalacion_respaldo_y_diagnostico_de_punta_a_punta(tmp_path):
     args = ["--datos", str(tmp_path / "datos"), "--respaldos", str(tmp_path / "respaldos"), "--escritorio", str(tmp_path / "escritorio")]
     r = subprocess.run([sys.executable, "windows/configurar.py", *args], cwd=ROOT, env=env, capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
-    env_file = tmp_path / "datos" / "gastromed.env"
+    env_file = tmp_path / "datos" / "neuromed.env"
     first = env_file.read_text(encoding="utf-8")
     assert "GASTROMED_ENV=consultorio" in first and "GASTROMED_DATA_KEY=" in first
-    assert any(p.name.startswith("GastroMed - CLAVES") for p in (tmp_path / "escritorio").iterdir())
+    assert any(p.name.startswith("NeuroMed - CLAVES") for p in (tmp_path / "escritorio").iterdir())
     # Re-ejecutar (actualización) no cambia claves ni crea usuarios nuevos
     r = subprocess.run([sys.executable, "windows/configurar.py", *args], cwd=ROOT, env=env, capture_output=True, text=True)
     assert r.returncode == 0 and env_file.read_text(encoding="utf-8") == first
@@ -51,11 +51,11 @@ def test_retencion_de_respaldos(tmp_path):
     sys.path.insert(0, str(ROOT / "scripts"))
     from respaldo import prune
     for i in range(35):
-        (tmp_path / f"gastromed-202610{i:02d}-000000.gmbak").write_bytes(b"x")
+        (tmp_path / f"neuromed-202610{i:02d}-000000.gmbak").write_bytes(b"x")
     (tmp_path / "otro-archivo.txt").write_text("no tocar")
     assert prune(tmp_path, 30) == 5
     left = sorted(p.name for p in tmp_path.glob("*.gmbak"))
-    assert len(left) == 30 and left[0] == "gastromed-20261005-000000.gmbak"
+    assert len(left) == 30 and left[0] == "neuromed-20261005-000000.gmbak"
     assert (tmp_path / "otro-archivo.txt").exists()
 
 

@@ -21,7 +21,7 @@ def test_lanzador_usa_carpeta_del_usuario_fuera_de_windows(tmp_path, monkeypatch
     import gastromed_exe
     monkeypatch.delenv("GASTROMED_ROOT", raising=False)
     if sys.platform != "win32":
-        assert str(gastromed_exe.data_root()).endswith("GastroMed")
+        assert str(gastromed_exe.data_root()).endswith("NeuroMed")
 
 
 def test_datos_copiados_de_windows_se_adaptan_sin_tocar_claves(tmp_path):
@@ -38,7 +38,7 @@ def test_datos_copiados_de_windows_se_adaptan_sin_tocar_claves(tmp_path):
     assert G.adapt_paths(env, datos, resp) is True
     txt = env.read_text(encoding="utf-8")
     assert "GASTROMED_DATA_KEY=abc=" in txt and "C:\\" not in txt and "G:\\" not in txt
-    assert f"GASTROMED_DATABASE_PATH={datos / 'gastromed.sqlite3'}" in txt and "GASTROMED_BACKUP_COPY_DIR=\n" in txt
+    assert f"GASTROMED_DATABASE_PATH={datos / 'neuromed.sqlite3'}" in txt and "GASTROMED_BACKUP_COPY_DIR=\n" in txt
     assert G.adapt_paths(env, datos, resp) is False          # la segunda vez ya no hay nada que corregir
 
 
@@ -47,7 +47,7 @@ def test_datos_propios_no_se_tocan(tmp_path):
     datos = tmp_path / "datos"
     datos.mkdir()
     env = datos / "gastromed.env"
-    env.write_text(f"GASTROMED_DATABASE_PATH={datos / 'gastromed.sqlite3'}\n", encoding="utf-8")
+    env.write_text(f"GASTROMED_DATABASE_PATH={datos / 'neuromed.sqlite3'}\n", encoding="utf-8")
     assert G.adapt_paths(env, datos, tmp_path / "respaldos") is False
 
 

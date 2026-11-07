@@ -1,6 +1,6 @@
 """Diagnósticos endoscópicos frecuentes para la conclusión del informe (v0.11.0).
 
-Terminología habitual en gastroenterología, redactada en español para GastroMed Pro, con las clasificaciones ya verificadas
+Terminología habitual en gastroenterología, redactada en español para NeuroMed Pro, con las clasificaciones ya verificadas
 en endoscopy_defs.py (Los Ángeles, Forrest, Praga, várices) y, desde v0.19.0, las del consenso que el Dr. Lainez aportó
 (fuentes en endo_findings.SOURCES). Códigos nuevos usados: K21.9, K29.0, K29.4, K29.6, K29.7, K44.9, K51.9, K50.8, K57.3,
 K62.7 y K91.8 (mismos bloques del navegador de la OMS citado abajo).

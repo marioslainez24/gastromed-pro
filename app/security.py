@@ -11,7 +11,7 @@ from flask import abort, current_app, g, redirect, request, url_for
 
 from .db import get_db, utcnow, write_tx
 
-SESSION_COOKIE = "gm_sesion"
+SESSION_COOKIE = "nm_sesion"
 
 # ---------------------------------------------------------------------------
 # Permisos por acción. Los roles son configurables por organización (tabla role_permissions);

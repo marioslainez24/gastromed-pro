@@ -154,7 +154,7 @@ def excel():
         [n, a, b, round(100 * a / b, 1) if b else "", desc] for n, a, b, desc in st["quality"]]
     who = next((u["full_name"] for u in users if u["id"] == author), "Todos")
     info = [["Dato", "Valor"], ["Periodo", f"{start.isoformat()} a {end.isoformat()}"], ["Profesional", who],
-            ["Generado con", "GastroMed Pro"], ["Contenido", "Solo números agregados; no incluye datos de pacientes."]]
+            ["Generado con", "NeuroMed Pro"], ["Contenido", "Solo números agregados; no incluye datos de pacientes."]]
     data = workbook([("Por mes", by_month), ("Diagnósticos de consulta", [["Diagnóstico", "Veces"]] + st["dx_consult"]),
                      ("Diagnósticos endoscópicos", [["Diagnóstico", "Veces"]] + st["dx_endo"]),
                      ("Atención y lugar", [["Atención", "Lugar", "Estudios"]] + [list(x) for x in st["by_care"]]), ("Calidad colonoscopia", quality),

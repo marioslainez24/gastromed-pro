@@ -34,14 +34,14 @@ def test_apagada_por_defecto_activar_copiar_conservar_y_desactivar(env, tmp_path
     assert "ACTIVADA" in med.get("/ajustes/respaldos").get_data(as_text=True)
     # copiar ahora: copia el último respaldo local, cifrado
     med.post("/ajustes/respaldos/drive", data={"csrf_token": tok, "action": "copiar"})
-    copies = sorted((drive / OFFSITE_SUBDIR).glob("gastromed-*.gmbak"))
+    copies = sorted((drive / OFFSITE_SUBDIR).glob("neuromed-*.gmbak"))
     assert len(copies) == 1 and b"Drive" not in copies[0].read_bytes() and b"SQLite format" not in copies[0].read_bytes()
     # el respaldo diario copia y se conservan solo los últimos 3
     import time
     for _ in range(4):
         time.sleep(1.05)
         assert run_automatic(cfg, key, load_data_key(cfg), APP_VERSION)[0]
-    copies = sorted((drive / OFFSITE_SUBDIR).glob("gastromed-*.gmbak"))
+    copies = sorted((drive / OFFSITE_SUBDIR).glob("neuromed-*.gmbak"))
     assert len(copies) == 3 and not list((drive / OFFSITE_SUBDIR).glob("*.parcial"))
     last = env["db"].execute("SELECT offsite_last_msg FROM clinic_settings WHERE org_id = ?", (env["org"]["org_id"],)).fetchone()[0]
     assert last.startswith("OK: copia")

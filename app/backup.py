@@ -80,7 +80,7 @@ def create_backup(db_path: str, files_dir: str, out_dir: str, backup_key: bytes,
         add("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2).encode())
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    path = out / f"gastromed-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}.gmbak"
+    path = out / f"neuromed-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}.gmbak"
     path.write_bytes(Fernet(backup_key).encrypt(buf.getvalue()))
     return path
 
@@ -170,7 +170,7 @@ def export_all(db_path: str, files_dir: str, data_key: bytes, out_zip: str) -> P
             safe = "".join(c if c.isalnum() or c in "-_ " else "_" for c in r["title"])[:60]
             mrn = "".join(c if c.isalnum() or c in "-_" else "_" for c in r["mrn"])   # el expediente puede ser el DNI (v0.25)
             z.writestr(f"adjuntos/{mrn}/{(r['study_date'] or r['uploaded_at'][:10])}_{safe}_{r['id'][:8]}.{ext[r['mime']]}", data)
-        z.writestr("LEAME.txt", "Exportación completa de GastroMed Pro.\n"
+        z.writestr("LEAME.txt", "Exportación completa de NeuroMed Pro.\n"
                    "datos/: un CSV por tabla (UTF-8). Las notas clínicas están en clinical_notes.csv (columna fields, JSON).\n"
                    "adjuntos/: estudios descifrados, agrupados por número de expediente.\n"
                    "ADVERTENCIA: este archivo NO está cifrado y contiene información clínica. Guárdelo en un medio protegido.\n")
@@ -183,20 +183,20 @@ def export_all(db_path: str, files_dir: str, data_key: bytes, out_zip: str) -> P
 # ---------------------------------------------------------------------------
 def prune(folder: Path, keep: int) -> int:
     """Conserva solo los últimos `keep` respaldos (no toca otros archivos)."""
-    olds = sorted(folder.glob("gastromed-*.gmbak"))[:-keep] if keep > 0 else []
+    olds = sorted(folder.glob("neuromed-*.gmbak"))[:-keep] if keep > 0 else []
     for f in olds:
         f.unlink()
     return len(olds)
 
 
 def last_backup_age_hours(backup_dir: str) -> float | None:
-    files = sorted(Path(backup_dir).glob("gastromed-*.gmbak")) if Path(backup_dir).exists() else []
+    files = sorted(Path(backup_dir).glob("neuromed-*.gmbak")) if Path(backup_dir).exists() else []
     if not files:
         return None
     return (datetime.now().timestamp() - files[-1].stat().st_mtime) / 3600
 
 
-OFFSITE_SUBDIR = "GastroMed-respaldos"
+OFFSITE_SUBDIR = "NeuroMed-respaldos"
 
 
 def drive_candidates() -> list[str]:

@@ -14,7 +14,7 @@ from .db import get_db
 from .security import password_problems
 
 bp = Blueprint("setup", __name__)
-SETUP_COOKIE = "gm_setup_csrf"
+SETUP_COOKIE = "nm_setup_csrf"
 
 
 def needs_setup() -> bool:
@@ -58,7 +58,7 @@ def first_run():
             if db.execute("SELECT 1 FROM users LIMIT 1").fetchone():   # doble verificación ante doble clic
                 return redirect(url_for("auth.login"))
             org = create_organization(db, form["clinic"][:160], doctor_display_name=form["name"][:120],
-                                      specialty=form["specialty"][:160] or "Gastroenterología, Hepatología y Endoscopia")
+                                      specialty=form["specialty"][:160] or "Neurología")
             create_user(db, org, form["email"].lower()[:200], form["name"][:120], pw, "propietario", True)
             current_app.config["GM_SETUP_DONE"] = True
             flash("Cuenta creada. Ingrese con su correo y contraseña.", "ok")

@@ -131,7 +131,7 @@
 {% endif %}
 
 <section class="card" id="formularios">
-  <h2>Formularios de gastroenterología</h2>
+  <h2>Formularios de neurología</h2>
   {% for f in gi_forms %}
     <article class="gi-summary">
       <h3>{{ f.title }}{% if editable %} <a class="small" href="{{ url_for('gi.form_edit', note_id=n.id, form_code=f.code) }}">editar</a>{% endif %}</h3>

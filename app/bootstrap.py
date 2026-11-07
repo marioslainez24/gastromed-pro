@@ -8,7 +8,7 @@ DEFAULT_DURATIONS = {"primera_vez": 40, "seguimiento": 20, "procedimiento": 60, 
 
 
 def create_organization(db, name: str, doctor_display_name: str = "Dr. Mario Lainez",
-                        specialty: str = "Gastroenterología, Hepatología y Endoscopia") -> dict:
+                        specialty: str = "Neurología") -> dict:
     org_id, site_id = new_id(), new_id()
     roles = {}
     with write_tx(db):

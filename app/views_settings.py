@@ -235,7 +235,7 @@ def _backup_status():
     from flask import current_app
     from .backup import last_backup_age_hours
     cfg = current_app.config["GM"]
-    files = sorted(Path(cfg.BACKUP_DIR).glob("gastromed-*.gmbak")) if Path(cfg.BACKUP_DIR).exists() else []
+    files = sorted(Path(cfg.BACKUP_DIR).glob("neuromed-*.gmbak")) if Path(cfg.BACKUP_DIR).exists() else []
     log = Path(cfg.DATABASE_PATH).parent / "respaldo.log"
     lines = log.read_text(encoding="utf-8", errors="replace").splitlines()[-8:] if log.exists() else []
     return {"last": files[-1].name if files else None, "size_mb": round(files[-1].stat().st_size / 1048576, 1) if files else None,
@@ -273,7 +273,7 @@ def disk_usage_report(db, org_id, cfg):
         e["bytes"] += n
         e["files"] += 1
     bdir = Path(cfg.BACKUP_DIR)
-    backs = sorted(bdir.glob("gastromed-*.gmbak")) if bdir.exists() else []
+    backs = sorted(bdir.glob("neuromed-*.gmbak")) if bdir.exists() else []
     back_bytes = sum(p.stat().st_size for p in backs)
     try:
         du = shutil.disk_usage(str(dbp.parent if dbp.parent.exists() else Path.home()))
@@ -434,7 +434,7 @@ def backups_drive():
             audit("copia_drive_desactivada", "ajustes", g.user["org_id"], db=db)
         flash("Copia en Google Drive desactivada. Las copias que ya están en Drive no se borran.", "ok")
     elif action == "copiar":
-        files = sorted(Path(cfg.BACKUP_DIR).glob("gastromed-*.gmbak")) if Path(cfg.BACKUP_DIR).exists() else []
+        files = sorted(Path(cfg.BACKUP_DIR).glob("neuromed-*.gmbak")) if Path(cfg.BACKUP_DIR).exists() else []
         if not files:
             key = os.environ.get("GASTROMED_BACKUP_KEY", "").encode()
             if not key:

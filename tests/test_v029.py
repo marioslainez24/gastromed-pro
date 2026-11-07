@@ -43,8 +43,8 @@ def test_elegir_cuantas_copias_y_se_respeta(env, tmp_path):
     d = Path(cfg.BACKUP_DIR)
     d.mkdir(parents=True, exist_ok=True)
     for i in range(9):
-        (d / f"gastromed-2026010{i}-000000.gmbak").write_bytes(b"viejo")
+        (d / f"neuromed-2026010{i}-000000.gmbak").write_bytes(b"viejo")
     ok, msgs = run_automatic(cfg, key, load_data_key(cfg), APP_VERSION)
-    assert ok and len(list(d.glob("gastromed-*.gmbak"))) == 7
+    assert ok and len(list(d.glob("neuromed-*.gmbak"))) == 7
     assert any("se conservan los últimos 7" in m for m in msgs)
     assert env["db"].execute("SELECT COUNT(*) FROM audit_log WHERE action = 'respaldos_copias_cambiadas'").fetchone()[0] == 1

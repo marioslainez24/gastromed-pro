@@ -1,7 +1,7 @@
-/* GastroMed Pro — hoja de estilos propia. Sin dependencias externas. */
+/* NeuroMed Pro — hoja de estilos propia. Sin dependencias externas. */
 :root {
   --bg: #f4f6f5; --surface: #ffffff; --surface-2: #eef3f2; --ink: #17242d; --ink-2: #44535e; --muted: #64737d;
-  --line: #d8e0e0; --accent: #0f6e66; --accent-ink: #ffffff; --accent-soft: #dcefec; --focus: #1a73e8;
+  --line: #d8e0e0; --accent: #4f3fb3; --accent-ink: #ffffff; --accent-soft: #e6e2f8; --focus: #1a73e8;
   --ok: #1f7a3d; --ok-soft: #e1f3e6; --warn: #8a5a00; --warn-soft: #fdf1d6; --danger: #b3261e; --danger-soft: #fbe3e1;
   --info-soft: #e3eefb; --shadow: 0 1px 2px rgba(16, 36, 45, .06), 0 2px 8px rgba(16, 36, 45, .05);
   --radius: 10px; --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -11,14 +11,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f1619; --surface: #162126; --surface-2: #1c2a30; --ink: #e6eef0; --ink-2: #bccbd0; --muted: #93a5ac;
-    --line: #2a3a41; --accent: #3fb8aa; --accent-ink: #062320; --accent-soft: #173a37; --focus: #8ab4f8;
+    --line: #2a3a41; --accent: #ab9cf7; --accent-ink: #1a1240; --accent-soft: #2c2652; --focus: #8ab4f8;
     --ok: #7fd49a; --ok-soft: #173326; --warn: #f2c063; --warn-soft: #3a2e12; --danger: #ff8a80; --danger-soft: #3d1c1a;
     --info-soft: #1a2a3d; --shadow: none; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f1619; --surface: #162126; --surface-2: #1c2a30; --ink: #e6eef0; --ink-2: #bccbd0; --muted: #93a5ac;
-  --line: #2a3a41; --accent: #3fb8aa; --accent-ink: #062320; --accent-soft: #173a37; --focus: #8ab4f8;
+  --line: #2a3a41; --accent: #ab9cf7; --accent-ink: #1a1240; --accent-soft: #2c2652; --focus: #8ab4f8;
   --ok: #7fd49a; --ok-soft: #173326; --warn: #f2c063; --warn-soft: #3a2e12; --danger: #ff8a80; --danger-soft: #3d1c1a;
   --info-soft: #1a2a3d; --shadow: none; color-scheme: dark;
 }
@@ -333,13 +333,13 @@ table .bristol-icon { width: 48px; height: 17px; }
 
 /* v0.7: colores por tipo de cita, dictado, imágenes */
 .appt.type-primera_vez, .wk-appt.type-primera_vez { border-left: 4px solid #2563eb; }
-.appt.type-seguimiento, .wk-appt.type-seguimiento { border-left: 4px solid #0f6e66; }
+.appt.type-seguimiento, .wk-appt.type-seguimiento { border-left: 4px solid #4f3fb3; }
 .appt.type-procedimiento, .wk-appt.type-procedimiento { border-left: 4px solid #b45309; }
 .appt.type-teleconsulta, .wk-appt.type-teleconsulta { border-left: 4px solid #7c3aed; }
 .appt[class*="type-"] { padding-left: .5rem; }
 .type-legend { display: flex; flex-wrap: wrap; gap: .8rem; font-size: .8rem; }
 .type-legend span::before { content: ""; display: inline-block; width: .7rem; height: .7rem; border-radius: 2px; margin-right: .3rem; vertical-align: middle; }
-.type-legend .tl-primera_vez::before { background: #2563eb; } .type-legend .tl-seguimiento::before { background: #0f6e66; }
+.type-legend .tl-primera_vez::before { background: #2563eb; } .type-legend .tl-seguimiento::before { background: #4f3fb3; }
 .type-legend .tl-procedimiento::before { background: #b45309; } .type-legend .tl-teleconsulta::before { background: #7c3aed; }
 .mic-btn { justify-self: start; align-self: flex-start; width: auto; font-size: .9rem; padding: .2rem .9rem; margin-top: .3rem; min-height: 36px; min-width: 44px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); cursor: pointer; font-size: 1rem; }
 .mic-btn.is-on { background: #dc2626; border-color: #dc2626; color: #fff; animation: micpulse 1.2s infinite; }

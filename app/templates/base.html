@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#0f6e66">
-  <title>{% block title %}GastroMed Pro{% endblock %} · GastroMed Pro</title>
+  <meta name="theme-color" content="#4f3fb3">
+  <title>{% block title %}NeuroMed Pro{% endblock %} · NeuroMed Pro</title>
   <link rel="manifest" href="{{ url_for('auth.manifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icons/icon.svg') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
@@ -17,9 +17,9 @@
 <a class="skip" href="#contenido">Saltar al contenido</a>
 {% if current_user %}
 <header class="topbar">
-  <a class="brand" href="{{ url_for('agenda.day') }}" aria-label="GastroMed Pro, ir a la agenda">
+  <a class="brand" href="{{ url_for('agenda.day') }}" aria-label="NeuroMed Pro, ir a la agenda">
     <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="{{ url_for('static', filename='icons/sprite.svg') }}#logo"/></svg>
-    <span>GastroMed <b>Pro</b></span>
+    <span>NeuroMed <b>Pro</b></span>
   </a>
   {% if can('pacientes.ver_admin') %}
   <form class="global-search" role="search" action="{{ url_for('patients.search') }}" method="get" data-autocomplete="{{ url_for('patients.search', formato='json') }}">
@@ -59,6 +59,6 @@
   {% endwith %}
   {% block content %}{% endblock %}
 </main>
-<footer class="foot muted small">GastroMed Pro {{ app_version }}{% if license_holder %} · Licencia de uso: <b>{{ license_holder }}</b>{% endif %}{% if env in ('desarrollo', 'pruebas') %} · Sistema en desarrollo: use solo datos ficticios{% endif %}</footer>
+<footer class="foot muted small">NeuroMed Pro {{ app_version }}{% if license_holder %} · Licencia de uso: <b>{{ license_holder }}</b>{% endif %}{% if env in ('desarrollo', 'pruebas') %} · Sistema en desarrollo: use solo datos ficticios{% endif %}</footer>
 </body>
 </html>

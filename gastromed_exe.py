@@ -1,6 +1,6 @@
-"""Punto de entrada del programa GastroMedPro.exe (Windows) y GastroMedPro para Mac (v0.22.0).
+"""Punto de entrada del programa NeuroMedPro.exe (Windows) y NeuroMedPro para Mac (v0.22.0).
 
-En Mac los datos quedan en ~/GastroMed (carpeta del usuario), la ventana es la Terminal y, mientras el programa está abierto,
+En Mac los datos quedan en ~/NeuroMed (carpeta del usuario), la ventana es la Terminal y, mientras el programa está abierto,
 se le pide a la Mac que no se duerma (caffeinate) para que el celular pueda conectarse.
 
 Doble clic → prepara la carpeta de datos (la primera vez crea las claves de cifrado), inicia el servidor
@@ -18,15 +18,15 @@ import webbrowser
 from datetime import datetime
 from pathlib import Path
 
-PORT = int(os.environ.get("GASTROMED_PORT", "8000"))
-HTTPS_PORT = int(os.environ.get("GASTROMED_HTTPS_PORT", "8443"))
+PORT = int(os.environ.get("GASTROMED_PORT", "8100"))
+HTTPS_PORT = int(os.environ.get("GASTROMED_HTTPS_PORT", "8543"))
 
 
 def data_root() -> Path:
-    """C:\\GastroMed si se puede escribir; si no, la carpeta del usuario."""
+    """C:\\NeuroMed si se puede escribir; si no, la carpeta del usuario."""
     if os.environ.get("GASTROMED_ROOT"):
         return Path(os.environ["GASTROMED_ROOT"])
-    for cand in (Path("C:/GastroMed") if os.name == "nt" else None, Path.home() / "GastroMed"):
+    for cand in (Path("C:/NeuroMed") if os.name == "nt" else None, Path.home() / "NeuroMed"):
         if cand is None:
             continue
         try:
@@ -37,7 +37,7 @@ def data_root() -> Path:
             return cand
         except OSError:
             continue
-    raise SystemExit("No se pudo crear la carpeta de datos de GastroMed.")
+    raise SystemExit("No se pudo crear la carpeta de datos de NeuroMed.")
 
 
 def desktop() -> Path:
@@ -62,7 +62,7 @@ def adapt_paths(env_file: Path, datos: Path, respaldos: Path) -> bool:
     """Si la carpeta «datos» se copió desde otra computadora (p. ej. de Windows a la Mac), corrige las rutas guardadas.
 
     Las claves NO se tocan: solo se reescriben las líneas de rutas que apuntan a la otra computadora."""
-    fixes = {"GASTROMED_DATABASE_PATH": str(datos / "gastromed.sqlite3"), "GASTROMED_FILES_DIR": str(datos / "archivos"),
+    fixes = {"GASTROMED_DATABASE_PATH": str(datos / "neuromed.sqlite3"), "GASTROMED_FILES_DIR": str(datos / "archivos"),
              "GASTROMED_BACKUP_DIR": str(respaldos), "GASTROMED_BACKUP_COPY_DIR": ""}
     lines, changed = env_file.read_text(encoding="utf-8-sig").splitlines(), False
     for i, line in enumerate(lines):
@@ -77,26 +77,26 @@ def adapt_paths(env_file: Path, datos: Path, respaldos: Path) -> bool:
 
 
 def first_run_config(root: Path) -> Path:
-    """Crea gastromed.env con claves nuevas solo si no existe. Nunca reemplaza claves existentes."""
+    """Crea neuromed.env con claves nuevas solo si no existe. Nunca reemplaza claves existentes."""
     from cryptography.fernet import Fernet
     datos, respaldos = root / "datos", root / "respaldos"
     for d in (datos, datos / "archivos", respaldos):
         d.mkdir(parents=True, exist_ok=True)
-    env_file = datos / "gastromed.env"
+    env_file = datos / "neuromed.env"
     if env_file.exists():
         adapt_paths(env_file, datos, respaldos)
         return env_file
     lines = [
-        "# Configuración de GastroMed Pro en esta PC. NO COMPARTA ESTE ARCHIVO.",
+        "# Configuración de NeuroMed Pro en esta PC. NO COMPARTA ESTE ARCHIVO.",
         f"# Creado {datetime.now():%Y-%m-%d %H:%M}",
         "GASTROMED_ENV=consultorio",
         f"GASTROMED_SECRET_KEY={secrets.token_hex(32)}",
         f"GASTROMED_DATA_KEY={Fernet.generate_key().decode()}",
         f"GASTROMED_BACKUP_KEY={Fernet.generate_key().decode()}",
-        f"GASTROMED_DATABASE_PATH={datos / 'gastromed.sqlite3'}",
+        f"GASTROMED_DATABASE_PATH={datos / 'neuromed.sqlite3'}",
         f"GASTROMED_FILES_DIR={datos / 'archivos'}",
         f"GASTROMED_BACKUP_DIR={respaldos}",
-        "# Carpeta de un disco externo o USB para copiar cada respaldo, p. ej.: E:\\RespaldosGastroMed",
+        "# Carpeta de un disco externo o USB para copiar cada respaldo, p. ej.: E:\\RespaldosNeuroMed",
         "GASTROMED_BACKUP_COPY_DIR=",
         "GASTROMED_BACKUP_KEEP=30",
         "GASTROMED_COOKIE_SECURE=0",
@@ -105,8 +105,8 @@ def first_run_config(root: Path) -> Path:
     env_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
     keys = [l for l in lines if l.startswith(("GASTROMED_DATA_KEY", "GASTROMED_BACKUP_KEY"))]
     try:
-        (desktop() / "GastroMed - CLAVES (copiar a USB y borrar de aqui).txt").write_text(
-            "CLAVES DE GASTROMED PRO — CONSERVE UNA COPIA FUERA DE ESTA PC\n\n"
+        (desktop() / "NeuroMed - CLAVES (copiar a USB y borrar de aqui).txt").write_text(
+            "CLAVES DE NEUROMED PRO — CONSERVE UNA COPIA FUERA DE ESTA PC\n\n"
             "Sin estas claves no se pueden abrir los respaldos ni los estudios adjuntos si la PC se daña.\n"
             "1. Copie este archivo a una memoria USB o imprímalo.\n2. Guárdelo en un lugar seguro.\n"
             "3. Borre este archivo del escritorio.\n\n" + "\n".join(keys) + "\n"
@@ -159,7 +159,7 @@ def ensure_certificate(datos: Path, ips: list[str]):
         except Exception:  # noqa: BLE001
             pass
     pk = ec.generate_private_key(ec.SECP256R1())
-    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "GastroMed Pro (consultorio)")])
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "NeuroMed Pro (consultorio)")])
     now = datetime.now(timezone.utc)
     san = [x509.DNSName("localhost")] + [x509.IPAddress(ipaddress.ip_address(i)) for i in sorted(wanted)]
     cert = (x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(pk.public_key())
@@ -232,17 +232,17 @@ def backup_loop(app):
 
 def main():
     if os.name == "nt":
-        os.system("title GastroMed Pro - NO CERRAR esta ventana")
+        os.system("title NeuroMed Pro - NO CERRAR esta ventana")
         try:
             sys.stdout.reconfigure(encoding="utf-8")
         except Exception:  # noqa: BLE001
             pass
     elif sys.platform == "darwin":
-        sys.stdout.write("\033]0;GastroMed Pro - NO CERRAR esta ventana\007")
+        sys.stdout.write("\033]0;NeuroMed Pro - NO CERRAR esta ventana\007")
         sys.stdout.flush()
     no_browser = "--sin-navegador" in sys.argv
     if port_in_use(PORT):
-        print("GastroMed Pro ya está abierto. Abriendo el navegador…")
+        print("NeuroMed Pro ya está abierto. Abriendo el navegador…")
         if not no_browser:
             webbrowser.open(f"http://localhost:{PORT}")
         time.sleep(3)
@@ -274,7 +274,7 @@ def main():
             app = create_app()
             print("  Aviso: el puerto", HTTPS_PORT, "está ocupado; el celular usará http sin cifrar.", e)
     print("=" * 66)
-    print(f"  GastroMed Pro {APP_VERSION}")
+    print(f"  NeuroMed Pro {APP_VERSION}")
     print("=" * 66)
     print(f"  En esta PC:        http://localhost:{PORT}")
     for ip in ips:
@@ -309,7 +309,7 @@ def main():
     if not no_browser:
         threading.Timer(1.5, lambda: webbrowser.open(f"http://localhost:{PORT}")).start()
     from waitress import serve
-    serve(app, host=os.environ.get("GASTROMED_HOST", "0.0.0.0"), port=PORT, threads=8, ident="GastroMed",
+    serve(app, host=os.environ.get("GASTROMED_HOST", "0.0.0.0"), port=PORT, threads=8, ident="NeuroMed",
           clear_untrusted_proxy_headers=True)
 
 
@@ -319,7 +319,7 @@ if __name__ == "__main__":
     except SystemExit:
         raise
     except Exception:  # noqa: BLE001
-        print("\nOcurrió un error al iniciar GastroMed Pro:\n")
+        print("\nOcurrió un error al iniciar NeuroMed Pro:\n")
         traceback.print_exc()
         print("\nTome una foto de esta ventana y compártala.")
         if os.name == "nt":

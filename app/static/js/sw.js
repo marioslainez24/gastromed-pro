@@ -1,4 +1,4 @@
-// Service worker de GastroMed Pro.
+// Service worker de NeuroMed Pro.
 // Política: SOLO se guardan recursos estáticos (estilos, scripts, íconos) y SOLO para usarlos sin conexión.
 // Ninguna página, expediente, PDF ni respuesta de datos se almacena en el dispositivo.
 // v0.10.2: el nombre de la caché lleva la versión del programa y los archivos se piden SIEMPRE primero a la PC

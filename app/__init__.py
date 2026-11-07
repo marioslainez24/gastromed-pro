@@ -1,4 +1,4 @@
-"""GastroMed Pro — aplicación Flask."""
+"""NeuroMed Pro — aplicación Flask."""
 import ipaddress
 import os
 
@@ -10,7 +10,7 @@ from .config import Config
 from .db import close_db, migrate
 from .security import PERMISSIONS, SESSION_COOKIE, can, check_csrf, enforce_account_requirements, load_current_user
 
-APP_VERSION = "0.30.0"
+APP_VERSION = "1.0.0"
 
 
 def _loopback(addr) -> bool:
@@ -28,7 +28,7 @@ def create_app(config: Config | None = None) -> Flask:
     app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # formularios; los adjuntos tendrán su propio límite
     app.config["TEMPLATES_AUTO_RELOAD"] = cfg.ENV == "desarrollo"
     # Cookie firmada de Flask: solo transporta mensajes de aviso (flash), nunca datos clínicos.
-    app.config.update(SESSION_COOKIE_NAME="gm_avisos", SESSION_COOKIE_HTTPONLY=True,
+    app.config.update(SESSION_COOKIE_NAME="nm_avisos", SESSION_COOKIE_HTTPONLY=True,
                       SESSION_COOKIE_SECURE=cfg.COOKIE_SECURE, SESSION_COOKIE_SAMESITE="Lax")
 
     migrate(cfg.DATABASE_PATH)

@@ -105,7 +105,7 @@ def verify(text: str, code: str | None = None) -> dict:
         Ed25519PublicKey.from_public_bytes(base64.b64decode(_public_key_b64())).verify(sig, payload)
         data = json.loads(payload)
     except (InvalidSignature, ValueError):
-        raise LicenseError("La clave no es válida (no fue generada para GastroMed Pro o está incompleta).")
+        raise LicenseError("La clave no es válida (no fue generada para NeuroMed Pro o está incompleta).")
     if data.get("v") != 1 or not data.get("titular"):
         raise LicenseError("La clave no es válida.")
     if data.get("equipo") != (code or machine_code()):

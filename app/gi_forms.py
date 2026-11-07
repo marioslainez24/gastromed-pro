@@ -1,6 +1,6 @@
 """Formularios de consulta gastroenterológica (Fase 2).
 
-Contenido propio, redactado para GastroMed Pro. No reproduce cuestionarios validados protegidos por licencia
+Contenido propio, redactado para NeuroMed Pro. No reproduce cuestionarios validados protegidos por licencia
 (p. ej., GerdQ, Rome IV, PAC-SYM, IBS-SSS): se registran como «pendientes de licencia».
 Cada formulario documenta duración, evolución, síntomas acompañantes, tratamientos previos, antecedentes y signos de alarma.
 """

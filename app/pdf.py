@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 
 INK = colors.HexColor("#1d2b36")
 MUTED = colors.HexColor("#5b6b77")
-ACCENT = colors.HexColor("#0f6e66")
+ACCENT = colors.HexColor("#4f3fb3")
 
 _base = dict(fontName="Helvetica", fontSize=12, leading=16, textColor=INK)   # v0.22: letra 12 a pedido del Dr. Lainez (antes 10)
 ST = {
@@ -186,7 +186,7 @@ def _sig_img(assets):
     return _img_flowable(assets["firma"], 60 * mm, 15 * mm)
 
 
-# v0.24.1: los documentos NO llevan pie con «Generado con GastroMed Pro» ni el titular de la licencia (pedido del Dr. Lainez).
+# v0.24.1: los documentos NO llevan pie con «Generado con NeuroMed Pro» ni el titular de la licencia (pedido del Dr. Lainez).
 
 
 def _e(s) -> str:
@@ -198,7 +198,7 @@ def prescription_pdf(r, items, p, s, size: str, allergies, assets=None) -> bytes
     pagesize = LETTER if size == "carta" else A4
     doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm,
                             bottomMargin=22 * mm, title="Receta médica", author=s["doctor_display_name"],
-                            subject="Receta", creator="GastroMed Pro")
+                            subject="Receta", creator="NeuroMed Pro")
     tz = ZoneInfo(s["timezone"])
     issued = parse_utc(r["issued_at"]).astimezone(tz)
     width = pagesize[0] - 36 * mm
@@ -292,7 +292,7 @@ def order_pdf(o, items, p, s, size: str, type_label: str, priority_label: str, a
     pagesize = LETTER if size == "carta" else A4
     doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=16 * mm,
                             bottomMargin=22 * mm, title=f"Solicitud de {type_label}", author=s["doctor_display_name"],
-                            creator="GastroMed Pro")
+                            creator="NeuroMed Pro")
     tz = ZoneInfo(s["timezone"])
     issued = parse_utc(o["created_at"]).astimezone(tz)
     width = pagesize[0] - 36 * mm
@@ -533,7 +533,7 @@ def procedure_pdf(pr, d, p, s, size, images, scope, addenda, D, assets=None, end
     pagesize = LETTER if size == "carta" else A4
     title = D.KINDS[pr["kind"]]
     doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=14 * mm, bottomMargin=20 * mm,
-                            title=f"Informe de {title}", author=(endo or {}).get("name") or s["doctor_display_name"], creator="GastroMed Pro")
+                            title=f"Informe de {title}", author=(endo or {}).get("name") or s["doctor_display_name"], creator="NeuroMed Pro")
     width = pagesize[0] - 32 * mm
     # Encabezado y firma con el ENDOSCOPISTA elegido en el informe (v0.22.0); si es otro médico, sin la firma escaneada del dueño
     endo = endo or {"name": s["doctor_display_name"], "owner": True, "detail": None}
@@ -756,7 +756,7 @@ def document_pdf(d, p, s, size, assets=None) -> bytes:
     buf = io.BytesIO()
     pagesize = LETTER if size == "carta" else A4
     doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=22 * mm, rightMargin=22 * mm, topMargin=16 * mm, bottomMargin=22 * mm,
-                            title=d["title"], author=s["doctor_display_name"], creator="GastroMed Pro")
+                            title=d["title"], author=s["doctor_display_name"], creator="NeuroMed Pro")
     width = pagesize[0] - 44 * mm
     story = [Paragraph(_e(s["doctor_display_name"]), ST["doctor"])]
     sub = [x for x in [s["specialty"], f"Colegiación: {s['license_number']}" if s["license_number"] else None] if x]
@@ -859,7 +859,7 @@ def sheet_pdf(title, body, s, size, assets=None) -> bytes:
     buf = io.BytesIO()
     pagesize = LETTER if size == "carta" else A4
     doc = SimpleDocTemplate(buf, pagesize=pagesize, leftMargin=15 * mm, rightMargin=15 * mm, topMargin=11 * mm, bottomMargin=11 * mm,
-                            title=title, author=s["doctor_display_name"], creator="GastroMed Pro")
+                            title=title, author=s["doctor_display_name"], creator="NeuroMed Pro")
     width = pagesize[0] - 30 * mm
     story = [Paragraph(_e(s["doctor_display_name"]), ST["doctor"])]
     sub = [x for x in [s["specialty"], s["address"], f"Tel.: {s['phones']}" if s["phones"] else None] if x]
