@@ -1,63 +1,48 @@
-"""Catálogo de estudios para las solicitudes de imagen, endoscopia y colonoscopia (v0.15.0).
+"""Catálogo de estudios para las solicitudes de imagen y de neurofisiología (NeuroMed Pro 1.0).
 
-Pedido del Dr. Lainez: marcar los estudios con un clic en vez de escribirlos. Son solo NOMBRES de estudios de uso habitual en
-gastroenterología (sin indicaciones, dosis ni precios). Lo que no esté se escribe en «Otros».
+Igual que en GastroMed Pro: marcar los estudios con un clic en vez de escribirlos. Son solo NOMBRES de estudios de uso habitual en
+neurología (sin indicaciones, dosis ni precios). Lo que no esté se escribe en «Otros».
 """
 
 IMAGING = [
-    ("Ultrasonido", [
-        "Ultrasonido abdominal completo", "Ultrasonido de abdomen superior (hígado, vías biliares, páncreas y bazo)",
-        "Ultrasonido hepático y de vías biliares", "Ultrasonido Doppler del eje esplenoportal", "Ultrasonido Doppler hepático (venas suprahepáticas)",
-        "Ultrasonido renal y de vías urinarias", "Ultrasonido pélvico", "Ultrasonido de pared abdominal (hernias)",
-        "Elastografía hepática transitoria (FibroScan)", "Elastografía hepática por ondas de corte (2D-SWE)"]),
     ("Tomografía (TAC)", [
-        "TAC de abdomen y pelvis simple", "TAC de abdomen y pelvis con contraste intravenoso", "TAC trifásica de hígado",
-        "TAC de páncreas (protocolo pancreático)", "Angio-TAC abdominal (arterias mesentéricas)", "Entero-TAC",
-        "Colonografía por TAC (colonoscopia virtual)", "TAC de tórax", "TAC de tórax, abdomen y pelvis con contraste (estadificación)"]),
+        "TAC de cráneo simple", "TAC de cráneo con contraste", "Angio-TAC cerebral y de vasos del cuello", "TAC de perfusión cerebral",
+        "TAC de columna cervical", "TAC de columna lumbar", "TAC de senos paranasales", "TAC de tórax"]),
     ("Resonancia magnética", [
-        "Resonancia magnética de abdomen con contraste", "Resonancia magnética hepática con contraste hepatoespecífico",
-        "Colangiorresonancia (CPRM)", "Resonancia magnética de páncreas", "Entero-resonancia",
-        "Resonancia magnética de pelvis (fístulas perianales)"]),
-    ("Radiología con contraste y simple", [
-        "Radiografía de abdomen simple (de pie y en decúbito)", "Radiografía de tórax PA", "Esofagograma con bario",
-        "Serie esofagogastroduodenal (SEGD)", "Tránsito intestinal", "Colon por enema", "Defecografía",
-        "Tránsito colónico con marcadores radiopacos"]),
-    ("Medicina nuclear", [
-        "Gammagrafía con eritrocitos marcados (sangrado digestivo)", "Gammagrafía de vaciamiento gástrico",
-        "Gammagrafía hepatobiliar (HIDA)", "PET-CT"]),
+        "Resonancia magnética de cerebro simple", "Resonancia magnética de cerebro simple y con gadolinio",
+        "Resonancia magnética de cerebro con protocolo de epilepsia", "Resonancia magnética de cerebro con difusión (protocolo de ACV)",
+        "Angio-resonancia cerebral", "Angio-resonancia de vasos del cuello", "Venorresonancia cerebral",
+        "Resonancia magnética de columna cervical", "Resonancia magnética de columna dorsal", "Resonancia magnética de columna lumbosacra",
+        "Resonancia magnética de órbitas", "Resonancia magnética de silla turca (hipófisis)"]),
+    ("Ultrasonido vascular", [
+        "Doppler carotídeo y vertebral", "Doppler transcraneal", "Doppler transcraneal con burbujas (búsqueda de cortocircuito)"]),
+    ("Corazón (estudio del ACV)", [
+        "Electrocardiograma", "Holter de 24 horas", "Holter de 72 horas", "Ecocardiograma transtorácico", "Ecocardiograma transesofágico"]),
+    ("Radiología simple y otros", [
+        "Radiografía de columna cervical", "Radiografía de columna lumbar", "Radiografía de tórax PA", "Angiografía cerebral por sustracción digital",
+        "PET-CT cerebral"]),
 ]
 
-ENDOSCOPY = [
-    ("Endoscopia alta", [
-        "Endoscopia digestiva alta diagnóstica", "Endoscopia digestiva alta con toma de biopsias",
-        "Endoscopia digestiva alta con biopsias y prueba de ureasa (H. pylori)", "Endoscopia digestiva alta con biopsias gástricas (protocolo de Sydney)",
-        "Endoscopia digestiva alta con biopsias de duodeno", "Endoscopia digestiva alta de control"]),
-    ("Endoscopia terapéutica", [
-        "Ligadura de várices esofágicas", "Hemostasia endoscópica", "Dilatación esofágica", "Polipectomía gástrica o duodenal",
-        "Extracción de cuerpo extraño", "Gastrostomía endoscópica percutánea (PEG)", "Colocación de prótesis esofágica o duodenal"]),
-    ("Vía biliar, páncreas e intestino delgado", [
-        "CPRE (colangiopancreatografía retrógrada endoscópica)", "Ultrasonido endoscópico (USE) alto",
-        "Ultrasonido endoscópico con punción (PAAF/BAAF)", "Cápsula endoscópica", "Enteroscopia"]),
-    ("Pruebas funcionales", [
-        "pH-metría esofágica de 24 horas", "pH-impedanciometría esofágica de 24 horas", "Manometría esofágica de alta resolución"]),
-]
-
-COLONOSCOPY = [
-    ("Colonoscopia", [
-        "Colonoscopia diagnóstica", "Colonoscopia de tamizaje", "Colonoscopia de vigilancia", "Colonoscopia con toma de biopsias",
-        "Colonoscopia con ileoscopia", "Colonoscopia con cromoendoscopia"]),
-    ("Colonoscopia terapéutica", [
-        "Colonoscopia con polipectomía", "Colonoscopia con mucosectomía", "Dilatación de estenosis colónica", "Descompresión colónica"]),
-    ("Recto y ano", [
-        "Rectosigmoidoscopia flexible", "Rectosigmoidoscopia con toma de biopsias", "Anoscopia", "Ligadura de hemorroides con bandas",
-        "Ultrasonido endoscópico rectal", "Manometría anorrectal"]),
+NEUROPHYS = [
+    ("Electroencefalografía", [
+        "Electroencefalograma (EEG) de rutina", "EEG con privación de sueño", "EEG de sueño", "Video-EEG prolongado",
+        "EEG continuo en paciente hospitalizado"]),
+    ("Nervio y músculo", [
+        "Electromiografía (EMG) y neuroconducción de 4 extremidades", "EMG y neuroconducción de miembros superiores",
+        "EMG y neuroconducción de miembros inferiores", "Neuroconducción de nervio facial (blink reflex)",
+        "Estimulación nerviosa repetitiva", "EMG de fibra única"]),
+    ("Potenciales evocados", [
+        "Potenciales evocados visuales", "Potenciales evocados auditivos de tallo cerebral", "Potenciales evocados somatosensoriales"]),
+    ("Sueño y otros", [
+        "Polisomnografía", "Poligrafía respiratoria domiciliaria", "Prueba de latencias múltiples del sueño", "Punción lumbar diagnóstica",
+        "Evaluación neuropsicológica"]),
 ]
 
 # tipo de la pantalla → (tipo guardado en la base, título impreso, catálogo, ejemplo para «Otros»)
+# En NeuroMed Pro el tipo guardado «endoscopia» se muestra como «Neurofisiología» (se conserva la clave de la base de datos).
 KINDS = {
-    "imagen": ("imagen", None, IMAGING, "Ej.: Ultrasonido de tiroides"),
-    "endoscopia": ("endoscopia", "Endoscopia", ENDOSCOPY, "Ej.: Endoscopia con dilatación neumática"),
-    "colonoscopia": ("endoscopia", "Colonoscopia", COLONOSCOPY, "Ej.: Colonoscopia con tatuaje de lesión"),
+    "imagen": ("imagen", None, IMAGING, "Ej.: Resonancia de plexo braquial"),
+    "endoscopia": ("endoscopia", "Neurofisiología", NEUROPHYS, "Ej.: EMG de músculos paraespinales"),
 }
 
 

@@ -10,7 +10,7 @@ from . import calculators as C
 from .util import age as age_txt
 from .views_labs import latest_values
 
-CODES = ("child_pugh", "meld_na", "meld3", "fib4", "apri", "maddrey")
+CODES = ()   # NeuroMed Pro: sin cálculos automáticos de hepatología
 
 
 def _age_years(birth):

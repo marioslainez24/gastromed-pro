@@ -89,7 +89,7 @@
 <section class="card" id="archivos">
   <div class="row-between"><h2>Estudios y archivos</h2>{% if can('clinico.editar') %}<a class="btn btn-sm" href="{{ url_for('files.upload', patient_id=p.id) }}">＋ Agregar estudio</a>{% endif %}</div>
   {% if files %}
-  {% set CAT = {'laboratorio':'Laboratorio','imagen':'Imagenología','endoscopia':'Endoscopia','patologia':'Patología','referencia':'Referencia','documento':'Documento','otro':'Otro'} %}
+  {% set CAT = {'laboratorio':'Laboratorio','imagen':'Imagenología','endoscopia':'Neurofisiología','patologia':'Patología','referencia':'Referencia','documento':'Documento','otro':'Otro'} %}
   {% macro file_actions(f) %}
         <a class="small" href="{{ url_for('files.download', file_id=f.id, descargar=1) }}">Descargar</a>
         {% if can('clinico.editar') %}

@@ -119,7 +119,7 @@ def test_estadisticas_y_excel(env):
     html = med.get("/estadisticas?desde=2026-01-01&hasta=2026-12-31").get_data(as_text=True)
     assert '<svg class="bars"' in html and "Diagnósticos de consulta más frecuentes" in html
     assert "ERGE sin esofagitis (CIE-10 K21.9)</span><b>2</b>" in html          # agrupado sin distinguir mayúsculas ni viñetas
-    assert "Tasa de detección de adenomas" in html
+    assert "Tasa de detección de adenomas" not in html           # NeuroMed Pro: sin indicadores de colonoscopia
     r = med.get("/estadisticas/excel?desde=2026-01-01&hasta=2026-12-31")
     assert r.status_code == 200 and r.headers["Content-Type"].startswith("application/vnd.openxmlformats")
     wb = read_xlsx(r.data)
@@ -148,8 +148,7 @@ def test_buscar_en_todos_los_expedientes(env):
     assert env["db"].execute("SELECT status FROM procedures WHERE id = ?", (proc,)).fetchone()[0] == "finalizado"
     _finalize_note(env, med, tok, p3, "Colitis ulcerosa")
     html = med.get("/buscar-expedientes?q=barrett").get_data(as_text=True)
-    assert "<b>2</b> paciente(s)" in html and "Vencido" in html                 # sin tildes ni mayúsculas; control vencido
-    assert html.index(p2) < html.index(p1)                                         # primero el control vencido
+    assert "<b>2</b> paciente(s)" in html                                          # sin tildes ni mayúsculas
     assert "Colitis ulcerosa" not in html
     assert "<b>1</b> paciente(s)" in med.get("/buscar-expedientes?q=barrett praga").get_data(as_text=True)   # todas las palabras
     assert "Escriba al menos 3 letras" in med.get("/buscar-expedientes?q=ba").get_data(as_text=True)

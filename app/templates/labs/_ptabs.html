@@ -1,7 +1,7 @@
 <nav class="seg tabs" aria-label="Secciones del paciente">
   <a href="{{ url_for('patients.view', patient_id=p.id) }}" {% if request.endpoint == 'patients.view' %}aria-current="page"{% endif %}>Expediente</a>
   <a href="{{ url_for('labs.patient_labs', patient_id=p.id) }}" {% if request.endpoint in ('labs.patient_labs','labs.results_new') %}aria-current="page"{% endif %}>Laboratorio y órdenes</a>
-  <a href="{{ url_for('endo.patient_procs', patient_id=p.id) }}" {% if request.endpoint in ('endo.patient_procs','endo.proc_new') %}aria-current="page"{% endif %}>Procedimientos</a>
-  <a href="{{ url_for('gi.patient_calcs', patient_id=p.id) }}" {% if request.endpoint == 'gi.patient_calcs' %}aria-current="page"{% endif %}>Cálculos</a>
+  <a href="{{ url_for('acv.patient_codes', patient_id=p.id) }}" {% if request.endpoint in ('acv.patient_codes','acv.edit') %}aria-current="page"{% endif %}>Código ACV</a>
+  <a href="{{ url_for('gi.patient_calcs', patient_id=p.id) }}" {% if request.endpoint == 'gi.patient_calcs' %}aria-current="page"{% endif %}>Escalas</a>
   {% if can('clinico.ver') %}<a href="{{ url_for('docs.patient_docs', patient_id=p.id) }}" {% if request.endpoint in ('docs.patient_docs','docs.doc_new') %}aria-current="page"{% endif %}>Documentos</a>{% endif %}
 </nav>

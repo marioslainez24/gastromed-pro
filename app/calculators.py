@@ -841,10 +841,16 @@ BSA = Calculator(
     reference_cases=[({"peso": "70", "talla": "170"}, {"valor": 1.82}), ({"peso": "100", "talla": "180"}, {"valor": 2.24})])
 
 
-ALL = [CHILD, MELD_NA, MELD3, FIB4, APRI, MADDREY, LILLE, GBS, ROCKALL, BISAP, BMI,
-       CKD_EPI, COCKCROFT, CA_CORR, ANION_GAP, CHA2DS2, HASBLED, QTC, CURB65, QSOFA, GCS, BSA]
+# NeuroMed Pro: escalas neurológicas primero (app/neuro_calcs.py) y luego las generales. Las de hepatología y hemorragia digestiva
+# de GastroMed Pro siguen definidas arriba (sus pruebas las comprueban) pero no se ofrecen en este programa.
+from . import neuro_calcs as _N  # noqa: E402
 
-BY_CODE = {c.code: c for c in ALL}
+GCS.group = "Urgencias neurológicas"
+CHA2DS2.group = HASBLED.group = "ACV"
+GASTRO_ONLY = [CHILD, MELD_NA, MELD3, FIB4, APRI, MADDREY, LILLE, GBS, ROCKALL, BISAP]
+ALL = _N.ALL + [GCS, CHA2DS2, HASBLED, BMI, CKD_EPI, COCKCROFT, CA_CORR, ANION_GAP, QTC, CURB65, QSOFA, BSA]
+
+BY_CODE = {c.code: c for c in ALL + GASTRO_ONLY}   # las digestivas no se listan, pero los resultados guardados siguen visibles
 
 
 def self_check(calc: Calculator) -> list[tuple[dict, dict, dict, bool]]:

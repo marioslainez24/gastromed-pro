@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Código ACV · {{ p.first_names }} {{ p.last_names }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1><a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1><span class="pill mono">{{ p.mrn }}</span></div>
+{% include "labs/_ptabs.html" %}
+{% if can('clinico.editar') %}
+<section class="card"><h2>Nuevo código ACV</h2>
+  <form method="post" action="{{ url_for('acv.new', patient_id=p.id) }}" class="btn-row">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="btn btn-primary btn-lg" type="submit">⚡ Iniciar código ACV ahora</button>
+    <span class="small muted">Se anota la hora de llegada actual; luego registre los demás tiempos.</span>
+  </form>
+</section>
+{% endif %}
+<section class="card"><h2>Códigos de este paciente <span class="count">{{ rows|length }}</span></h2>
+  {% if rows %}<ul class="list">{% for r in rows %}
+    <li><div class="row-between"><a href="{{ url_for('acv.edit', code_id=r.id) }}"><b>{{ fmt_dt(r.created_at) }}</b></a>
+      <span class="tag {{ 'tag-ok' if r.status == 'finalizado' else '' }}">{{ 'Finalizado' if r.status == 'finalizado' else 'En curso' }}</span></div>
+      {% if r.summary %}<p class="small muted">{{ r.summary[:260] }}{% if r.summary|length > 260 %}…{% endif %}</p>{% endif %}</li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Sin códigos ACV registrados.</p>{% endif %}
+</section>
+{% endblock %}

@@ -171,26 +171,6 @@ def test_tipo_de_atencion_sala_o_consulta_externa(env):
     assert json.loads(env["db"].execute("SELECT data FROM procedures WHERE id = ?", (proc,)).fetchone()[0])["care_setting"] is None
 
 
-def test_estadisticas_por_atencion_y_lugar(env):
-    from conftest import create_patient, csrf, login
-    from tests.test_fase3 import full_form, new_proc, version
-    from app.views_stats import compute
-    from datetime import date
-    med = login(env["app"], "propietario")
-    tok = csrf(med)
-    pid = create_patient(med)
-    for care, fac in (("sala", "Hospital Ficticio"), ("externa", "")):
-        proc = new_proc(med, pid, tok, "colonoscopia")
-        med.post(f"/procedimientos/{proc}/guardar", data=full_form(tok, version(env, proc), care_setting=care, facility=fac, then="finalizar"))
-        med.post(f"/procedimientos/{proc}/finalizar", data={"csrf_token": tok, "version": version(env, proc)})
-    with env["app"].test_request_context():
-        from app.db import get_db
-        st = compute(get_db(), env["org"]["org_id"], date(2026, 1, 1), date(2026, 12, 31))
-    assert ("Sala (hospitalizado)", "Hospital Ficticio", 1) in st["by_care"] and ("Consulta externa", "Su clínica", 1) in st["by_care"]
-    html = med.get("/estadisticas?desde=2026-01-01&hasta=2026-12-31").get_data(as_text=True)
-    assert "Estudios por tipo de atención y lugar" in html and "Hospital Ficticio" in html
-
-
 def test_informe_sin_folio(env):
     from conftest import create_patient, csrf, login
     from tests.test_fase3 import new_proc

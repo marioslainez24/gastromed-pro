@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Código ACV · {{ p.first_names }} {{ p.last_names }}{% endblock %}
+{% block content %}
+{% set ro = c.status != 'borrador' or not can('clinico.editar') %}
+<div class="page-head"><h1>Código ACV · <a href="{{ url_for('patients.view', patient_id=p.id) }}">{{ p.first_names }} {{ p.last_names }}</a></h1>
+  <span class="pill mono">{{ p.mrn }}</span>
+  <span class="tag {{ 'tag-ok' if c.status == 'finalizado' else 'tag-warn' }}">{{ 'Finalizado' if c.status == 'finalizado' else 'En curso' }}</span></div>
+{% include "labs/_ptabs.html" %}
+{% if errors %}<div class="flash flash-error" role="alert"><ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+{% if anticoag %}<div class="warn-box">El paciente tiene registrado un anticoagulante en sus medicamentos. Confirme la hora de la última dosis y las pruebas de coagulación.</div>{% endif %}
+
+<div class="stat-tiles acv-tiles">
+  <div class="stat"><span class="stat-n">{{ hm(ev.elapsed) }}</span><span class="stat-l">Desde el último momento visto bien{% if d.needle %} hasta la aguja{% elif c.status == 'borrador' %} (hasta ahora){% endif %}</span></div>
+  {% for k, lab in (('ct', 'Puerta–TAC'), ('needle', 'Puerta–aguja'), ('groin', 'Puerta–punción femoral')) %}
+  {% set m = ev.metrics[k] %}
+  <div class="stat"><span class="stat-n">{{ hm(m) }}</span><span class="stat-l">{{ lab }}{% if m is not none %} <span class="tag {{ 'tag-ok' if m <= A.GOALS[k] else 'tag-danger' }}">meta ≤ {{ A.GOALS[k] }} min</span>{% endif %}</span></div>
+  {% endfor %}
+</div>
+
+<form method="post" class="stack" id="acv-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="version" value="{{ c.version }}">
+  <fieldset {% if ro %}disabled{% endif %} class="stack">
+  <div class="grid2">
+    <section class="card"><h2>Tiempos</h2>
+      <div class="grid2">{% for k, lab in A.TIME_KEYS %}
+        <label class="field">{{ lab }}<input type="time" name="{{ k }}" id="acv-{{ k }}" value="{{ d[k] }}"></label>{% endfor %}</div>
+      <label class="check"><input type="checkbox" name="wake" value="1" {% if d.wake %}checked{% endif %}> Inicio desconocido o al despertar</label>
+      {% if not ro %}<button class="btn btn-sm" name="action" value="ahora" type="submit">⏱ Marcar ahora el siguiente tiempo vacío</button>{% endif %}
+    </section>
+    <section class="card"><h2>Evaluación inicial</h2>
+      <div class="grid2">
+        <label class="field">PA sistólica (mmHg)<input name="pas" id="acv-pas" inputmode="numeric" class="w-num" value="{{ d.pas }}"></label>
+        <label class="field">PA diastólica (mmHg)<input name="pad" id="acv-pad" inputmode="numeric" class="w-num" value="{{ d.pad }}"></label>
+        <label class="field">Glucosa capilar (mg/dL)<input name="glu" id="acv-glu" inputmode="numeric" class="w-num" value="{{ d.glu }}"></label>
+        <label class="field">NIHSS<input name="nihss" id="acv-nihss" inputmode="numeric" class="w-num" value="{{ d.nihss }}"></label>
+        <label class="field">Rankin previo al evento<select name="prem" id="acv-prem">{% for x in range(6) %}<option {% if x == d.prem %}selected{% endif %}>{{ x }}</option>{% endfor %}</select></label>
+        <label class="field">Peso (kg)<input name="w" id="acv-w" inputmode="decimal" class="w-num" value="{{ d.w }}"></label>
+      </div>
+      <p class="small"><a href="{{ url_for('gi.calc_use', code='nihss', patient_id=p.id) }}">Calcular el NIHSS ítem por ítem</a> ·
+        <a href="{{ url_for('gi.calc_use', code='aspects', patient_id=p.id) }}">Calcular el ASPECTS</a></p>
+    </section>
+  </div>
+
+  <div class="grid2" id="resultado">
+    <section class="card"><h2>Trombólisis intravenosa</h2>
+      <div class="result-box acv-{{ ev.lysis[0] }}" role="status"><b>{{ ev.lysis[1] }}</b><br><span class="small">{{ ev.lysis[2] }}</span></div>
+      <fieldset class="mt-s"><legend>Contraindicaciones (marque las presentes)</legend>
+        {% for k, lab in A.CONTRAINDICATIONS %}<label class="check"><input type="checkbox" name="ci" value="{{ k }}" {% if k in d.ci %}checked{% endif %}> {{ lab }}</label>{% endfor %}
+      </fieldset>
+      <label class="field">Trombolítico<select name="agent" id="acv-agent">{% for k, lab in A.AGENTS.items() %}<option value="{{ k }}" {% if k == d.agent %}selected{% endif %}>{{ lab }}</option>{% endfor %}</select></label>
+      {% if ds %}<div class="result-box"><span class="small muted">Dosis calculada con {{ d.w }} kg</span><br><b>{{ ds.texto }}</b></div>
+      {% else %}<p class="small muted">Escriba el peso para calcular la dosis.</p>{% endif %}
+    </section>
+    <div class="stack">
+      <section class="card"><h2>Trombectomía mecánica</h2>
+        <label class="check"><input type="checkbox" name="lvo" value="1" {% if d.lvo %}checked{% endif %}> Oclusión de gran vaso en angio-TAC (carótida interna, M1 o basilar)</label>
+        <label class="field">ASPECTS<input name="aspects" id="acv-aspects" inputmode="numeric" class="w-num" value="{{ d.aspects }}"></label>
+        <div class="result-box acv-{{ ev.evt[0] }}" role="status"><b>{{ ev.evt[1] }}</b><br><span class="small">{{ ev.evt[2] }}</span></div>
+      </section>
+      <section class="card"><h2>Después del trombolítico</h2>
+        <ul class="small">
+          <li>PA menor de 180/105 mmHg durante 24 horas.</li>
+          <li>Examen neurológico y NIHSS cada 15 min por 2 h, cada 30 min por 6 h y luego cada hora hasta las 24 h.</li>
+          <li>Sin antitrombóticos por 24 h, hasta la TAC de control.</li>
+          <li>Evitar sondas, catéteres centrales y punciones arteriales en las primeras horas.</li>
+          <li>Ante cefalea intensa, vómito o empeoramiento: suspender la infusión y TAC urgente.</li>
+          <li>Vigilar angioedema de labios y lengua.</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+
+  <section class="card"><h2>Notas</h2>
+    <label class="field">Notas del código (síntomas, testigos, decisiones)<textarea name="notes" id="acv-notes" rows="3" maxlength="3000" data-grow>{{ d.notes }}</textarea></label>
+  </section>
+  </fieldset>
+  {% if not ro %}
+  <div class="btn-row sticky-actions">
+    <button class="btn btn-primary" name="action" value="guardar" type="submit">Guardar y recalcular</button>
+    {% if can('notas.finalizar') %}<button class="btn" name="action" value="finalizar" type="submit">Finalizar y guardar en el expediente</button>{% endif %}
+  </div>
+  {% endif %}
+</form>
+
+<section class="card"><h2>Resumen</h2>
+  <p class="prewrap">{{ c.summary if c.status == 'finalizado' else preview }}</p>
+  <p class="small muted">{% if c.status == 'finalizado' %}Finalizado el {{ fmt_dt(c.finalized_at) }}. Ya no se puede modificar.{% else %}Vista previa: se guarda tal cual al finalizar.{% endif %}</p>
+</section>
+<p class="small muted">Herramienta de apoyo según las guías AHA/ASA 2019 y ESO 2021–2023 (fuentes en el código del programa). Siga el protocolo de su hospital
+  y confirme cada criterio antes de administrar un tratamiento.</p>
+{% endblock %}

@@ -17,34 +17,46 @@ from .views_patients import get_patient_or_404
 bp = Blueprint("edu", __name__)
 
 EXAMPLES = [
-    ("Medidas para el reflujo", """MEDIDAS PARA EL REFLUJO
+    ("Diario de cefalea", """DIARIO DE CEFALEA
 
-• Cene por lo menos 3 horas antes de acostarse.
-• Eleve la cabecera de la cama (con bloques bajo las patas de la cabecera, no solo con almohadas).
-• Coma porciones pequeñas; evite comidas abundantes.
-• Si tiene sobrepeso, bajar de peso ayuda a disminuir los síntomas.
-• No fume y evite el alcohol.
-• Observe qué alimentos le causan molestias (por ejemplo comidas grasosas, chocolate, café, menta, cítricos o picante) y evítelos.
-• Evite acostarse o agacharse inmediatamente después de comer.
+Anote cada día que tenga dolor de cabeza y traiga este registro a su próxima consulta.
 
-Si tiene dificultad o dolor para tragar, vómito con sangre, heces negras o pérdida de peso sin explicación, consulte de inmediato."""),
-    ("Dieta rica en fibra", """DIETA RICA EN FIBRA
+• Fecha y hora en que empezó el dolor.
+• Cuánto duró.
+• Intensidad del 1 al 10.
+• Dónde le dolió (un lado, los dos lados, la frente, la nuca).
+• Si tuvo náuseas, vómito, molestia con la luz o con el ruido.
+• Si vio luces, manchas o tuvo hormigueo antes del dolor.
+• Qué medicamento tomó, a qué hora y si le ayudó.
+• Qué cree que lo provocó (desvelo, ayuno, estrés, menstruación, alimentos, alcohol).
 
-• Aumente la fibra poco a poco, en una o dos semanas, para evitar gases e inflamación.
-• Coma frutas (de preferencia con cáscara) y verduras todos los días.
-• Prefiera cereales integrales: avena, pan y tortilla integral, arroz integral.
-• Incluya leguminosas: frijoles, lentejas, garbanzos.
-• Tome suficiente agua durante el día; la fibra funciona mejor con líquidos.
-• Haga actividad física con regularidad.
-• Vaya al baño cuando sienta la necesidad; no la aguante."""),
-    ("Dieta baja en grasa", """DIETA BAJA EN GRASA
+Tome analgésicos menos de 10 días al mes: usarlos más seguido puede empeorar el dolor de cabeza.
 
-• Evite frituras, chicharrón, embutidos, mantequilla, manteca y quesos grasosos.
-• Prepare los alimentos cocidos, asados, a la plancha o al vapor.
-• Prefiera carnes magras (pollo sin piel, pescado) y retire la grasa visible.
-• Use poco aceite al cocinar.
-• Prefiera lácteos descremados.
-• Coma porciones moderadas, varias veces al día."""),
+Acuda de inmediato a emergencia si el dolor es súbito y el peor de su vida, si se acompaña de fiebre y rigidez de nuca,
+debilidad, confusión, convulsión o pérdida de la visión."""),
+    ("Cómo reconocer un ACV (derrame cerebral)", """CÓMO RECONOCER UN ACV
+
+Un ACV es una emergencia: cada minuto cuenta. Si nota alguno de estos signos de forma repentina, llame al 911 o vaya a
+emergencia de inmediato y anote la hora en que empezó:
+
+• Cara caída de un lado al sonreír.
+• Debilidad o adormecimiento de un brazo o una pierna.
+• Dificultad para hablar o para entender.
+• Pérdida súbita de la visión de uno o ambos ojos.
+• Mareo intenso con pérdida del equilibrio.
+• Dolor de cabeza súbito y muy intenso.
+
+No espere a ver si se le pasa. No le dé de comer ni de beber a la persona hasta que la vea un médico."""),
+    ("Recomendaciones para personas con epilepsia", """RECOMENDACIONES PARA PERSONAS CON EPILEPSIA
+
+• Tome sus medicamentos todos los días a la misma hora. No los suspenda ni cambie la dosis sin consultar.
+• Duerma lo suficiente: el desvelo puede provocar crisis.
+• Evite el alcohol y las drogas.
+• No nade solo, no se bañe en tina y evite trabajar en alturas o con máquinas peligrosas.
+• No maneje hasta que su médico le indique que es seguro.
+• Si está embarazada o planea estarlo, consulte antes: algunos medicamentos deben ajustarse.
+• Lleve consigo una tarjeta que diga que tiene epilepsia y qué medicamentos toma.
+• Enseñe a su familia qué hacer durante una crisis."""),
 ]
 
 

@@ -76,7 +76,7 @@ def main(exe):
         assert "Licencia de uso: <b>Titular de Prueba</b>" in html, "Titular en el pie"
         tok = re.search(r'name="setup_csrf" value="([^"]+)"', html).group(1)
         r = post("/configuracion-inicial", {"setup_csrf": tok, "clinic": "Consultorio prueba", "name": "Dr. Prueba",
-                                            "specialty": "Gastroenterología", "email": "dr@prueba.local",
+                                            "specialty": "Neurología", "email": "dr@prueba.local",
                                             "password": "Prueba-Exe-2026", "password2": "Prueba-Exe-2026"})
         assert r.url.endswith("/ingresar"), r.url
         html = r.read().decode()
@@ -90,10 +90,19 @@ def main(exe):
         assert re.fullmatch(r"[0-9a-f]{32}", pid), r.url
         r = post("/notas/nueva", {"csrf_token": csrf, "patient_id": pid, "kind": "primera", "template": "soap"})
         nid = r.url.split("/")[-1].split("?")[0]
-        hx = post(f"/notas/{nid}/historia", {"csrf_token": csrf, "hx-motivo": "dolor_abdominal", "hx-dolor_abdominal-caracter": "colico"}).read().decode()
-        assert "consulta por dolor abdominal" in hx and "colico" not in hx, "Asistente de historia"
-        ex = post(f"/notas/{nid}/exploracion", {"csrf_token": csrf, "abdomen-normal": "1"}).read().decode()
-        assert "Abdomen plano" in ex, "Exploración con clics"
+        hx = post(f"/notas/{nid}/historia", {"csrf_token": csrf, "hx-motivo": "cefalea", "hx-cefalea-caracter": "pulsatil"}).read().decode()
+        assert "consulta por cefalea" in hx and "pulsatil" not in hx, "Asistente de historia"
+        ex = post(f"/notas/{nid}/exploracion", {"csrf_token": csrf, "motor-normal": "1"}).read().decode()
+        assert "Fuerza 5/5" in ex, "Exploración con clics"
+        # NeuroMed Pro: Código ACV de punta a punta dentro del ejecutable
+        r = post(f"/pacientes/{pid}/codigo-acv/nuevo", {"csrf_token": csrf})
+        acv_id = r.url.split("/")[-1].split("?")[0].split("#")[0]
+        html = get(f"/codigo-acv/{acv_id}").read().decode()
+        ver = re.search(r'name="version" value="(\d+)"', html).group(1)
+        post(f"/codigo-acv/{acv_id}", {"csrf_token": csrf, "version": ver, "lkw": "08:00", "arr": "08:20", "w": "70", "agent": "tpa",
+                                       "action": "finalizar"})
+        assert "Alteplasa 63.0 mg" in get(f"/codigo-acv/{acv_id}").read().decode(), "Código ACV"
+        assert "NIHSS" in get("/calculadoras/nihss").read().decode(), "Escala NIHSS"
         req = urllib.request.Request(f"{B}/notas/{nid}/guardar", data=b'{"version": 1, "motivo": "Dispepsia"}',
                                      headers={"Content-Type": "application/json", "X-CSRF-Token": csrf})
         assert op.open(req, timeout=30).status == 200
@@ -159,11 +168,11 @@ def main(exe):
                                                         "body": "Constancia de prueba.", "final_title": "CONSTANCIA DE INCAPACIDAD MEDICA"})
         did = re.search(r"/documentos/([0-9a-f]{32})", r.geturl()).group(1)
         assert get(f"/documentos/{did}/pdf").read().startswith(b"%PDF-"), "PDF del documento clínico"
-        # v0.15: solicitud de colonoscopia con estudios marcados y otro resultado de laboratorio escrito a mano
-        r = post("/ordenes/nueva", {"csrf_token": csrf, "patient_id": pid, "order_type": "colonoscopia", "study": "Colonoscopia diagnóstica",
+        # v0.15: solicitud de neurofisiología con estudios marcados y otro resultado de laboratorio escrito a mano
+        r = post("/ordenes/nueva", {"csrf_token": csrf, "patient_id": pid, "order_type": "endoscopia", "study": "Electroencefalograma (EEG) de rutina",
                                     "priority": "rutina", "responsible_id": resp})
         coid = re.search(r"/ordenes/([0-9a-f]{32})", r.geturl()).group(1)
-        assert get(f"/ordenes/{coid}/pdf").read().startswith(b"%PDF-"), "Solicitud de colonoscopia"
+        assert get(f"/ordenes/{coid}/pdf").read().startswith(b"%PDF-"), "Solicitud de neurofisiología"
         r = post(f"/pacientes/{pid}/laboratorio/registrar", {"csrf_token": csrf, "taken_on": "2026-10-01", "otro-0-name": "Elastasa fecal",
                                                              "otro-0-value": "450"})
         assert "Elastasa fecal" in get(f"/pacientes/{pid}/laboratorio").read().decode(), "Otros resultados"

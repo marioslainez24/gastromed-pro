@@ -56,17 +56,6 @@ def test_frases_crear_editar_desactivar_y_aparecen_en_la_nota(env):
     assert login(env["app"], "recepcion").get("/ajustes/frases").status_code == 403
 
 
-def test_frases_en_informe_de_endoscopia(env):
-    med = login(env["app"], "propietario")
-    tok = csrf(med)
-    med.post("/ajustes/frases/nueva", data={"csrf_token": tok, "field": "endo:recommendations", "title": "Esperar patología",
-                                             "body": "Esperar resultado de patología."})
-    pid = create_patient(med)
-    r = med.post(f"/pacientes/{pid}/procedimientos/nuevo", data={"csrf_token": tok, "kind": "eda"})
-    html = med.get(r.headers["Location"]).get_data(as_text=True)
-    assert 'data-phrase-field="endo:recommendations"' in html and "Esperar patología" in html
-
-
 def test_guardar_nota_como_plantilla_y_aplicarla(env):
     med = login(env["app"], "propietario")
     tok = csrf(med)

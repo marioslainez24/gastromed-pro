@@ -220,16 +220,7 @@ def test_resumen_del_paciente_y_calculos_rapidos(env):
     med.post(f"/pacientes/{pid}/laboratorio/registrar", data={"csrf_token": tok, "taken_on": "2026-10-20", "code": ["bt", "inr"],
                                                               "v_bt": "2", "v_inr": "1.5"})
     html = med.get(f"/pacientes/{pid}").get_data(as_text=True)
-    assert "Resumen" in html and "Últimos laboratorios" in html and "Cálculos con los últimos laboratorios" in html
+    assert "Resumen" in html and "Últimos laboratorios" in html and "Código ACV" in html
+    assert "Cálculos con los últimos laboratorios" not in html   # NeuroMed Pro: sin cálculos de hepatología
     assert "↑" in html                                   # AST subió de 40 a 80
-    # FIB-4 se puede calcular solo con el expediente; Child-Pugh pide datos clínicos y no los supone
-    from app.patient_summary import summary
-    with env["app"].test_request_context():
-        p = env["db"].execute("SELECT * FROM patients WHERE id = ?", (pid,)).fetchone()
-        s = summary(env["db"], p)
-    calcs = {c["code"]: c for c in s["calcs"]}
-    expected = C.run(C.BY_CODE["fib4"], {"edad": "60", "ast": "80", "alt": "60", "plt": "120"})["texto"]
-    assert calcs["fib4"]["preview"] == expected and not calcs["fib4"]["missing"]
-    assert "Child-Pugh" == calcs["child_pugh"]["name"] and calcs["child_pugh"]["preview"] is None and calcs["child_pugh"]["missing"]
-    assert any("Albúmina" in m for m in calcs["child_pugh"]["missing"])
     assert "Nada pendiente." in html or "por revisar" in html

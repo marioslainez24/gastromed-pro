@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Calculadoras{% endblock %}
+{% block title %}Escalas{% endblock %}
 {% block content %}
-<div class="page-head"><h1>Calculadoras y clasificaciones</h1></div>
+<div class="page-head"><h1>Escalas neurológicas y calculadoras</h1></div>
 <div class="flash flash-info">Cada calculadora debe ser <b>revisada y aprobada por el médico propietario</b> antes de poder guardar resultados en un expediente.
   Mientras tanto puede probarse sin guardar. Los resultados son de apoyo y no constituyen indicaciones terapéuticas.</div>
 {% for grp, items in groups.items() %}
@@ -23,6 +23,6 @@
 {% endfor %}
 <section class="card muted small">
   <h2>No habilitados (requieren licencia o validación)</h2>
-  <p>{{ licencias|join(' · ') }}. Clasificaciones endoscópicas (Los Ángeles, Praga, Boston, Forrest, París): Fase 3, dentro del informe de endoscopia.</p>
+  <p>{{ licencias|join(' · ') }}.</p>
 </section>
 {% endblock %}

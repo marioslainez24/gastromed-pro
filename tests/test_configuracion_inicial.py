@@ -50,6 +50,6 @@ def test_primer_arranque_crea_claves_una_sola_vez(tmp_path, monkeypatch):
     env1 = gastromed_exe.first_run_config(tmp_path / "GastroMed")
     content = env1.read_text(encoding="utf-8")
     assert "GASTROMED_ENV=consultorio" in content and "GASTROMED_DATA_KEY=" in content
-    assert (tmp_path / "Desktop" / "GastroMed - CLAVES (copiar a USB y borrar de aqui).txt").exists()
+    assert (tmp_path / "Desktop" / "NeuroMed - CLAVES (copiar a USB y borrar de aqui).txt").exists()
     env2 = gastromed_exe.first_run_config(tmp_path / "GastroMed")
     assert env2.read_text(encoding="utf-8") == content   # nunca reemplaza claves existentes

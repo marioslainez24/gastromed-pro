@@ -46,8 +46,8 @@
   {% if can('agenda.ver') %}<a href="{{ url_for('agenda.day') }}" {% if ep.startswith('agenda') %}aria-current="page"{% endif %}><span aria-hidden="true">▦</span> Agenda</a>{% endif %}
   {% if can('pacientes.ver_admin') %}<a href="{{ url_for('patients.search') }}" {% if ep.startswith('patients') or ep.startswith('notes') or ep.startswith('rx') or ep.startswith('labs.') and ep != 'labs.pending' or ep in ('gi.diary','gi.form_edit','gi.patient_calcs') %}aria-current="page"{% endif %}><span aria-hidden="true">☰</span> Pacientes</a>{% endif %}
   {% if can('clinico.ver') %}<a href="{{ url_for('labs.pending') }}" {% if ep in ('labs.pending',) %}aria-current="page"{% endif %}><span aria-hidden="true">✓</span> Pendientes</a>
-  <a href="{{ url_for('endo.index') }}" {% if ep in ('endo.index','endo.quality','endo.equipment') %}aria-current="page"{% endif %}><span aria-hidden="true">◎</span> Endoscopia</a>
-  <a href="{{ url_for('gi.calc_index') }}" {% if ep.startswith('gi.calc') %}aria-current="page"{% endif %}><span aria-hidden="true">∑</span> Calculadoras</a>
+  <a href="{{ url_for('acv.index') }}" {% if ep.startswith('acv') %}aria-current="page"{% endif %}><span aria-hidden="true">⚡</span> Código ACV</a>
+  <a href="{{ url_for('gi.calc_index') }}" {% if ep.startswith('gi.calc') %}aria-current="page"{% endif %}><span aria-hidden="true">∑</span> Escalas</a>
   <a href="{{ url_for('stats.index') }}" {% if ep.startswith('stats') %}aria-current="page"{% endif %}><span aria-hidden="true">▤</span> Estadísticas</a>{% endif %}
   {% if can('ajustes.editar') %}<a href="{{ url_for('settings.clinic') }}" {% if ep.startswith('settings') %}aria-current="page"{% endif %}><span aria-hidden="true">⚙</span> Ajustes</a>{% endif %}
 </nav>

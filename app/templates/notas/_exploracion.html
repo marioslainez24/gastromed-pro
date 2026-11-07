@@ -3,7 +3,7 @@
   <summary><b>🩺 Exploración física con clics</b> <span class="muted small">— «Normal» por sistema o marque los hallazgos</span></summary>
   <div class="btn-row exam-top">
     <button type="button" class="btn btn-primary btn-sm" data-exam-allnormal>✓ Todo normal y escribir</button>
-    <span class="small muted">Marca normal el aspecto general, cardiopulmonar y abdomen (no el tacto rectal). <a href="{{ url_for('texts.phrases') }}#exploracion" target="_blank" rel="noopener">Cambiar mis textos normales</a></span>
+    <span class="small muted">Marca normal el aspecto general, cardiopulmonar y toda la exploración neurológica (no los signos meníngeos). <a href="{{ url_for('texts.phrases') }}#exploracion" target="_blank" rel="noopener">Cambiar mis textos normales</a></span>
   </div>
   {% for sysk, (label, target, resto, fields) in EXAM_SYSTEMS.items() %}
   <div class="exam-sys" data-exam-sys="{{ sysk }}">
@@ -27,6 +27,6 @@
   <div class="btn-row hea-actions">
     <button type="button" class="btn btn-primary" data-exam-write>Escribir en la exploración ↓</button>
     <button type="button" class="btn btn-quiet btn-sm" data-exam-clear>Limpiar</button>
-    <span class="small muted" data-exam-msg aria-live="polite">Se agrega al final de {{ 'la nota' if n.template == 'narrativa' else 'la exploración general y la abdominal' }}; luego puede corregirlo.</span>
+    <span class="small muted" data-exam-msg aria-live="polite">Se agrega al final de {{ 'la nota' if n.template == 'narrativa' else 'la exploración general y la neurológica' }}; luego puede corregirlo.</span>
   </div>
 </details>

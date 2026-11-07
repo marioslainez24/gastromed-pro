@@ -1,8 +1,8 @@
-"""Asistente de configuración inicial de GastroMed Pro en la PC del consultorio.
+"""Asistente de configuración inicial de NeuroMed Pro en la PC del consultorio.
 
 Lo ejecuta el instalador. Es seguro ejecutarlo de nuevo: nunca reemplaza claves ni usuarios existentes.
 
-  python windows/configurar.py --datos C:\\GastroMed\\datos --respaldos C:\\GastroMed\\respaldos --escritorio <carpeta>
+  python windows/configurar.py --datos C:\\NeuroMed\\datos --respaldos C:\\NeuroMed\\respaldos --escritorio <carpeta>
 """
 import argparse
 import getpass
@@ -27,13 +27,13 @@ def ask(prompt: str, default: str = "", env: str = "") -> str:
 def write_env(env_file: Path, datos: Path, respaldos: Path, copy_dir: str):
     from cryptography.fernet import Fernet
     lines = [
-        "# Configuración de GastroMed Pro en esta PC. NO COMPARTA ESTE ARCHIVO.",
+        "# Configuración de NeuroMed Pro en esta PC. NO COMPARTA ESTE ARCHIVO.",
         f"# Creado {datetime.now():%Y-%m-%d %H:%M}",
         "GASTROMED_ENV=consultorio",
         f"GASTROMED_SECRET_KEY={secrets.token_hex(32)}",
         f"GASTROMED_DATA_KEY={Fernet.generate_key().decode()}",
         f"GASTROMED_BACKUP_KEY={Fernet.generate_key().decode()}",
-        f"GASTROMED_DATABASE_PATH={datos / 'gastromed.sqlite3'}",
+        f"GASTROMED_DATABASE_PATH={datos / 'neuromed.sqlite3'}",
         f"GASTROMED_FILES_DIR={datos / 'archivos'}",
         f"GASTROMED_BACKUP_DIR={respaldos}",
         f"GASTROMED_BACKUP_COPY_DIR={copy_dir}",
@@ -47,7 +47,7 @@ def write_env(env_file: Path, datos: Path, respaldos: Path, copy_dir: str):
 
 def save_keys_copy(env_file: Path, desktop: Path) -> Path:
     keys = [l for l in env_file.read_text(encoding="utf-8").splitlines() if l.startswith(("GASTROMED_DATA_KEY", "GASTROMED_BACKUP_KEY"))]
-    out = desktop / "GastroMed - CLAVES (copiar a USB y borrar de aqui).txt"
+    out = desktop / "NeuroMed - CLAVES (copiar a USB y borrar de aqui).txt"
     out.write_text(
         "CLAVES DE GASTROMED PRO — CONSERVE UNA COPIA FUERA DE ESTA PC\n\n"
         "Sin estas claves no se pueden abrir los respaldos ni los estudios adjuntos si la PC se daña.\n"
@@ -103,12 +103,12 @@ def main():
     datos, respaldos = Path(a.datos), Path(a.respaldos)
     for d in (datos, datos / "archivos", respaldos):
         d.mkdir(parents=True, exist_ok=True)
-    env_file = datos / "gastromed.env"
+    env_file = datos / "neuromed.env"
     if env_file.exists():
         print("  Configuración existente encontrada: se conservan las claves.")
     else:
         print("\n--- Copia externa de respaldos ---")
-        print("  Recomendado: un disco externo o USB que se quede en el consultorio, p. ej. E:\\RespaldosGastroMed")
+        print("  Recomendado: un disco externo o USB que se quede en el consultorio, p. ej. E:\\RespaldosNeuroMed")
         copy_dir = ask("Carpeta de copia externa (Enter para configurarla después)", "", "COPYDIR")
         write_env(env_file, datos, respaldos, copy_dir)
         keys = save_keys_copy(env_file, Path(a.escritorio))

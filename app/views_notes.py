@@ -25,7 +25,7 @@ TEXT_FIELDS = {
     "motivo": "Motivo de consulta", "hea": "Historia de la enfermedad actual", "antecedentes": "Antecedentes",
     "revision_sistemas": "Revisión por sistemas",
     "narrativa": "Nota narrativa", "exploracion_general": "Exploración física general",
-    "exploracion_abdominal": "Exploración abdominal", "impresion": "Impresión diagnóstica",
+    "exploracion_abdominal": "Exploración neurológica", "impresion": "Impresión diagnóstica",
     "diagnosticos": "Diagnósticos (texto libre)", "plan": "Plan",
     # Campos anteriores a v0.15 (pedido del médico: quitar diferenciales y dejar un solo plan). Se siguen mostrando y
     # guardando SOLO si la nota ya tenía texto en ellos, para no perder información de notas antiguas.

@@ -11,8 +11,7 @@
   {% if can('ordenes.emitir') %}
   <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='laboratorio') }}">Orden de laboratorio</a>
   <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='imagen') }}">Orden de imagen</a>
-  <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='endoscopia') }}">Solicitud de endoscopia</a>
-    <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='colonoscopia') }}">Solicitud de colonoscopia</a>
+  <a class="btn" href="{{ url_for('labs.order_new', patient_id=p.id, order_type='endoscopia') }}">Solicitud de neurofisiología</a>
   {% endif %}
 </div>
 

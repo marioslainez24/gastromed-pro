@@ -410,7 +410,7 @@
     }
     $("[data-exam-write]", ex).addEventListener("click", exWrite);
     $("[data-exam-allnormal]", ex).addEventListener("click", function () {
-      ["general", "cardiopulmonar", "abdomen"].forEach(function (k) {
+      ["general", "cardiopulmonar", "mental", "pares", "motor", "reflejos", "sensibilidad", "coordinacion"].forEach(function (k) {
         var sys = ex.querySelector("[data-exam-sys='" + k + "']"); if (!sys) return;
         if (!$$("[data-exam-finding]", sys).some(function (f) { return f.checked || ((f.type === "text" || f.inputMode) && f.type !== "checkbox" && f.type !== "radio" && f.value); }))
           $("[data-exam-normal]", sys).checked = true;

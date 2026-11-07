@@ -15,7 +15,7 @@ from .views_patients import get_patient_or_404
 
 bp = Blueprint("labs", __name__)
 
-ORDER_TYPES = {"laboratorio": "Laboratorio", "imagen": "Imagenología", "endoscopia": "Endoscopia"}
+ORDER_TYPES = {"laboratorio": "Laboratorio", "imagen": "Imagenología", "endoscopia": "Neurofisiología"}
 PRIORITIES = {"rutina": "Rutina", "preferente": "Preferente", "urgente": "Urgente"}
 ORDER_STATUS = {"solicitada": "Solicitada", "resultado_parcial": "Resultado parcial", "resultado_recibido": "Resultado recibido",
                 "cerrada": "Cerrada", "anulada": "Anulada"}

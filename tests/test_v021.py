@@ -22,7 +22,7 @@ def test_hojas_educativas_imprimir_enviar_y_registro(env):
     # ejemplos: se cargan sin revisar y no se pueden entregar
     med.post("/hojas-educativas", data={"csrf_token": tok, "action": "ejemplos"})
     ej = db.execute("SELECT id, title, reviewed FROM edu_handouts ORDER BY title").fetchall()
-    assert [r["title"] for r in ej] == ["Dieta baja en grasa", "Dieta rica en fibra", "Medidas para el reflujo"] and not any(r["reviewed"] for r in ej)
+    assert [r["title"] for r in ej] == ["Cómo reconocer un ACV (derrame cerebral)", "Diario de cefalea", "Recomendaciones para personas con epilepsia"] and not any(r["reviewed"] for r in ej)
     pid = create_patient(med, email="paciente.ficticio@prueba.hn")
     page = med.get(f"/pacientes/{pid}/documentos").get_data(as_text=True)
     assert "Hojas educativas y dietas" in page and "(ejemplo sin revisar)" in page

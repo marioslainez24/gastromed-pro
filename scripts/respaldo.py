@@ -1,4 +1,4 @@
-"""Respaldos de GastroMed Pro.
+"""Respaldos de NeuroMed Pro.
 
   python scripts/respaldo.py generar-clave              → imprime una clave nueva para GASTROMED_BACKUP_KEY
   python scripts/respaldo.py crear [carpeta]            → crea un respaldo cifrado (por defecto en GASTROMED_BACKUP_DIR)
@@ -71,7 +71,7 @@ def main(argv):
         report = verify_and_restore(argv[1], backup_key(), argv[2], load_data_key(cfg))
         show(report)
         if report["ok"]:
-            print(f"\nPara usar la restauración, configure GASTROMED_DATABASE_PATH={argv[2]}/gastromed.sqlite3 "
+            print(f"\nPara usar la restauración, configure GASTROMED_DATABASE_PATH={argv[2]}/neuromed.sqlite3 "
                   f"y GASTROMED_FILES_DIR={argv[2]}/archivos y reinicie la aplicación.")
         return 0 if report["ok"] else 2
     elif cmd == "exportar" and len(argv) == 2:

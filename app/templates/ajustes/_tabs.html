@@ -3,8 +3,6 @@
   <a href="{{ url_for('extras.schedules') }}" {% if request.endpoint == 'extras.schedules' %}aria-current="page"{% endif %}>Horarios y vacaciones</a>
   <a href="{{ url_for('extras.reminders_settings') }}" {% if request.endpoint == 'extras.reminders_settings' %}aria-current="page"{% endif %}>Recordatorios</a>
   {% if can('clinico.editar') %}<a href="{{ url_for('texts.phrases') }}" {% if request.endpoint == 'texts.phrases' %}aria-current="page"{% endif %}>Frases y plantillas</a>{% endif %}
-  {% if can('ajustes.editar') %}<a href="{{ url_for('settings.report_style') }}" {% if request.endpoint == 'settings.report_style' %}aria-current="page"{% endif %}>Estilo del informe</a>{% endif %}
-  {% if can('ajustes.editar') %}<a href="{{ url_for('settings.endo_staff_page') }}" {% if request.endpoint == 'settings.endo_staff_page' %}aria-current="page"{% endif %}>Personal de endoscopia</a>{% endif %}
   {% if can('ajustes.editar') %}<a href="{{ url_for('settings.backups') }}" {% if request.endpoint == 'settings.backups' %}aria-current="page"{% endif %}>Respaldos</a>{% endif %}
   {% if can('ajustes.editar') %}<a href="{{ url_for('settings.disk_space') }}" {% if request.endpoint == 'settings.disk_space' %}aria-current="page"{% endif %}>Espacio en disco</a>{% endif %}
   {% if can('usuarios.gestionar') %}<a href="{{ url_for('settings.users') }}" {% if request.endpoint == 'settings.users' %}aria-current="page"{% endif %}>Usuarios y permisos</a>{% endif %}

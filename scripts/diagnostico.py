@@ -1,4 +1,4 @@
-"""Revisión rápida del estado de GastroMed Pro (lo ejecuta VERIFICAR.bat)."""
+"""Revisión rápida del estado de NeuroMed Pro (lo ejecuta VERIFICAR.bat)."""
 import os
 import sqlite3
 import sys
@@ -16,7 +16,7 @@ def main():
         ok = ok and good
         print(("  [OK]    " if good else "  [ALERTA] ") + text)
 
-    print("Diagnóstico de GastroMed Pro\n")
+    print("Diagnóstico de NeuroMed Pro\n")
     try:
         from app.config import Config
         from app.crypto import load_data_key
@@ -41,7 +41,7 @@ def main():
         conn.close()
     else:
         line(False, f"No existe la base de datos en {db}")
-    backups = sorted(Path(cfg.BACKUP_DIR).glob("gastromed-*.gmbak")) if Path(cfg.BACKUP_DIR).exists() else []
+    backups = sorted(Path(cfg.BACKUP_DIR).glob("neuromed-*.gmbak")) if Path(cfg.BACKUP_DIR).exists() else []
     if backups:
         age_h = (time.time() - backups[-1].stat().st_mtime) / 3600
         line(age_h < 36, f"Último respaldo: {backups[-1].name} (hace {age_h:.0f} h) · total {len(backups)}")

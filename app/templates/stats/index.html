@@ -10,50 +10,29 @@
     {% for u in users %}<option value="{{ u.id }}" {% if u.id == author %}selected{% endif %}>{{ u.full_name }}</option>{% endfor %}</select></label>{% endif %}
   <button class="btn btn-primary" type="submit">Ver</button>
 </form>
-<p class="muted small">Cuenta lo finalizado en el programa (consultas y estudios en borrador o descartados no se incluyen). El archivo de Excel trae solo
+<p class="muted small">Cuenta lo finalizado en el programa (las consultas en borrador o descartadas no se incluyen). El archivo de Excel trae solo
   números: no incluye nombres ni datos de pacientes.</p>
 
 <div class="stat-tiles">
   <div class="stat"><span class="stat-n">{{ st.totals.consultas }}</span><span class="stat-l">Consultas</span></div>
-  <div class="stat"><span class="stat-n">{{ st.totals.eda }}</span><span class="stat-l">Endoscopias altas</span></div>
-  <div class="stat"><span class="stat-n">{{ st.totals.colonoscopia }}</span><span class="stat-l">Colonoscopias</span></div>
-  <div class="stat"><span class="stat-n">{{ st.totals.rectosigmoidoscopia + st.totals.cpre + st.totals.use }}</span><span class="stat-l">Otros estudios</span></div>
   <div class="stat"><span class="stat-n">{{ st.totals.pacientes }}</span><span class="stat-l">Pacientes nuevos</span></div>
 </div>
 
 <section class="card"><h2>Por mes</h2>
   <div class="chart-wrap">{{ chart }}</div>
   <div class="table-wrap"><table class="table num">
-    <thead><tr><th>Mes</th><th>Consultas</th>{% for k in KIND_ORDER %}<th>{{ KINDS[k] }}</th>{% endfor %}<th>Pacientes nuevos</th></tr></thead>
-    <tbody>{% for r in st.rows|reverse %}<tr><td>{{ r.label }}</td><td>{{ r.consultas }}</td>{% for k in KIND_ORDER %}<td>{{ r[k] }}</td>{% endfor %}<td>{{ r.pacientes }}</td></tr>{% endfor %}</tbody>
-    <tfoot><tr><th>Total</th><th>{{ st.totals.consultas }}</th>{% for k in KIND_ORDER %}<th>{{ st.totals[k] }}</th>{% endfor %}<th>{{ st.totals.pacientes }}</th></tr></tfoot>
+    <thead><tr><th>Mes</th><th>Consultas</th><th>Pacientes nuevos</th></tr></thead>
+    <tbody>{% for r in st.rows|reverse %}<tr><td>{{ r.label }}</td><td>{{ r.consultas }}</td><td>{{ r.pacientes }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><th>Total</th><th>{{ st.totals.consultas }}</th><th>{{ st.totals.pacientes }}</th></tr></tfoot>
   </table></div>
 </section>
 
-<div class="grid2">
+<div>
   <section class="card"><h2>Diagnósticos de consulta más frecuentes</h2>
     {% if st.dx_consult %}<ol class="dx-rank">{% for t, n in st.dx_consult %}<li><span>{{ t }}</span><b>{{ n }}</b></li>{% endfor %}</ol>
     {% else %}<p class="muted small">Sin consultas finalizadas en el periodo.</p>{% endif %}</section>
-  <section class="card"><h2>Diagnósticos endoscópicos más frecuentes</h2>
-    {% if st.dx_endo %}<ol class="dx-rank">{% for t, n in st.dx_endo %}<li><span>{{ t }}</span><b>{{ n }}</b></li>{% endfor %}</ol>
-    {% else %}<p class="muted small">Sin estudios finalizados en el periodo.</p>{% endif %}</section>
 </div>
 <p class="muted small">Los diagnósticos se cuentan tal como se escribieron (sin distinguir mayúsculas). Si usa siempre la misma redacción o la lista
   de diagnósticos con CIE-10, el conteo es más exacto.</p>
 
-<section class="card"><h2>Estudios por tipo de atención y lugar</h2>
-  {% if st.by_care %}<div class="table-wrap"><table class="table"><thead><tr><th>Atención</th><th>Lugar</th><th class="num">Estudios</th></tr></thead>
-    <tbody>{% for c, f, n in st.by_care %}<tr><td>{{ c }}</td><td>{{ f }}</td><td class="num">{{ n }}</td></tr>{% endfor %}</tbody></table></div>
-  {% else %}<p class="muted small">Sin estudios finalizados en el periodo.</p>{% endif %}
-</section>
-
-<section class="card"><h2>Calidad de la colonoscopia</h2>
-  <div class="table-wrap"><table class="table">
-    <thead><tr><th>Indicador</th><th>Resultado</th><th>Cómo se calcula</th></tr></thead>
-    <tbody>{% for n, a, b, desc in st.quality %}<tr><td><b>{{ n }}</b></td>
-      <td class="nowrap">{% if b %}<b>{{ '%.1f'|format(100 * a / b) }} %</b> <span class="muted small">({{ a }} de {{ b }})</span>{% else %}<span class="muted">Sin datos</span>{% endif %}</td>
-      <td class="small muted">{{ desc }}</td></tr>{% endfor %}</tbody>
-  </table></div>
-  <p class="small"><a href="{{ url_for('endo.quality', desde=start, hasta=end) }}">Ver el detalle en Endoscopia → Indicadores de calidad</a></p>
-</section>
 {% endblock %}

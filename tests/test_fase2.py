@@ -141,18 +141,18 @@ def test_formulario_gi_en_nota_y_bloqueo(env):
     pid = create_patient(med)
     tok = csrf(med)
     nid = med.post("/notas/nueva", data={"csrf_token": tok, "patient_id": pid, "kind": "primera", "template": "soap"}).headers["Location"].split("/")[-1]
-    assert med.get(f"/notas/{nid}/formulario/diarrea").status_code == 200
-    r = med.post(f"/notas/{nid}/formulario/diarrea", data={"csrf_token": tok, "tipo": "cronica", "duracion": "3-6m", "frecuencia": "5",
-                                                           "bristol": "6", "caracteristicas": ["sangre", "nocturna", "invalida"],
-                                                           "signos_alarma": ["perdida_peso"]})
+    assert med.get(f"/notas/{nid}/formulario/cefalea").status_code == 200
+    r = med.post(f"/notas/{nid}/formulario/cefalea", data={"csrf_token": tok, "inicio": "cronico", "duracion": "3-6m", "dias_mes": "5",
+                                                           "acompanantes": ["nausea", "fotofobia", "invalida"],
+                                                           "signos_alarma": ["fiebre"]})
     assert r.status_code == 302
     data = json.loads(env["db"].execute("SELECT data FROM clinical_forms").fetchone()[0])
-    assert data["bristol"] == 6 and data["caracteristicas"] == ["sangre", "nocturna"]
+    assert data["dias_mes"] == 5 and data["acompanantes"] == ["nausea", "fotofobia"]
     html = med.get(f"/notas/{nid}").get_data(as_text=True)
-    assert "Diarrea aguda y crónica" in html and "Tipo 6" in html and "Pérdida de peso involuntaria" in html
-    med.post(f"/notas/{nid}/guardar", json={"version": 1, "motivo": "Diarrea"}, headers={"X-CSRF-Token": tok})
+    assert "Cefalea" in html and "Fotofobia" in html and "Fiebre" in html
+    med.post(f"/notas/{nid}/guardar", json={"version": 1, "motivo": "Cefalea"}, headers={"X-CSRF-Token": tok})
     med.post(f"/notas/{nid}/finalizar", data={"csrf_token": tok, "version": 2})
-    assert med.post(f"/notas/{nid}/formulario/diarrea", data={"csrf_token": tok, "tipo": "aguda"}).status_code == 409
+    assert med.post(f"/notas/{nid}/formulario/cefalea", data={"csrf_token": tok, "inicio": "subito"}).status_code == 409
     with pytest.raises(sqlite3.IntegrityError):
         env["db"].execute("UPDATE clinical_forms SET data = '{}'")
 
@@ -163,7 +163,7 @@ def test_todos_los_formularios_cargan(env):
     pid = create_patient(med)
     tok = csrf(med)
     nid = med.post("/notas/nueva", data={"csrf_token": tok, "patient_id": pid, "kind": "primera", "template": "soap"}).headers["Location"].split("/")[-1]
-    assert len(FORMS) == 13
+    assert len(FORMS) == 7
     for code in FORMS:
         assert med.get(f"/notas/{nid}/formulario/{code}").status_code == 200, code
 

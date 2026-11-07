@@ -2,20 +2,22 @@
 
 El médico marca los antecedentes con clics; se guardan en el expediente (tabla patient_history, como siempre: nada se borra) y
 cada nota nueva los trae ya escritos en el campo «Antecedentes» (copia del momento, editable). Solo nombres de antecedentes
-frecuentes en gastroenterología; lo que no esté se escribe en «Otro».
+frecuentes en neurología; lo que no esté se escribe en «Otro».
 """
 
 CHIPS = {
-    "personal": ["Diabetes mellitus tipo 2", "Hipertensión arterial", "Dislipidemia", "Obesidad", "Cardiopatía isquémica",
-                 "Fibrilación auricular", "Insuficiencia cardiaca", "Enfermedad renal crónica", "Hipotiroidismo", "Asma o EPOC",
-                 "Cirrosis hepática", "Hígado graso", "Hepatitis B", "Hepatitis C", "VIH", "Enfermedad por reflujo gastroesofágico",
-                 "Úlcera péptica", "Infección por H. pylori tratada", "Enfermedad inflamatoria intestinal", "Pólipos de colon",
-                 "Enfermedad celíaca", "Pancreatitis", "Anemia", "Trombosis venosa o embolia", "Depresión o ansiedad", "Cáncer"],
-    "quirurgico": ["Colecistectomía", "Apendicectomía", "Hernioplastia", "Funduplicatura", "Gastrectomía", "Cirugía bariátrica",
-                   "Colectomía", "Cirugía de hemorroides", "Cesárea", "Histerectomía", "Cirugía cardiaca", "Trasplante"],
-    "familiar": ["Cáncer colorrectal", "Cáncer gástrico", "Cáncer de esófago", "Cáncer de páncreas", "Cáncer de hígado",
-                 "Pólipos de colon", "Enfermedad inflamatoria intestinal", "Enfermedad celíaca", "Cirrosis o hepatopatía", "Diabetes"],
-    "procedimiento": ["Endoscopia digestiva alta previa", "Colonoscopia previa", "CPRE previa", "Ultrasonido abdominal previo"],
+    "personal": ["Hipertensión arterial", "Diabetes mellitus tipo 2", "Dislipidemia", "Obesidad", "Fibrilación auricular",
+                 "Cardiopatía isquémica", "Insuficiencia cardiaca", "Enfermedad renal crónica", "Hipotiroidismo", "Apnea del sueño",
+                 "ACV isquémico previo", "Hemorragia cerebral previa", "Ataque isquémico transitorio", "Epilepsia", "Crisis febriles en la infancia",
+                 "Migraña", "Traumatismo craneoencefálico", "Meningitis o encefalitis", "Neurocisticercosis", "Enfermedad de Parkinson",
+                 "Deterioro cognitivo", "Esclerosis múltiple", "Neuropatía periférica", "Depresión o ansiedad", "VIH", "Cáncer"],
+    "quirurgico": ["Craneotomía", "Derivación ventrículo-peritoneal", "Cirugía de columna cervical", "Cirugía de columna lumbar",
+                   "Endarterectomía carotídea", "Embolización o clip de aneurisma", "Trombectomía mecánica", "Liberación de túnel del carpo",
+                   "Cirugía cardiaca", "Cesárea", "Histerectomía"],
+    "familiar": ["Epilepsia", "ACV antes de los 55 años", "Aneurisma cerebral", "Demencia", "Enfermedad de Parkinson", "Esclerosis múltiple",
+                 "Migraña", "Enfermedad neuromuscular hereditaria", "Diabetes", "Hipertensión"],
+    "procedimiento": ["TAC de cráneo previa", "Resonancia magnética cerebral previa", "Electroencefalograma previo",
+                      "EMG y neuroconducción previa", "Punción lumbar previa", "Trombólisis previa"],
 }
 RELATIVES = ["padre", "madre", "hermano(a)", "hijo(a)", "abuelo(a)", "tío(a)"]
 

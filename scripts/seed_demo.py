@@ -32,7 +32,7 @@ def main():
         Path(str(db_path) + suffix).unlink(missing_ok=True)
     migrate(str(db_path))
     db = connect(str(db_path))
-    org = create_organization(db, "Clínica GastroMed (DEMOSTRACIÓN)")
+    org = create_organization(db, "Clínica NeuroMed (DEMOSTRACIÓN)")
     creds = []
     users = {}
     for email, name, role, prac in [

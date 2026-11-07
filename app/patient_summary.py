@@ -68,4 +68,7 @@ def summary(db, p, approved=None):
     out["surveillance"] = min(due, key=lambda x: x["due"]) if due else None
     from .quick_calcs import quick
     out["calcs"] = quick(db, p, approved)
+    # NeuroMed Pro: últimos códigos ACV del paciente
+    out["acv"] = db.execute("SELECT id, status, created_at, summary FROM stroke_codes WHERE patient_id = ? ORDER BY created_at DESC LIMIT 3",
+                            (pid,)).fetchall()
     return out

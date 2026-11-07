@@ -25,14 +25,14 @@ def test_antecedentes_con_clics_se_guardan_y_aparecen_en_la_nota_siguiente(env):
     H = {"X-Requested-With": "fetch"}
     assert med.post(url, data={"csrf_token": tok, "category": "personal", "item": "Diabetes mellitus tipo 2"}, headers=H).get_json()["agregado"]
     assert not med.post(url, data={"csrf_token": tok, "category": "personal", "item": "Diabetes mellitus tipo 2"}, headers=H).get_json()["agregado"]
-    med.post(url, data={"csrf_token": tok, "category": "quirurgico", "item": "Colecistectomía", "when_text": "2018"}, headers=H)
-    med.post(url, data={"csrf_token": tok, "category": "familiar", "item": "Cáncer colorrectal", "relative": ["madre", "inventado"]}, headers=H)
+    med.post(url, data={"csrf_token": tok, "category": "quirurgico", "item": "Craneotomía", "when_text": "2018"}, headers=H)
+    med.post(url, data={"csrf_token": tok, "category": "familiar", "item": "Epilepsia", "relative": ["madre", "inventado"]}, headers=H)
     med.post(url, data={"csrf_token": tok, "category": "habito", "habit": "Tabaco", "value": "Fumador actual", "detail": "10 al día"}, headers=H)
     r = med.post(url, data={"csrf_token": tok, "category": "habito", "habit": "Tabaco", "value": "Exfumador"}, headers=H)
     r = med.post(url, data={"csrf_token": tok, "category": "personal", "item": "__otro__", "other": "Lupus (ficticio)"}, headers=H)
     t = r.get_json()["texto"]
     assert "Patológicos: Diabetes mellitus tipo 2; Lupus (ficticio)." in t
-    assert "Quirúrgicos: Colecistectomía (2018)." in t and "Familiares: Cáncer colorrectal en madre." in t
+    assert "Quirúrgicos: Craneotomía (2018)." in t and "Familiares: Epilepsia en madre." in t
     assert "Hábitos: Tabaco: exfumador." in t and "fumador actual" not in t          # el hábito nuevo reemplaza al anterior
     assert med.post(url, data={"csrf_token": tok, "category": "personal", "item": "Inventado"}, headers=H).status_code == 422
     assert med.post(url, data={"csrf_token": tok, "category": "habito", "habit": "Tabaco", "value": "x"}, headers=H).status_code == 422

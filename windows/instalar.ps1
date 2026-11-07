@@ -1,10 +1,10 @@
-﻿# GastroMed Pro - Instalador para Windows 11
+﻿# NeuroMed Pro - Instalador para Windows 11
 # Lo ejecuta INSTALAR.bat. Puede volver a ejecutarse para ACTUALIZAR: conserva datos, claves y usuarios.
 
 $ErrorActionPreference = "Stop"
-$Host.UI.RawUI.WindowTitle = "Instalador de GastroMed Pro"
+$Host.UI.RawUI.WindowTitle = "Instalador de NeuroMed Pro"
 
-$Root      = "C:\GastroMed"
+$Root      = "C:\NeuroMed"
 $AppDir    = Join-Path $Root "programa"
 $DataDir   = Join-Path $Root "datos"
 $BackupDir = Join-Path $Root "respaldos"
@@ -28,7 +28,7 @@ function SiNo($pregunta, $porDefecto = "S") {
 }
 
 Write-Host "==============================================================" -ForegroundColor Cyan
-Write-Host "   Instalacion de GastroMed Pro en esta PC (servidor privado)" -ForegroundColor Cyan
+Write-Host "   Instalacion de NeuroMed Pro en esta PC (servidor privado)" -ForegroundColor Cyan
 Write-Host "==============================================================" -ForegroundColor Cyan
 Write-Host "Programa:  $AppDir"
 Write-Host "Datos:     $DataDir"
@@ -66,7 +66,7 @@ Ok "Python: $Python"
 
 # ---------------------------------------------------------------- 2. Respaldo previo (si es actualizacion)
 Paso 2 "Revisando instalacion anterior"
-$EnvFile = Join-Path $DataDir "gastromed.env"
+$EnvFile = Join-Path $DataDir "neuromed.env"
 $VenvPy  = Join-Path $AppDir ".venv\Scripts\python.exe"
 if ((Test-Path $EnvFile) -and (Test-Path $VenvPy)) {
     Write-Host "      Instalacion existente: se hara un respaldo antes de actualizar."
@@ -138,12 +138,12 @@ function Acceso($nombre, $bat, $carpeta, $icono) {
     if ($bat -eq "iniciar.bat") { $lnk.WindowStyle = 7 }   # minimizada
     $lnk.Save()
 }
-Acceso "GastroMed Pro" "iniciar.bat" $Desktop 21
-Acceso "GastroMed Pro - Verificar estado" "verificar.bat" $Desktop 76
-Acceso "GastroMed Pro - DEMOSTRACION" "demo.bat" $Desktop 22
+Acceso "NeuroMed Pro" "iniciar.bat" $Desktop 21
+Acceso "NeuroMed Pro - Verificar estado" "verificar.bat" $Desktop 76
+Acceso "NeuroMed Pro - DEMOSTRACION" "demo.bat" $Desktop 22
 Ok "Accesos directos en el escritorio"
-if (SiNo "      Iniciar GastroMed Pro automaticamente al encender esta PC?" "S") {
-    Acceso "GastroMed Pro" "iniciar-sin-navegador.bat" $Startup 21
+if (SiNo "      Iniciar NeuroMed Pro automaticamente al encender esta PC?" "S") {
+    Acceso "NeuroMed Pro" "iniciar-sin-navegador.bat" $Startup 21
     Ok "Inicio automatico activado"
 }
 
@@ -152,21 +152,21 @@ Paso 8 "Programando respaldo diario (21:00; si la PC esta apagada, se hace al en
 $accion   = New-ScheduledTaskAction -Execute (Join-Path $AppDir "windows\respaldo.bat") -WorkingDirectory $AppDir
 $trigger  = New-ScheduledTaskTrigger -Daily -At "21:00"
 $opciones = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 2)
-Register-ScheduledTask -TaskName "GastroMed Pro - Respaldo diario" -Action $accion -Trigger $trigger -Settings $opciones -Description "Respaldo cifrado y verificado de GastroMed Pro" -Force | Out-Null
+Register-ScheduledTask -TaskName "NeuroMed Pro - Respaldo diario" -Action $accion -Trigger $trigger -Settings $opciones -Description "Respaldo cifrado y verificado de NeuroMed Pro" -Force | Out-Null
 Ok "Tarea programada creada"
 $env:GASTROMED_ENV_FILE = $EnvFile
 Push-Location $AppDir
 & $VenvPy "scripts\respaldo.py" "automatico"
 Pop-Location
-if ($LASTEXITCODE -eq 0) { Ok "Primer respaldo creado y verificado" } else { Aviso "El primer respaldo fallo; revise con 'GastroMed Pro - Verificar estado'." }
+if ($LASTEXITCODE -eq 0) { Ok "Primer respaldo creado y verificado" } else { Aviso "El primer respaldo fallo; revise con 'NeuroMed Pro - Verificar estado'." }
 
 # ---------------------------------------------------------------- 9. Acceso desde el celular
 Paso 9 "Acceso desde el celular (mismo Wi-Fi)"
-Write-Host "      Para usarlo desde el celular, Windows debe permitir conexiones al puerto 8000 en redes PRIVADAS."
+Write-Host "      Para usarlo desde el celular, Windows debe permitir conexiones al puerto 8100 en redes PRIVADAS."
 Write-Host "      Esto requiere permiso de administrador (aparecera una ventana de confirmacion)."
 if (SiNo "      Permitir acceso desde el celular?" "S") {
-    $cmd = "Remove-NetFirewallRule -DisplayName 'GastroMed Pro' -ErrorAction SilentlyContinue; " +
-           "New-NetFirewallRule -DisplayName 'GastroMed Pro' -Direction Inbound -Protocol TCP -LocalPort 8000 -Profile Private -Action Allow | Out-Null"
+    $cmd = "Remove-NetFirewallRule -DisplayName 'NeuroMed Pro' -ErrorAction SilentlyContinue; " +
+           "New-NetFirewallRule -DisplayName 'NeuroMed Pro' -Direction Inbound -Protocol TCP -LocalPort 8100 -Profile Private -Action Allow | Out-Null"
     try {
         Start-Process powershell.exe -Verb RunAs -Wait -ArgumentList "-NoProfile -Command $cmd"
         Ok "Regla de firewall creada (solo redes privadas)"
@@ -179,9 +179,9 @@ Write-Host ""
 Write-Host "==============================================================" -ForegroundColor Green
 Write-Host "   Instalacion terminada" -ForegroundColor Green
 Write-Host "==============================================================" -ForegroundColor Green
-Write-Host " - Para usar el sistema: doble clic en 'GastroMed Pro' (escritorio)."
-Write-Host " - Para practicar con pacientes ficticios: 'GastroMed Pro - DEMOSTRACION'."
+Write-Host " - Para usar el sistema: doble clic en 'NeuroMed Pro' (escritorio)."
+Write-Host " - Para practicar con pacientes ficticios: 'NeuroMed Pro - DEMOSTRACION'."
 Write-Host " - IMPORTANTE: copie a una USB el archivo de CLAVES que quedo en el escritorio y luego borrelo."
 Write-Host ""
-if (SiNo "Abrir GastroMed Pro ahora?" "S") { Start-Process (Join-Path $AppDir "windows\iniciar.bat") -WindowStyle Minimized }
+if (SiNo "Abrir NeuroMed Pro ahora?" "S") { Start-Process (Join-Path $AppDir "windows\iniciar.bat") -WindowStyle Minimized }
 Read-Host "Pulse Enter para cerrar el instalador"

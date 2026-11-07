@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Código ACV{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Código ACV</h1></div>
+<section class="card"><h2>Iniciar un código</h2>
+  <p>Busque al paciente arriba (o regístrelo), abra su expediente y entre a la pestaña <b>Código ACV</b>. La hora de llegada se anota sola y
+    después va registrando los tiempos, la presión, la glucosa, el NIHSS y las contraindicaciones.</p>
+  <p class="muted small">Herramienta de apoyo según las guías AHA/ASA 2019 y ESO 2021–2023. Siga el protocolo de su hospital y confirme cada
+    criterio antes de administrar un tratamiento.</p>
+</section>
+<section class="card"><h2>Últimos códigos <span class="count">{{ rows|length }}</span></h2>
+  {% if rows %}<ul class="list">{% for r in rows %}
+    <li class="row-between"><span><a href="{{ url_for('acv.edit', code_id=r.id) }}"><b>{{ r.last_names }}, {{ r.first_names }}</b></a>
+      <span class="muted small mono">{{ r.mrn }}</span> · {{ fmt_dt(r.created_at) }}</span>
+      <span class="tag {{ 'tag-ok' if r.status == 'finalizado' else '' }}">{{ 'Finalizado' if r.status == 'finalizado' else 'En curso' }}</span></li>{% endfor %}</ul>
+  {% else %}<p class="muted small">Aún no hay códigos ACV registrados.</p>{% endif %}
+</section>
+{% endblock %}

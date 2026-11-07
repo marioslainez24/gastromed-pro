@@ -1,6 +1,6 @@
 """Asistente para redactar la historia de la enfermedad actual (v0.12.0).
 
-El médico marca opciones de los formularios gastroenterológicos (gi_forms.FORMS) y este módulo arma un párrafo en español
+El médico marca opciones de los formularios de neurología (gi_forms.FORMS) y este módulo arma un párrafo en español
 con EXACTAMENTE lo marcado. Reglas:
 - No agrega síntomas, datos ni conclusiones que el médico no marcó.
 - Solo escribe negativos («Niega…») si el médico marcó «Interrogados y negados los no marcados»; si no, calla.
@@ -9,11 +9,9 @@ con EXACTAMENTE lo marcado. Reglas:
 from .gi_forms import BRISTOL, FORMS, clean
 
 MOTIVO = {
-    "reflujo_dispepsia": "síntomas de reflujo y dispepsia", "disfagia": "disfagia", "dolor_abdominal": "dolor abdominal",
-    "nausea_vomito": "náuseas y vómitos", "diarrea": "diarrea", "estrenimiento": "estreñimiento", "sangrado": "sangrado digestivo",
-    "anemia_ferropenia": "anemia", "perdida_peso": "pérdida de peso", "ictericia_hepaticas": "ictericia o alteración de pruebas hepáticas",
-    "distension": "distensión abdominal", "eii": "seguimiento de enfermedad inflamatoria intestinal",
-    "pancreas_biliar": "enfermedad pancreática o biliar",
+    "cefalea": "cefalea", "crisis": "crisis epilépticas", "deficit": "déficit neurológico focal", "mareo": "mareo",
+    "periferico": "debilidad, adormecimiento o dolor en las extremidades", "cognitivo": "deterioro cognitivo",
+    "movimiento": "temblor o trastorno del movimiento",
 }
 DURATION_TXT = {"<1s": "menos de una semana", "1-4s": "1 a 4 semanas", "1-3m": "1 a 3 meses", "3-6m": "3 a 6 meses",
                 ">6m": "más de 6 meses"}
@@ -28,97 +26,55 @@ T = {
     "*": {
         "sintomas": "Refiere {v}.", "acompanantes": "Se acompaña de {v}.", "tratamientos_previos": "Tratamientos previos: {v}.",
         "antecedentes_relevantes": "Antecedentes relevantes: {v}.", "comentarios": "{v}", "desencadenantes": "Desencadenantes: {v}.",
-        "exposiciones": "Como antecedentes de exposición refiere {v}.", "factores": "Factores asociados: {v}.",
-        "dieta": "Dieta: {v}.", "imagenes": "Imágenes: {v}.", "protesis": "Prótesis: {v}.",
+        "factores": "Factores asociados: {v}.",
     },
-    "reflujo_dispepsia": {
-        "frecuencia": {"<1": "Los síntomas se presentan menos de un día por semana.", "1-2": "Los síntomas se presentan 1 a 2 días por semana.",
-                       "3-6": "Los síntomas se presentan 3 a 6 días por semana.", "diario": "Los síntomas son diarios."},
-        "nocturnos": YESNO("Presenta síntomas nocturnos.", "Sin síntomas nocturnos."),
-        "aine": {"si": "Usa AINE o ácido acetilsalicílico.", "no": "No usa AINE ni ácido acetilsalicílico.",
-                 "ocasional": "Uso ocasional de AINE o ácido acetilsalicílico."},
-        "ibp": {"no_usado": "No ha usado inhibidores de bomba de protones.", "completa": "Respuesta completa a inhibidores de bomba de protones.",
-                "parcial": "Respuesta parcial a inhibidores de bomba de protones.", "sin_respuesta": "Sin respuesta a inhibidores de bomba de protones."},
-        "hp_previo": "Estudio previo de H. pylori: {v}.",
+    "cefalea": {
+        "inicio": {"subito": "De inicio súbito.", "progresivo": "De inicio progresivo en minutos u horas.", "cronico": "De larga evolución."},
+        "localizacion": "Localización: {v}.", "caracter": "De carácter {v}.", "intensidad": "Intensidad {v}/10.",
+        "dias_mes": "Presenta cefalea {v} días al mes.",
+        "duracion_crisis": {"seg": "Cada episodio dura segundos.", "min": "Cada episodio dura de 15 a 180 minutos.",
+                            "horas": "Cada episodio dura de 4 a 72 horas.", "continua": "El dolor es continuo."},
+        "aura": "Con aura {v}.", "analgesicos": "Usa analgésicos o triptanes {v} días al mes.",
     },
-    "disfagia": {
-        "tipo": {"orofaringea": "La disfagia es orofaríngea, al iniciar la deglución.", "esofagica": "La disfagia es esofágica, de localización retroesternal."},
-        "consistencia": {"solidos": "Es solo para sólidos.", "ambos": "Es para sólidos y líquidos desde el inicio.",
-                         "progresiva": "Inició con sólidos y progresó a líquidos."},
-        "odinofagia": YESNO("Refiere odinofagia.", "Sin odinofagia."),
-        "impactacion": YESNO("Ha presentado episodios de impactación alimentaria.", "Sin episodios de impactación alimentaria."),
-        "atopia": YESNO("Tiene antecedentes de atopia.", "Sin antecedentes de atopia."),
+    "crisis": {
+        "tipo": "Tipo de crisis: {v}.", "frecuencia": "Frecuencia: {v}.", "ultima": "Última crisis: {v}.",
+        "fenomenos": "Durante la crisis: {v}.",
+        "postictal": {"confusion": "Después de la crisis queda confuso.", "somnolencia": "Después de la crisis queda somnoliento.",
+                      "paresia": "Presenta debilidad transitoria después de la crisis.", "rapida": "Se recupera de inmediato."},
+        "testigo": YESNO("Los eventos fueron presenciados por un testigo.", "Sin testigo de los eventos."),
+        "desencadenantes_crisis": "Desencadenantes: {v}.", "medicacion": "Fármacos anticrisis y adherencia: {v}.",
+        "efectos": "Efectos adversos: {v}.", "conduce": YESNO("Conduce vehículos.", "No conduce vehículos."),
     },
-    "dolor_abdominal": {
-        "localizacion": "El dolor se localiza en {v}.", "caracter": "Es de carácter {v}.", "intensidad": "Intensidad {v}/10.",
-        "irradiacion": "Se irradia a {v}.",
-        "relacion_comidas": {"no": "Sin relación con las comidas.", "empeora": "Empeora al comer.", "mejora": "Mejora al comer."},
-        "relacion_evacuacion": {"no": "Sin relación con la evacuación.", "mejora": "Mejora al evacuar.",
-                                "cambio_habito": "Se asocia a cambio en el hábito intestinal."},
+    "deficit": {
+        "inicio": {"subito": "De inicio súbito.", "progresivo": "De instalación progresiva en horas o días.", "despertar": "Lo notó al despertar."},
+        "hora": "Último momento visto bien: {v}.", "lado": {"derecho": "Afecta el lado derecho.", "izquierdo": "Afecta el lado izquierdo.",
+                                                            "bilateral": "Afecta ambos lados."},
+        "resolucion": {"lt1h": "Los síntomas se resolvieron por completo en menos de 1 hora.", "gt1h": "Los síntomas se resolvieron por completo en más de 1 hora.",
+                       "parcial": "Los síntomas mejoraron parcialmente.", "persiste": "Los síntomas persisten.", "empeora": "Los síntomas empeoran."},
+        "factores": "Factores de riesgo vascular: {v}.", "antitromboticos": "Antitrombóticos: {v}.",
     },
-    "nausea_vomito": {
-        "frecuencia": "Presenta {v} episodios de vómito al día.", "contenido": "El contenido es {v}.",
-        "momento": {"posprandial_inm": "Los vómitos son posprandiales inmediatos.", "posprandial_tardio": "Los vómitos son posprandiales tardíos.",
-                    "matutino": "Los vómitos son matutinos.", "ciclico": "Presenta episodios cíclicos."},
-        "deshidratacion": YESNO("Con signos de deshidratación.", "Sin signos de deshidratación."),
+    "mareo": {
+        "tipo": {"vertigo": "Describe vértigo, con sensación de giro de objetos.", "inestabilidad": "Describe inestabilidad o desequilibrio.",
+                 "presincope": "Describe sensación de desmayo."},
+        "episodios": {"seg": "Los episodios duran segundos.", "min": "Los episodios duran minutos.", "horas": "Los episodios duran horas.",
+                      "continuo": "Es continuo, por días."},
+        "desencadenantes_mareo": "Se desencadena con {v}.",
     },
-    "diarrea": {
-        "tipo": {"aguda": "Diarrea aguda (menos de 14 días).", "persistente": "Diarrea persistente (14 a 30 días).",
-                 "cronica": "Diarrea crónica (más de 4 semanas)."},
-        "frecuencia": "Presenta {v} evacuaciones al día.", "caracteristicas": "Las evacuaciones se acompañan de {v}.",
+    "periferico": {
+        "distribucion": {"distal_simetrica": "De distribución distal y simétrica.", "proximal": "De predominio proximal.",
+                         "un_miembro": "Afecta un miembro.", "hemicuerpo": "Afecta un lado del cuerpo.", "territorio": "En el territorio de un nervio o raíz."},
+        "territorio": "Nervio o raíz sospechada: {v}.",
     },
-    "estrenimiento": {
-        "frecuencia": "Presenta {v} evacuaciones por semana.", "laxantes": "Laxantes usados y respuesta: {v}.",
+    "cognitivo": {
+        "informante": "Informa: {v}.", "inicio": {"insidioso": "De inicio insidioso.", "subagudo": "De instalación en semanas.",
+                                                    "escalonado": "De evolución escalonada."},
+        "dominios": "Afecta {v}.", "conducta": "En conducta y sueño: {v}.",
+        "funcionalidad": {"independiente": "Es independiente en sus actividades.", "instrumentales": "Necesita ayuda en actividades instrumentales.",
+                          "basicas": "Necesita ayuda en actividades básicas."},
     },
-    "sangrado": {
-        "forma": "Se presenta como {v}.", "inicio": "Inicio: {v}.", "episodios": "Número de episodios: {v}.",
-        "hemodinamia": "Con repercusión: {v}.", "medicamentos": "Usa {v}.", "antecedentes_hd": "Antecedentes: {v}.",
-        "escalas": "Escalas: {v}.",
-    },
-    "anemia_ferropenia": {
-        "perdidas": "Posibles pérdidas: {v}.", "malabsorcion": "Posible malabsorción: {v}.",
-        "hierro": "Tratamiento con hierro: {v}.",
-    },
-    "perdida_peso": {
-        "peso_habitual": "Peso habitual {v} kg.", "peso_actual": "Peso actual {v} kg.", "tiempo": "Pérdida ocurrida en {v}.",
-        "intencional": YESNO("La pérdida de peso es intencional.", "La pérdida de peso no es intencional."),
-        "ingesta": {"normal": "Ingesta normal.", "disminuida": "Ingesta disminuida.", "aumentada": "Ingesta aumentada."},
-    },
-    "ictericia_hepaticas": {
-        "patron": {"hepatocelular": "Patrón bioquímico hepatocelular.", "colestasico": "Patrón bioquímico colestásico.",
-                   "mixto": "Patrón bioquímico mixto.", "bilirrubina_aislada": "Hiperbilirrubinemia aislada."},
-        "exposiciones": "Factores de riesgo: {v}.", "alcohol_detalle": "Consumo de alcohol: {v}.",
-        "descompensacion": "Con datos de descompensación: {v}.",
-    },
-    "distension": {
-        "patron": {"progresiva_dia": "La distensión es progresiva durante el día.", "posprandial": "La distensión es posprandial.",
-                   "constante": "La distensión es constante."},
-        "dieta": "Relación con alimentos: {v}.",
-        "ascitis_sospecha": YESNO("Hay datos que sugieren ascitis u otra causa orgánica.", "Sin datos que sugieran ascitis u otra causa orgánica."),
-    },
-    "eii": {
-        "diagnostico": {"cu": "Con diagnóstico de colitis ulcerosa.", "ec": "Con diagnóstico de enfermedad de Crohn.",
-                        "no_clasificada": "Con diagnóstico de colitis no clasificada.",
-                        "sospecha": "En estudio por sospecha de enfermedad inflamatoria intestinal."},
-        "anio_dx": "Diagnosticada en {v}.", "extension": "Extensión o localización: {v}.",
-        "comportamiento": {"inflamatorio": "Comportamiento inflamatorio.", "estenosante": "Comportamiento estenosante.",
-                           "penetrante": "Comportamiento penetrante.", "no_aplica": ""},
-        "perianal": YESNO("Con enfermedad perianal.", "Sin enfermedad perianal."),
-        "evacuaciones": "Presenta {v} evacuaciones al día.",
-        "sangre": {"no": "Sin sangre en las heces.", "ocasional": "Sangre ocasional en las heces.", "frecuente": "Sangre frecuente en las heces.",
-                   "siempre": "Sangre en todas las evacuaciones."},
-        "extraintestinales": "Manifestaciones extraintestinales: {v}.", "tratamiento_actual": "Tratamiento actual: {v}.",
-        "historial_tx": "Historial de tratamientos: {v}.", "cribado": "Cribado y vacunas: {v}.",
-        "actividad_global": {"remision": "En valoración global, en remisión.", "leve": "En valoración global, actividad leve.",
-                             "moderada": "En valoración global, actividad moderada.", "grave": "En valoración global, actividad grave."},
-        "indices": "",
-    },
-    "pancreas_biliar": {
-        "cuadro": {"pa": "Cuadro de pancreatitis aguda.", "pc": "Cuadro de pancreatitis crónica.", "quiste": "Lesión quística pancreática.",
-                   "litiasis": "Litiasis biliar.", "coledocolitiasis": "Coledocolitiasis o colangitis.", "estenosis": "Estenosis biliar.",
-                   "protesis": "Paciente con prótesis biliar."},
-        "etiologia": "Etiología sospechada: {v}.", "insuf_exocrina": "Con datos de insuficiencia pancreática exocrina: {v}.",
-        "diabetes": YESNO("Con diabetes asociada.", "Sin diabetes asociada."),
+    "movimiento": {
+        "lado": {"derecho": "Inició en el lado derecho.", "izquierdo": "Inició en el lado izquierdo.", "bilateral": "De inicio bilateral."},
+        "no_motores": "Síntomas no motores: {v}.", "factores": "Fármacos y exposiciones: {v}.", "off": "Refiere {v} horas OFF al día.",
     },
 }
 SKIP = {"duracion", "evolucion", "signos_alarma"}   # se usan en la frase inicial y en el cierre

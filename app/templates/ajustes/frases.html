@@ -10,7 +10,7 @@
   <div class="row-between"><h2>Frases predefinidas <span class="count">{{ rows|selectattr('active')|list|length }}</span></h2>
     <form method="post" action="{{ url_for('texts.phrase_examples') }}" class="inline"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <button class="btn btn-sm btn-quiet" type="submit">Agregar frases de ejemplo</button></form></div>
-  <p class="muted small">Textos que usted escribe una vez y luego inserta con un clic. En las notas y en los informes de endoscopia aparece un botón
+  <p class="muted small">Textos que usted escribe una vez y luego inserta con un clic. En las notas y en los documentos aparece un botón
     <b>«Frases»</b> debajo de cada campo con las frases de ese campo y las de «Cualquier campo».</p>
 
   <details class="phrase-new" {% if not rows %}open{% endif %}><summary class="btn btn-sm btn-primary">＋ Nueva frase</summary>

@@ -599,3 +599,10 @@ ul.plain { list-style: none; padding: 0; margin: 0; } ul.plain li { margin: .15r
 .keep-choice { display: grid; gap: .2rem; cursor: pointer; }
 .keep-choice input[type=radio] { width: 1.1rem; height: 1.1rem; min-height: 0; margin: 0; accent-color: var(--accent); }
 .keep-choice.is-current { border-color: var(--accent); }
+
+/* NeuroMed Pro · Código ACV */
+.result-box.acv-ok, .result-box.acv-warn, .result-box.acv-crit { padding: .7rem .9rem; border-radius: 8px; margin: .5rem 0; }
+.result-box.acv-ok { border-color: #1f7a3f; }
+.result-box.acv-warn { border-color: #b07400; background: var(--warn-soft); }
+.result-box.acv-crit { border-color: #b42318; }
+.acv-tiles .stat-l .tag { margin-left: .25rem; }

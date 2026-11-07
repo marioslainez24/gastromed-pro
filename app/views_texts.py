@@ -21,34 +21,43 @@ def field_choices():
     from .views_notes import ACTIVE_FIELDS
     out = [("*", "Cualquier campo")]
     out += [(k, f"Nota · {v}") for k, v in ACTIVE_FIELDS.items()]
-    seen = set()
-    for secs in D.NARRATIVE.values():
-        for k, lab in secs:
-            if k not in seen:
-                seen.add(k)
-                out.append((f"endo:{k}", f"Endoscopia · {lab}"))
-    out += [("endo:conclusion", "Endoscopia · Conclusión"), ("endo:recommendations", "Endoscopia · Recomendaciones"),
-            ("doc:body", "Documentos clínicos · Texto")]
+    out += [("doc:body", "Documentos clínicos · Texto")]
     return out
 
 
 # Frases de ejemplo (opcionales): descripciones habituales que el médico revisa y adapta. No contienen dosis ni fórmulas.
 EXAMPLE_PHRASES = [
-    ("exploracion_abdominal", "Abdomen normal",
-     "Abdomen plano, blando, depresible, no doloroso a la palpación superficial ni profunda, sin masas ni visceromegalias, "
-     "peristalsis presente, sin signos de irritación peritoneal."),
+    ("exploracion_abdominal", "Exploración neurológica normal",
+     "Alerta, orientado, lenguaje conservado. Pares craneales sin alteraciones. Fuerza 5/5 en las cuatro extremidades, tono y trofismo "
+     "normales. Reflejos osteotendinosos simétricos, respuesta plantar flexora bilateral. Sensibilidad conservada. Sin dismetría. "
+     "Marcha normal. Sin signos meníngeos."),
     ("exploracion_general", "Exploración general normal",
-     "Paciente consciente, orientado, hidratado, con mucosas de coloración normal, sin ictericia. Cardiopulmonar sin alteraciones."),
-    ("plan", "Signos de alarma digestivos",
-     "Se explican signos de alarma: vómito con sangre o en «pozo de café», heces negras o con sangre, dolor abdominal intenso, "
-     "fiebre, coloración amarilla de piel u ojos, o vómitos persistentes. Si se presentan, acudir de inmediato a emergencia."),
-    ("plan", "Medidas antirreflujo",
-     "Se indican medidas generales: cenar al menos 3 horas antes de acostarse, elevar la cabecera de la cama, evitar comidas "
-     "abundantes, grasas, alcohol y tabaco, y control del peso."),
+     "Paciente consciente, hidratado, con buena coloración de piel y mucosas. Ruidos cardiacos rítmicos, sin soplos. Sin soplos carotídeos."),
+    ("plan", "Signos de alarma de ACV",
+     "Se explican signos de alarma de ACV: cara caída, debilidad o adormecimiento de un brazo o pierna, dificultad para hablar o "
+     "entender, pérdida súbita de la visión o del equilibrio. Ante cualquiera, llamar al 911 o acudir a emergencia de inmediato, "
+     "anotando la hora de inicio."),
+    ("plan", "Signos de alarma de cefalea",
+     "Se explican signos de alarma: dolor de cabeza súbito y muy intenso, con fiebre y rigidez de nuca, con debilidad, confusión, "
+     "convulsión o alteración de la visión, o que empeora progresivamente. Si se presentan, acudir de inmediato a emergencia."),
+    ("plan", "Conducción y epilepsia",
+     "Se indica no conducir vehículos, no nadar solo ni trabajar en alturas hasta completar el período libre de crisis que se indique."),
     ("plan", "Control con resultados", "Control en consulta con resultados de los estudios solicitados."),
-    ("endo:recommendations", "Esperar patología", "Pendiente resultado de patología; se comentará en la consulta de control."),
-    ("endo:recommendations", "Dieta tras sedación",
-     "Iniciar dieta líquida y luego blanda según tolerancia. No conducir ni firmar documentos el resto del día por la sedación."),
+    ("doc:body", "Informe de electroencefalograma",
+     "INFORME DE ELECTROENCEFALOGRAMA\n\nTipo de estudio: EEG de rutina / con privación de sueño, 21 electrodos (sistema 10-20), "
+     "duración ___ minutos.\nEstado: vigilia / somnolencia / sueño N1–N2.\n\nActividad de fondo: ritmo posterior dominante de ___ Hz, "
+     "simétrico y reactivo a la apertura ocular.\nActivaciones: hiperventilación ___. Fotoestimulación intermitente ___.\n"
+     "Hallazgos interictales: ___\nEventos clínicos registrados: ___\n\nConclusión: EEG ___.\nUn EEG normal no descarta epilepsia."),
+    ("doc:body", "Informe de EMG y neuroconducción",
+     "INFORME DE ELECTROMIOGRAFÍA Y NEUROCONDUCCIÓN\n\nTemperatura cutánea: ___ °C\n\nNeuroconducción motora: ___\n"
+     "Neuroconducción sensitiva: ___\nOndas F y reflejo H: ___\nElectromiografía con aguja: ___\nEstimulación repetitiva (si aplica): ___"
+     "\n\nConclusión: ___"),
+    ("doc:body", "Plan de acción ante una crisis epiléptica",
+     "QUÉ HACER SI LA PERSONA TIENE UNA CRISIS\n\n1. Mantenga la calma y mire el reloj: anote cuánto dura.\n2. Aleje objetos peligrosos y "
+     "proteja su cabeza con algo suave.\n3. No le meta nada en la boca y no sujete sus movimientos.\n4. Cuando terminen las sacudidas, "
+     "acuéstela de lado.\n5. Quédese con ella hasta que esté despierta y orientada.\n\nLlame al 911 o vaya a emergencia si la crisis dura "
+     "más de 5 minutos, si tiene una crisis tras otra sin despertar, si se golpeó, si le cuesta respirar, si la crisis ocurrió en el agua, "
+     "si está embarazada o si es su primera crisis."),
 ]
 
 

@@ -104,10 +104,9 @@ def test_solicitudes_de_imagen_endoscopia_y_colonoscopia_con_estudios_para_marca
     pid = create_patient(med)
     resp = env["users"]["propietario"]
     names = [n for _, ns in SC.IMAGING for n in ns]
-    assert "TAC trifásica de hígado" in names and "Ultrasonido Doppler del eje esplenoportal" in names
-    for kind, title, pick in (("imagen", "Imagenología", "TAC trifásica de hígado"),
-                              ("endoscopia", "Endoscopia", "Endoscopia digestiva alta diagnóstica"),
-                              ("colonoscopia", "Colonoscopia", "Colonoscopia con polipectomía")):
+    assert "TAC de cráneo simple" in names and "Doppler carotídeo y vertebral" in names
+    for kind, title, pick in (("imagen", "Imagenología", "TAC de cráneo simple"),
+                              ("endoscopia", "Neurofisiología", "Electroencefalograma (EEG) de rutina")):
         html = med.get(f"/ordenes/nueva?patient_id={pid}&order_type={kind}").get_data(as_text=True)
         assert pick in html and 'name="study"' in html and title in html
         r = med.post("/ordenes/nueva", data={"csrf_token": tok, "patient_id": pid, "order_type": kind, "study": [pick, "Estudio inventado"],
@@ -120,6 +119,7 @@ def test_solicitudes_de_imagen_endoscopia_y_colonoscopia_con_estudios_para_marca
         assert o["order_type"] == ("imagen" if kind == "imagen" else "endoscopia")
         text = "".join(pg.extract_text() for pg in PdfReader(io.BytesIO(med.get(f"/ordenes/{oid}/pdf").data)).pages)
         assert f"SOLICITUD DE {title.upper()}" in text and pick in text
-    assert "Solicitud de colonoscopia" in med.get(f"/pacientes/{pid}/laboratorio").get_data(as_text=True)
-    r = med.post("/ordenes/nueva", data={"csrf_token": tok, "patient_id": pid, "order_type": "colonoscopia", "priority": "rutina", "responsible_id": resp})
+    assert "Solicitud de neurofisiología" in med.get(f"/pacientes/{pid}/laboratorio").get_data(as_text=True)
+    r = med.post("/ordenes/nueva", data={"csrf_token": tok, "patient_id": pid, "order_type": "endoscopia", "priority": "rutina", "responsible_id": resp})
     assert r.status_code == 422
+    assert med.get(f"/ordenes/nueva?patient_id={pid}&order_type=colonoscopia").status_code == 400   # NeuroMed Pro: sin colonoscopia

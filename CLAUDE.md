@@ -1,3 +1,19 @@
+# RAMA `neuro` = NeuroMed Pro (leer esto primero si está en esta rama)
+
+NeuroMed Pro es la versión para NEUROLOGÍA, creada el 7-nov-2026 a pedido del Dr. Lainez a partir de GastroMed Pro v0.30.0. Vive en la
+rama `neuro` de este mismo repositorio (desde aquí no se pueden crear repositorios). NO se fusiona con `main`.
+- Construcción: `.github/workflows/construir-neuro.yml` (cada push a `neuro`): pruebas → `build/NeuroMedPro.spec` → prueba de humo →
+  Release `neuromed-vX.Y.Z-N` con `--latest=false` (así `/releases/latest` sigue siendo GastroMedPro.exe). Versión: 1.0.0.
+- Convive con GastroMed Pro en la misma PC: datos en `C:\NeuroMed`, `datos\neuromed.env`, puertos 8100 (http) y 8543 (https), cookies `nm_*`.
+  Las variables de entorno internas siguen llamándose `GASTROMED_*` (no se ven).
+- Licencia: misma llave y mismo código de equipo que GastroMed Pro (la clave que activa una PC sirve para los dos programas).
+- Contenido de neurología: `app/neuro_calcs.py` (18 escalas con fuente y casos), `app/acv.py` + `app/views_acv.py` (Código ACV, migración 0024),
+  `consult_diagnoses.py`, `antecedents.py`, `exam.py` (exploración neurológica; el campo `exploracion_abdominal` se muestra como
+  «Exploración neurológica»), `gi_forms.py` + `hea.py` (7 formularios de neurología), `study_catalog.py` (el tipo de orden `endoscopia`
+  se muestra como «Neurofisiología»), ejemplos de frases (informes de EEG/EMG) y hojas educativas.
+- La endoscopia y las calculadoras digestivas siguen en el código (sus pruebas pasan) pero NO aparecen en menús ni pestañas.
+- Pendiente: que el Dr. revise la lista CIE-10 de neurología, las escalas (aprobarlas en «Escalas») y los textos de ejemplo.
+
 # GastroMed Pro: guía para continuar el desarrollo (leer primero)
 
 Usuario: Dr. Mario Lainez, gastroenterólogo en Honduras. No es programador. Comunicación en español sencillo y sin jerga técnica.
